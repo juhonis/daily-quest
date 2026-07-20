@@ -37,14 +37,7 @@ export function QuestsColumn() {
 
   return (
     <div className="p-4 flex flex-col h-full">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-slate-300">Quests</h2>
-        {tab === 'quests' && (
-          <Button variant="icon" aria-label="Edit panels" onClick={() => setShowEditPanels(true)}>
-            <Settings className="w-5 h-5" />
-          </Button>
-        )}
-      </div>
+      <h2 className="text-sm font-semibold text-slate-300 mb-3">Quests</h2>
 
       <QuestsTabs
         activeTab={tab}
@@ -86,13 +79,18 @@ export function QuestsColumn() {
 
       {tab === 'quests' && (
         <>
-          <QuickAddBar
-            presets={quickPresets}
-            selectedDate={selectedDate}
-            onInstantAdd={(preset) => addQuestFromPreset(preset, selectedDate)}
-            onManageAdd={addQuickPreset}
-            onManageDelete={deleteQuickPreset}
-          />
+          <div className="flex items-center gap-2 justify-between">
+            <QuickAddBar
+              presets={quickPresets}
+              selectedDate={selectedDate}
+              onInstantAdd={(preset) => addQuestFromPreset(preset, selectedDate)}
+              onManageAdd={addQuickPreset}
+              onManageDelete={deleteQuickPreset}
+            />
+            <Button variant="icon" aria-label="Edit panels" onClick={() => setShowEditPanels(true)}>
+              <Settings className="w-5 h-5" />
+            </Button>
+          </div>
           {allVisibleHidden ? (
             <p className="text-sm text-slate-500 text-center py-8">
               No panels visible. Tap Edit panels to show some.
