@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useStore } from '../../store/useStore'
 import { Button } from '../../components/ui/Button'
-import { Settings } from 'lucide-react'
+import { Settings, ChevronLeft, ChevronRight, CalendarCheck } from 'lucide-react'
+import { format } from 'date-fns'
+import { addDays, getTodayLocal, parseDate } from '../../utils/dateUtils'
 import { QuestsTabs } from './QuestsTabs'
 import { QuickAddBar } from './QuickAddBar'
 import { QuestsPanelsRow } from './QuestsPanelsRow'
@@ -18,6 +20,7 @@ export function QuestsColumn() {
   const completions = useStore((s) => s.completions)
   const quickPresets = useStore((s) => s.quickPresets)
   const selectedDate = useStore((s) => s.selectedDate)
+  const setSelectedDate = useStore((s) => s.setSelectedDate)
   const toggleCompletion = useStore((s) => s.toggleCompletion)
   const toggleSubQuest = useStore((s) => s.toggleSubQuest)
   const deleteQuest = useStore((s) => s.deleteQuest)
@@ -29,10 +32,12 @@ export function QuestsColumn() {
   const hiddenPanels = useStore((s) => s.hiddenPanels)
 
   const allVisibleHidden = hiddenPanels.length === 5
+  const isToday = selectedDate === getTodayLocal()
+  const dateLabel = format(parseDate(selectedDate), 'EEEE dd/MM/yyyy')
 
   return (
     <div className="p-4 flex flex-col h-full">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-semibold text-slate-300">Quests</h2>
         {tab === 'quests' && (
           <Button variant="icon" aria-label="Edit panels" onClick={() => setShowEditPanels(true)}>
@@ -51,6 +56,33 @@ export function QuestsColumn() {
           setTab(t)
         }}
       />
+
+      <div className="flex items-center gap-2 mb-4">
+        <Button
+          variant="icon"
+          aria-label="Previous day"
+          onClick={() => setSelectedDate(addDays(selectedDate, -1))}
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </Button>
+        <button
+          onClick={() => setSelectedDate(getTodayLocal())}
+          className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
+            isToday ? 'text-slate-300' : 'text-blue-400 hover:text-blue-300'
+          }`}
+          title={isToday ? 'Today' : 'Jump to today'}
+        >
+          {!isToday && <CalendarCheck className="w-3.5 h-3.5" />}
+          {dateLabel}
+        </button>
+        <Button
+          variant="icon"
+          aria-label="Next day"
+          onClick={() => setSelectedDate(addDays(selectedDate, 1))}
+        >
+          <ChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
 
       {tab === 'quests' && (
         <>
