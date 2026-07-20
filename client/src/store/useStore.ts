@@ -72,6 +72,40 @@ export const useStore = create<AppState>()(
           }
         }),
 
+      toggleSubQuest: (questId, subQuestId, date) =>
+        set((s) => {
+          const quest = s.quests.find((q) => q.id === questId)
+          if (!quest) return s
+
+          const newSubQuests = quest.subQuests.map((sq) =>
+            sq.id === subQuestId ? { ...sq, isCompleted: !sq.isCompleted } : sq,
+          )
+          const allDone = newSubQuests.every((sq) => sq.isCompleted)
+          const hasCompletion = s.completions.some(
+            (c) => c.questId === questId && c.completedOn === date,
+          )
+
+          let newCompletions = [...s.completions]
+          if (allDone && !hasCompletion) {
+            newCompletions.push({
+              id: crypto.randomUUID(),
+              questId,
+              completedOn: date,
+            })
+          } else if (!allDone && hasCompletion) {
+            newCompletions = newCompletions.filter(
+              (c) => !(c.questId === questId && c.completedOn === date),
+            )
+          }
+
+          return {
+            quests: s.quests.map((q) =>
+              q.id === questId ? { ...q, subQuests: newSubQuests } : q,
+            ),
+            completions: newCompletions,
+          }
+        }),
+
       setSelectedDate: (date) => set({ selectedDate: date }),
 
       addQuickPreset: (preset) =>

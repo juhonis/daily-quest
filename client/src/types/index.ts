@@ -55,6 +55,7 @@ interface AppState {
   activateQuest: (questId: string, targetDate: string) => void
   archiveQuest: (questId: string) => void
   toggleCompletion: (questId: string, date: string) => void
+  toggleSubQuest: (questId: string, subQuestId: string, date: string) => void
   setSelectedDate: (date: string) => void
   addQuickPreset: (preset: QuickPreset) => void
   updateQuickPreset: (presetId: string, updates: Partial<QuickPreset>) => void
