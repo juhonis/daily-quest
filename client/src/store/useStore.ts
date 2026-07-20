@@ -122,6 +122,28 @@ export const useStore = create<AppState>()(
         set((s) => ({
           quickPresets: s.quickPresets.filter((p) => p.id !== presetId),
         })),
+
+      addQuestFromPreset: (preset, date) =>
+        set((s) => {
+          const quest = {
+            id: crypto.randomUUID(),
+            title: preset.title,
+            description: undefined,
+            createdAt: getTodayLocal(),
+            targetDate: date,
+            repeat: 'daily' as const,
+            repeatConfig: undefined,
+            rollover: true,
+            subQuests: [],
+            externalUrl: preset.externalUrl,
+            icon: preset.icon,
+            status: 'active' as const,
+            archivedAt: null,
+            xp: null,
+            maxRolloverDays: null,
+          }
+          return { quests: [...s.quests, quest] }
+        }),
     }),
     { name: 'daily-quest-store' },
   ),

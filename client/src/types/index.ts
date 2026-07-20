@@ -60,6 +60,7 @@ interface AppState {
   addQuickPreset: (preset: QuickPreset) => void
   updateQuickPreset: (presetId: string, updates: Partial<QuickPreset>) => void
   deleteQuickPreset: (presetId: string) => void
+  addQuestFromPreset: (preset: QuickPreset, date: string) => void
 }
 
 export type { RepeatType, QuestStatus, SubQuest, Quest, CompletionRecord, QuickPreset, AppState }
