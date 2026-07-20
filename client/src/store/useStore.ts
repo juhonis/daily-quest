@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { AppState } from '../types'
+import type { AppState, PanelId } from '../types'
 import { getTodayLocal } from '../utils/dateUtils'
 
 const seededPresets: AppState['quickPresets'] = [
@@ -24,6 +24,8 @@ const seededPresets: AppState['quickPresets'] = [
   },
 ]
 
+const defaultPanelOrder: PanelId[] = ['daily', 'repeating', 'important', 'rollover', 'done']
+
 export const useStore = create<AppState>()(
   persist(
     (set) => ({
@@ -31,6 +33,8 @@ export const useStore = create<AppState>()(
       completions: [],
       quickPresets: seededPresets,
       selectedDate: getTodayLocal(),
+      panelOrder: defaultPanelOrder,
+      hiddenPanels: [],
 
       addQuest: (quest) => set((s) => ({ quests: [...s.quests, quest] })),
       updateQuest: (questId, updates) =>
@@ -144,7 +148,27 @@ export const useStore = create<AppState>()(
           }
           return { quests: [...s.quests, quest] }
         }),
+
+      setPanelOrder: (order) => set({ panelOrder: order }),
+
+      togglePanelHidden: (id) =>
+        set((s) => ({
+          hiddenPanels: s.hiddenPanels.includes(id)
+            ? s.hiddenPanels.filter((h) => h !== id)
+            : [...s.hiddenPanels, id],
+        })),
     }),
-    { name: 'daily-quest-store' },
+    {
+      name: 'daily-quest-store',
+      merge: (persisted, current) => {
+        const p = persisted as Partial<AppState>
+        return {
+          ...current,
+          ...p,
+          panelOrder: p.panelOrder ?? current.panelOrder,
+          hiddenPanels: p.hiddenPanels ?? current.hiddenPanels,
+        }
+      },
+    },
   ),
 )

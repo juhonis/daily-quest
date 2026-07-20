@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import type { Quest, QuestStatus, RepeatType } from '../../types'
+import type { Quest, QuickPreset, QuestStatus, RepeatType } from '../../types'
 import { Button } from '../../components/ui/Button'
 import { Plus, X } from 'lucide-react'
 
@@ -8,6 +8,7 @@ interface QuestCreateFormProps {
   defaultDate: string
   onSave: (quest: Quest) => void
   onClose: () => void
+  onSavePreset?: (preset: QuickPreset) => void
 }
 
 function emptyForm(defaultDate: string) {
@@ -22,6 +23,7 @@ function emptyForm(defaultDate: string) {
     repeatUnit: 'day' as 'day' | 'week' | 'month',
     subQuestInputs: [] as { id: string; title: string }[],
     xp: null as number | null,
+    addToQuickAdd: false,
   }
 }
 
@@ -37,10 +39,11 @@ function questToForm(q: Quest): ReturnType<typeof emptyForm> {
     repeatUnit: q.repeatConfig?.unit ?? 'day',
     subQuestInputs: q.subQuests.map((sq) => ({ id: sq.id, title: sq.title })),
     xp: q.xp ?? null,
+    addToQuickAdd: false,
   }
 }
 
-export function QuestCreateForm({ initialData, defaultDate, onSave, onClose }: QuestCreateFormProps) {
+export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onSavePreset }: QuestCreateFormProps) {
   const [form, setForm] = useState(initialData ? questToForm(initialData) : emptyForm(defaultDate))
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
@@ -89,8 +92,17 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose }: Q
       maxRolloverDays: initialData?.maxRolloverDays ?? null,
       sortOrder: initialData?.sortOrder,
     }
+
+    if (form.addToQuickAdd && onSavePreset && !initialData) {
+      onSavePreset({
+        id: crypto.randomUUID(),
+        title: form.title.trim(),
+        externalUrl: quest.externalUrl,
+        isUserDefined: true,
+      })
+    }
+
     onSave(quest)
-    onClose()
   }
 
   return (
@@ -172,7 +184,7 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose }: Q
         </div>
       )}
 
-      <div className="flex items-center gap-4">
+      <div className="space-y-2">
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
@@ -182,6 +194,18 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose }: Q
           />
           <span className="text-xs text-slate-400">Rollover (appears daily until done)</span>
         </label>
+
+        {!initialData && (
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.addToQuickAdd}
+              onChange={(e) => update('addToQuickAdd', e.target.checked)}
+              className="h-4 w-4 accent-blue-600"
+            />
+            <span className="text-xs text-slate-400">Add to Quick Add</span>
+          </label>
+        )}
       </div>
 
       <div>

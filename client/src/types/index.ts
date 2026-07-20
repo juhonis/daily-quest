@@ -1,5 +1,6 @@
 type RepeatType = 'none' | 'daily' | 'weekly' | 'monthly' | 'custom'
 type QuestStatus = 'active' | 'inactive'
+type PanelId = 'daily' | 'repeating' | 'important' | 'rollover' | 'done'
 
 interface SubQuest {
   id: string
@@ -48,6 +49,8 @@ interface AppState {
   completions: CompletionRecord[]
   quickPresets: QuickPreset[]
   selectedDate: string
+  panelOrder: PanelId[]
+  hiddenPanels: PanelId[]
 
   addQuest: (quest: Quest) => void
   updateQuest: (questId: string, updates: Partial<Quest>) => void
@@ -61,6 +64,8 @@ interface AppState {
   updateQuickPreset: (presetId: string, updates: Partial<QuickPreset>) => void
   deleteQuickPreset: (presetId: string) => void
   addQuestFromPreset: (preset: QuickPreset, date: string) => void
+  setPanelOrder: (order: PanelId[]) => void
+  togglePanelHidden: (id: PanelId) => void
 }
 
-export type { RepeatType, QuestStatus, SubQuest, Quest, CompletionRecord, QuickPreset, AppState }
+export type { RepeatType, QuestStatus, PanelId, SubQuest, Quest, CompletionRecord, QuickPreset, AppState }
