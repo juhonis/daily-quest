@@ -2,7 +2,7 @@ import { useState, useMemo, type FormEvent } from 'react'
 import type { Quest, QuickPreset, QuestStatus, RepeatType } from '../../types'
 import { useStore } from '../../store/useStore'
 import { Button } from '../../components/ui/Button'
-import { Plus, X } from 'lucide-react'
+import { X } from 'lucide-react'
 
 interface QuestCreateFormProps {
   initialData?: Quest
@@ -53,9 +53,14 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
     setForm((prev) => ({ ...prev, [key]: value }))
   }
 
-  function addSubQuest() {
+  const [subQuestInput, setSubQuestInput] = useState('')
+
+  function addSubQuest(title: string) {
+    const trimmed = title.trim()
+    if (!trimmed) return
     const id = crypto.randomUUID()
-    update('subQuestInputs', [...form.subQuestInputs, { id, title: '' }])
+    update('subQuestInputs', [...form.subQuestInputs, { id, title: trimmed }])
+    setSubQuestInput('')
   }
 
   function removeSubQuest(id: string) {
@@ -110,85 +115,85 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-xs font-medium text-slate-400 mb-1">Title *</label>
-        <input
-          type="text"
-          value={form.title}
-          onChange={(e) => update('title', e.target.value)}
-          placeholder="What do you want to do?"
-          required
-          className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-
-      <div>
-        <label className="block text-xs font-medium text-slate-400 mb-1">Description</label>
-        <textarea
-          value={form.description}
-          onChange={(e) => update('description', e.target.value)}
-          placeholder="Optional details..."
-          rows={2}
-          className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
+    <form onSubmit={handleSubmit} className="max-w-xl mx-auto w-full space-y-4">
+      <SectionCard title="Details">
         <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1">Target Date</label>
+          <label className="block text-xs font-medium text-slate-400 mb-1">Title *</label>
           <input
-            type="date"
-            value={form.targetDate}
-            onChange={(e) => update('targetDate', e.target.value)}
-            className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            type="text"
+            value={form.title}
+            onChange={(e) => update('title', e.target.value)}
+            placeholder="What do you want to do?"
+            required
+            className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-
         <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1">Repeat</label>
-          <select
-            value={form.repeat}
-            onChange={(e) => update('repeat', e.target.value as RepeatType)}
-            className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="none">None</option>
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-            <option value="custom">Custom</option>
-          </select>
+          <label className="block text-xs font-medium text-slate-400 mb-1">Description</label>
+          <textarea
+            value={form.description}
+            onChange={(e) => update('description', e.target.value)}
+            placeholder="Optional details..."
+            rows={2}
+            className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          />
         </div>
-      </div>
+      </SectionCard>
 
-      {form.repeat === 'custom' && (
+      <SectionCard title="Schedule">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Interval</label>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Target Date</label>
             <input
-              type="number"
-              min={1}
-              value={form.repeatInterval}
-              onChange={(e) => update('repeatInterval', Math.max(1, Number(e.target.value)))}
+              type="date"
+              value={form.targetDate}
+              onChange={(e) => update('targetDate', e.target.value)}
               className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Unit</label>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Repeat</label>
             <select
-              value={form.repeatUnit}
-              onChange={(e) => update('repeatUnit', e.target.value as 'day' | 'week' | 'month')}
+              value={form.repeat}
+              onChange={(e) => update('repeat', e.target.value as RepeatType)}
               className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="day">Days</option>
-              <option value="week">Weeks</option>
-              <option value="month">Months</option>
+              <option value="none">None</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="custom">Custom</option>
             </select>
           </div>
         </div>
-      )}
 
-      <div className="space-y-2">
+        {form.repeat === 'custom' && (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Interval</label>
+              <input
+                type="number"
+                min={1}
+                value={form.repeatInterval}
+                onChange={(e) => update('repeatInterval', Math.max(1, Number(e.target.value)))}
+                className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Unit</label>
+              <select
+                value={form.repeatUnit}
+                onChange={(e) => update('repeatUnit', e.target.value as 'day' | 'week' | 'month')}
+                className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="day">Days</option>
+                <option value="week">Weeks</option>
+                <option value="month">Months</option>
+              </select>
+            </div>
+          </div>
+        )}
+
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
@@ -198,7 +203,21 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
           />
           <span className="text-xs text-slate-400">Rollover (appears daily until done)</span>
         </label>
+      </SectionCard>
 
+      <SectionCard title="Tags & XP">
+        <TagInput tags={form.tags} onAddTag={(tag) => update('tags', [...form.tags, tag])} onRemoveTag={(tag) => update('tags', form.tags.filter((t) => t !== tag))} />
+        <div>
+          <label className="block text-xs font-medium text-slate-400 mb-1">XP (optional)</label>
+          <input
+            type="number"
+            min={0}
+            value={form.xp ?? ''}
+            onChange={(e) => update('xp', e.target.value ? Number(e.target.value) : null)}
+            placeholder="e.g. 10"
+            className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
         {!initialData && (
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -210,36 +229,9 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
             <span className="text-xs text-slate-400">Add to Quick Add</span>
           </label>
         )}
-      </div>
+      </SectionCard>
 
-      <div>
-        <label className="block text-xs font-medium text-slate-400 mb-1">XP (optional)</label>
-        <input
-          type="number"
-          min={0}
-          value={form.xp ?? ''}
-          onChange={(e) => update('xp', e.target.value ? Number(e.target.value) : null)}
-          placeholder="e.g. 10"
-          className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-
-      <TagInput tags={form.tags} onAddTag={(tag) => update('tags', [...form.tags, tag])} onRemoveTag={(tag) => update('tags', form.tags.filter((t) => t !== tag))} />
-
-      <div>
-        <div className="flex items-center justify-between mb-1">
-          <label className="text-xs font-medium text-slate-400">Sub-quests</label>
-          <button
-            type="button"
-            onClick={addSubQuest}
-            className="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
-          >
-            <Plus className="w-3 h-3" /> Add
-          </button>
-        </div>
-        {form.subQuestInputs.length === 0 && (
-          <p className="text-xs text-slate-600">No sub-quests. Add a checklist item.</p>
-        )}
+      <SectionCard title="Sub-quests">
         <div className="space-y-2">
           {form.subQuestInputs.map((sq) => (
             <div key={sq.id} className="flex items-center gap-2">
@@ -253,17 +245,33 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
               <button
                 type="button"
                 onClick={() => removeSubQuest(sq.id)}
-                className="text-slate-500 hover:text-red-400 transition-colors"
+                className="text-slate-500 hover:text-red-400 transition-colors shrink-0"
                 aria-label="Remove sub-quest"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
           ))}
+          {form.subQuestInputs.length === 0 && (
+            <p className="text-xs text-slate-600">No sub-quests yet.</p>
+          )}
         </div>
-      </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={subQuestInput}
+            onChange={(e) => setSubQuestInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSubQuest(subQuestInput) } }}
+            placeholder="Add a sub-quest..."
+            className="flex-1 rounded-lg border border-slate-600 bg-slate-700 px-3 py-1.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button type="button" onClick={() => addSubQuest(subQuestInput)} className="shrink-0 rounded-lg bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-700 transition-colors">
+            Add
+          </button>
+        </div>
+      </SectionCard>
 
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onClose}>
           Cancel
         </Button>
@@ -272,6 +280,15 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
         </Button>
       </div>
     </form>
+  )
+}
+
+function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-lg border border-slate-700 bg-slate-800/30 p-3 space-y-3">
+      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{title}</h3>
+      {children}
+    </div>
   )
 }
 
