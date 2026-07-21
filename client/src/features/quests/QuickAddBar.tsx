@@ -1,13 +1,39 @@
 import { useEffect, useRef, useState } from 'react'
 import { Zap } from 'lucide-react'
-import type { QuickPreset } from '../../types'
+import type { QuickPreset, RepeatType } from '../../types'
+
+type QuestType = 'today' | 'daily' | 'repeating' | 'important'
+
+interface QuestTypeConfig {
+  repeat: RepeatType
+  rollover: boolean
+  repeatConfig?: { interval: number; unit: 'day' | 'week' | 'month' }
+}
 
 interface QuickAddBarProps {
   presets: QuickPreset[]
   selectedDate: string
-  onInstantAdd: (preset: QuickPreset) => void
+  onInstantAdd: (preset: QuickPreset, config: QuestTypeConfig) => void
   onManageAdd: (preset: QuickPreset) => void
   onManageDelete: (id: string) => void
+}
+
+const TYPE_CONFIG: Record<QuestType, (unit?: 'week' | 'month') => QuestTypeConfig> = {
+  today: () => ({ repeat: 'none', rollover: false }),
+  daily: () => ({ repeat: 'daily', rollover: false }),
+  repeating: (unit = 'week') => ({
+    repeat: unit === 'week' ? 'weekly' : 'monthly',
+    rollover: false,
+    repeatConfig: { interval: 1, unit },
+  }),
+  important: () => ({ repeat: 'none', rollover: true }),
+}
+
+const TYPE_LABELS: Record<QuestType, string> = {
+  today: 'Today',
+  daily: 'Daily',
+  repeating: 'Repeat',
+  important: 'Important',
 }
 
 export function QuickAddBar({
@@ -20,6 +46,8 @@ export function QuickAddBar({
   const [manageOpen, setManageOpen] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newUrl, setNewUrl] = useState('')
+  const [questType, setQuestType] = useState<QuestType>('today')
+  const [repeatUnit, setRepeatUnit] = useState<'week' | 'month'>('week')
   const wrapperRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -45,6 +73,14 @@ export function QuickAddBar({
     setNewUrl('')
   }
 
+  function handlePickPreset(preset: QuickPreset) {
+    const config = TYPE_CONFIG[questType](questType === 'repeating' ? repeatUnit : undefined)
+    onInstantAdd(preset, config)
+    setMenuOpen(false)
+  }
+
+  const types: QuestType[] = ['today', 'daily', 'repeating', 'important']
+
   return (
     <div className="relative mb-4" ref={wrapperRef}>
       <button
@@ -58,15 +94,52 @@ export function QuickAddBar({
 
       {menuOpen && (
         <div
-          className="absolute left-0 top-full mt-2 z-20 w-72 rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-xl"
+          className="absolute left-0 top-full mt-2 z-20 w-80 rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-xl"
           onClick={(e) => e.stopPropagation()}
         >
+          <div className="flex items-center gap-1 mb-3">
+            {types.map((t) => (
+              <button
+                key={t}
+                onClick={() => setQuestType(t)}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                  questType === t
+                    ? 'bg-blue-600 text-white'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700'
+                }`}
+              >
+                {TYPE_LABELS[t]}
+              </button>
+            ))}
+          </div>
+
+          {questType === 'repeating' && (
+            <div className="flex items-center gap-2 mb-3 text-xs text-slate-400">
+              <span>Interval:</span>
+              <div className="flex gap-1">
+                {(['week', 'month'] as const).map((u) => (
+                  <button
+                    key={u}
+                    onClick={() => setRepeatUnit(u)}
+                    className={`px-2 py-0.5 rounded text-xs capitalize transition-colors ${
+                      repeatUnit === u
+                        ? 'bg-slate-600 text-white'
+                        : 'text-slate-500 hover:text-slate-300'
+                    }`}
+                  >
+                    {u}ly
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {presets.length > 0 ? (
             <div className="flex flex-wrap gap-2 mb-2">
               {presets.map((p) => (
                 <button
                   key={p.id}
-                  onClick={() => onInstantAdd(p)}
+                  onClick={() => handlePickPreset(p)}
                   className="shrink-0 rounded-lg border border-slate-700 bg-slate-700/60 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-600 hover:text-white transition-colors"
                 >
                   {p.title}

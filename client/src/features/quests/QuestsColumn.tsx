@@ -89,7 +89,7 @@ export function QuestsColumn() {
             <QuickAddBar
               presets={quickPresets}
               selectedDate={selectedDate}
-              onInstantAdd={(preset) => addQuestFromPreset(preset, selectedDate)}
+               onInstantAdd={(preset, config) => addQuestFromPreset(preset, selectedDate, config)}
               onManageAdd={addQuickPreset}
               onManageDelete={deleteQuickPreset}
             />

@@ -103,9 +103,15 @@ export function QuestsPanelsRow(props: QuestsPanelsRowProps) {
   )
 
   const questMap: Record<PanelId, Quest[]> = {
-    daily: groups.repeating.filter((q) => q.repeat === 'daily'),
-    repeating: groups.repeating.filter((q) => q.repeat !== 'daily'),
-    important: groups.todays,
+    daily: [
+      ...groups.repeating.filter((q) => q.repeat === 'daily'),
+      ...groups.todays.filter((q) => q.repeat === 'daily' && !q.rollover),
+    ],
+    repeating: [
+      ...groups.repeating.filter((q) => q.repeat !== 'daily'),
+      ...groups.todays.filter((q) => q.repeat !== 'none' && q.repeat !== 'daily' && !q.rollover),
+    ],
+    important: groups.todays.filter((q) => q.rollover || q.repeat === 'none'),
     rollover: groups.rollover,
     done: finished,
   }
@@ -140,8 +146,8 @@ export function QuestsPanelsRow(props: QuestsPanelsRowProps) {
             <SortablePanel
               key={id}
               id={id}
-              quests={questMap[id]}
               {...props}
+              quests={questMap[id]}
             />
           ))}
         </div>

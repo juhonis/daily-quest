@@ -63,7 +63,7 @@ interface AppState {
   addQuickPreset: (preset: QuickPreset) => void
   updateQuickPreset: (presetId: string, updates: Partial<QuickPreset>) => void
   deleteQuickPreset: (presetId: string) => void
-  addQuestFromPreset: (preset: QuickPreset, date: string) => void
+  addQuestFromPreset: (preset: QuickPreset, date: string, overrides?: { repeat?: RepeatType; rollover?: boolean; repeatConfig?: { interval: number; unit: 'day' | 'week' | 'month' } }) => void
   setPanelOrder: (order: PanelId[]) => void
   togglePanelHidden: (id: PanelId) => void
 }

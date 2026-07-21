@@ -127,7 +127,7 @@ export const useStore = create<AppState>()(
           quickPresets: s.quickPresets.filter((p) => p.id !== presetId),
         })),
 
-      addQuestFromPreset: (preset, date) =>
+      addQuestFromPreset: (preset, date, overrides?) =>
         set((s) => {
           const quest = {
             id: crypto.randomUUID(),
@@ -135,9 +135,9 @@ export const useStore = create<AppState>()(
             description: undefined,
             createdAt: getTodayLocal(),
             targetDate: date,
-            repeat: 'daily' as const,
-            repeatConfig: undefined,
-            rollover: true,
+            repeat: overrides?.repeat ?? 'daily',
+            repeatConfig: overrides?.repeatConfig,
+            rollover: overrides?.rollover ?? true,
             subQuests: [],
             externalUrl: preset.externalUrl,
             icon: preset.icon,
