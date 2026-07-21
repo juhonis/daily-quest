@@ -1,5 +1,6 @@
 import type { Quest, CompletionRecord } from '../../../types'
 import { QuestCard } from '../QuestCard'
+import { X, GripVertical } from 'lucide-react'
 
 interface BasePanelProps {
   quests: Quest[]
@@ -12,6 +13,8 @@ interface BasePanelProps {
   label: string
   emptyHint: string
   isDone?: boolean
+  dragHandleProps?: Record<string, unknown>
+  onHide?: () => void
 }
 
 export function BasePanel({
@@ -25,12 +28,26 @@ export function BasePanel({
   label,
   emptyHint,
   isDone,
+  dragHandleProps,
+  onHide,
 }: BasePanelProps) {
   return (
     <div className="rounded-lg border border-slate-700 bg-slate-800/30 p-3 h-full flex flex-col">
-      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-        {label}
-      </h3>
+      <div className="flex items-center gap-1 mb-3">
+        {dragHandleProps && (
+          <button {...dragHandleProps} className="p-0.5 cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-300">
+            <GripVertical className="w-3.5 h-3.5" />
+          </button>
+        )}
+        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex-1">
+          {label}
+        </h3>
+        {onHide && (
+          <button onClick={onHide} className="p-0.5 text-slate-500 hover:text-red-400">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
       {quests.length === 0 ? (
         <p className="text-xs text-slate-600 text-center py-4 flex-1">{emptyHint}</p>
       ) : (

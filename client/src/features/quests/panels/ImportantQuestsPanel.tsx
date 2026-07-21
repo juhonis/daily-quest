@@ -9,6 +9,8 @@ interface ImportantQuestsPanelProps {
   onToggleSubQuest: (questId: string, subQuestId: string, date: string) => void
   onDelete: (questId: string) => void
   onEdit: (questId: string) => void
+  dragHandleProps?: Record<string, unknown>
+  onHide?: () => void
 }
 
 export function ImportantQuestsPanel(props: ImportantQuestsPanelProps) {
