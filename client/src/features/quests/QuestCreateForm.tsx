@@ -328,6 +328,22 @@ function TagInput({ tags, onAddTag, onRemoveTag }: { tags: string[]; onAddTag: (
           ))}
         </div>
       )}
+
+      {allTags.filter((t) => !tags.includes(t)).length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {allTags.filter((t) => !tags.includes(t)).map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => { onAddTag(tag); setInput('') }}
+              className="shrink-0 rounded-lg border border-slate-700 bg-slate-700/60 px-2 py-1 text-xs text-slate-300 hover:bg-slate-600 hover:text-white transition-colors"
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="flex gap-2">
         <input
           type="text"
