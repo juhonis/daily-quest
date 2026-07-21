@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useMemo, type FormEvent } from 'react'
 import type { Quest, QuickPreset, QuestStatus, RepeatType } from '../../types'
+import { useStore } from '../../store/useStore'
 import { Button } from '../../components/ui/Button'
 import { Plus, X } from 'lucide-react'
 
@@ -24,6 +25,7 @@ function emptyForm(defaultDate: string) {
     subQuestInputs: [] as { id: string; title: string }[],
     xp: null as number | null,
     addToQuickAdd: false,
+    tags: [] as string[],
   }
 }
 
@@ -40,6 +42,7 @@ function questToForm(q: Quest): ReturnType<typeof emptyForm> {
     subQuestInputs: q.subQuests.map((sq) => ({ id: sq.id, title: sq.title })),
     xp: q.xp ?? null,
     addToQuickAdd: false,
+    tags: q.tags ?? [],
   }
 }
 
@@ -91,6 +94,7 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
       xp: form.xp ?? null,
       maxRolloverDays: initialData?.maxRolloverDays ?? null,
       sortOrder: initialData?.sortOrder,
+      tags: form.tags.length > 0 ? form.tags : undefined,
     }
 
     if (form.addToQuickAdd && onSavePreset && !initialData) {
@@ -220,6 +224,8 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
         />
       </div>
 
+      <TagInput tags={form.tags} onAddTag={(tag) => update('tags', [...form.tags, tag])} onRemoveTag={(tag) => update('tags', form.tags.filter((t) => t !== tag))} />
+
       <div>
         <div className="flex items-center justify-between mb-1">
           <label className="text-xs font-medium text-slate-400">Sub-quests</label>
@@ -266,5 +272,72 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
         </Button>
       </div>
     </form>
+  )
+}
+
+function TagInput({ tags, onAddTag, onRemoveTag }: { tags: string[]; onAddTag: (tag: string) => void; onRemoveTag: (tag: string) => void }) {
+  const [input, setInput] = useState('')
+  const quests = useStore((s) => s.quests)
+  const allTags = useMemo(() => {
+    const set = new Set<string>()
+    quests.forEach((q) => q.tags?.forEach((t) => set.add(t)))
+    return [...set].sort()
+  }, [quests])
+
+  const suggestions = input.trim()
+    ? allTags.filter((t) => t.toLowerCase().includes(input.toLowerCase()) && !tags.includes(t))
+    : []
+
+  function handleAdd() {
+    const trimmed = input.trim()
+    if (trimmed && !tags.includes(trimmed)) {
+      onAddTag(trimmed)
+    }
+    setInput('')
+  }
+
+  return (
+    <div>
+      <label className="block text-xs font-medium text-slate-400 mb-1">Tags</label>
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {tags.map((tag) => (
+            <span key={tag} className="inline-flex items-center gap-1 rounded-md bg-blue-600/20 border border-blue-600/30 px-2 py-0.5 text-xs text-blue-300">
+              {tag}
+              <button type="button" onClick={() => onRemoveTag(tag)} className="text-blue-400 hover:text-blue-200">
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAdd() } }}
+          placeholder="Add a tag..."
+          className="flex-1 rounded-lg border border-slate-600 bg-slate-700 px-3 py-1.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button type="button" onClick={handleAdd} className="shrink-0 rounded-lg bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-700 transition-colors">
+          Add
+        </button>
+      </div>
+      {suggestions.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mt-1.5">
+          {suggestions.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => { onAddTag(s); setInput('') }}
+              className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              + {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }

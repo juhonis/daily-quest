@@ -35,6 +35,7 @@ export const useStore = create<AppState>()(
       selectedDate: getTodayLocal(),
       panelOrder: defaultPanelOrder,
       hiddenPanels: [],
+      filterTags: [],
 
       addQuest: (quest) => set((s) => ({ quests: [...s.quests, quest] })),
       updateQuest: (questId, updates) =>
@@ -145,6 +146,7 @@ export const useStore = create<AppState>()(
             archivedAt: null,
             xp: null,
             maxRolloverDays: null,
+            tags: overrides?.tags,
           }
           return { quests: [...s.quests, quest] }
         }),
@@ -157,6 +159,8 @@ export const useStore = create<AppState>()(
             ? s.hiddenPanels.filter((h) => h !== id)
             : [...s.hiddenPanels, id],
         })),
+
+      setFilterTags: (tags) => set({ filterTags: tags }),
     }),
     {
       name: 'daily-quest-store',

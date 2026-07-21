@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useStore } from '../../store/useStore'
 import { Button } from '../../components/ui/Button'
 import { Settings, ChevronLeft, ChevronRight, CalendarCheck } from 'lucide-react'
@@ -30,6 +30,18 @@ export function QuestsColumn() {
   const addQuickPreset = useStore((s) => s.addQuickPreset)
   const deleteQuickPreset = useStore((s) => s.deleteQuickPreset)
   const hiddenPanels = useStore((s) => s.hiddenPanels)
+  const filterTags = useStore((s) => s.filterTags)
+  const setFilterTags = useStore((s) => s.setFilterTags)
+
+  const allTags = useMemo(() => {
+    const set = new Set<string>()
+    quests.forEach((q) => q.tags?.forEach((t) => set.add(t)))
+    return [...set].sort()
+  }, [quests])
+
+  const filteredQuests = filterTags.length > 0
+    ? quests.filter((q) => q.tags?.some((t) => filterTags.includes(t)))
+    : quests
 
   const allVisibleHidden = hiddenPanels.length === 5
   const isToday = selectedDate === getTodayLocal()
@@ -85,6 +97,40 @@ export function QuestsColumn() {
 
       {tab === 'quests' && (
         <>
+          {allTags.length > 0 && (
+            <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+              <button
+                onClick={() => setFilterTags([])}
+                className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+                  filterTags.length === 0
+                    ? 'bg-slate-700 text-white'
+                    : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                All
+              </button>
+              {allTags.map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => {
+                    setFilterTags(
+                      filterTags.includes(tag)
+                        ? filterTags.filter((t) => t !== tag)
+                        : [...filterTags, tag],
+                    )
+                  }}
+                  className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+                    filterTags.includes(tag)
+                      ? 'bg-blue-600 text-white'
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="flex items-center gap-2 justify-between">
             <QuickAddBar
               presets={quickPresets}
@@ -103,8 +149,8 @@ export function QuestsColumn() {
             </p>
           ) : (
             <div className="flex-1 overflow-y-auto">
-              <QuestsPanelsRow
-                quests={quests}
+               <QuestsPanelsRow
+                quests={filteredQuests}
                 completions={completions}
                 selectedDate={selectedDate}
                 onToggleCompletion={toggleCompletion}

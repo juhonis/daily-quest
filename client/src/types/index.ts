@@ -28,6 +28,7 @@ interface Quest {
   xp?: number | null
   maxRolloverDays?: number | null
   sortOrder?: number
+  tags?: string[]
 }
 
 interface CompletionRecord {
@@ -63,9 +64,11 @@ interface AppState {
   addQuickPreset: (preset: QuickPreset) => void
   updateQuickPreset: (presetId: string, updates: Partial<QuickPreset>) => void
   deleteQuickPreset: (presetId: string) => void
-  addQuestFromPreset: (preset: QuickPreset, date: string, overrides?: { repeat?: RepeatType; rollover?: boolean; repeatConfig?: { interval: number; unit: 'day' | 'week' | 'month' } }) => void
+  addQuestFromPreset: (preset: QuickPreset, date: string, overrides?: { repeat?: RepeatType; rollover?: boolean; repeatConfig?: { interval: number; unit: 'day' | 'week' | 'month' }; tags?: string[] }) => void
   setPanelOrder: (order: PanelId[]) => void
   togglePanelHidden: (id: PanelId) => void
+  filterTags: string[]
+  setFilterTags: (tags: string[]) => void
 }
 
 export type { RepeatType, QuestStatus, PanelId, SubQuest, Quest, CompletionRecord, QuickPreset, AppState }

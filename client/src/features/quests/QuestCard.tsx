@@ -120,6 +120,16 @@ export function QuestCard({
                 )}
               </div>
 
+              {quest.tags && quest.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {quest.tags.map((tag) => (
+                    <span key={tag} className="rounded-md bg-blue-600/15 border border-blue-600/20 px-1.5 py-0.5 text-xs text-blue-300">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
               <div className="flex items-center gap-2 mt-3 pt-2 border-t border-slate-700">
                 {quest.externalUrl && (
                   <button
