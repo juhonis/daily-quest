@@ -5,7 +5,7 @@ interface QuestsTabsProps {
 
 export function QuestsTabs({ activeTab, onChange }: QuestsTabsProps) {
   return (
-    <div className="inline-flex rounded-lg bg-slate-800 p-1 mb-2">
+    <div className="inline-flex rounded-lg bg-slate-800 p-1">
       <button
         onClick={() => onChange('quests')}
         className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${

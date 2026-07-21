@@ -82,18 +82,22 @@ export function QuestsColumn() {
         </Button>
       </div>
 
-      <h2 className="text-sm font-semibold text-slate-300 mb-3">Quests</h2>
+      <div className="text-center mb-1">
+        <h2 className="text-xl font-bold text-white tracking-tight">Daily Quests</h2>
+      </div>
 
-      <QuestsTabs
-        activeTab={tab}
-        onChange={(t) => {
-          if (t === 'create') {
-            setEditingQuest(null)
-            setFormKey((k) => k + 1)
-          }
-          setTab(t)
-        }}
-      />
+      <div className="flex justify-center mb-3">
+        <QuestsTabs
+          activeTab={tab}
+          onChange={(t) => {
+            if (t === 'create') {
+              setEditingQuest(null)
+              setFormKey((k) => k + 1)
+            }
+            setTab(t)
+          }}
+        />
+      </div>
 
       {tab === 'quests' && (
         <>
