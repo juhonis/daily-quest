@@ -4,8 +4,10 @@ import { useStore } from '../store/useStore'
 export function useGeolocation() {
   const coords = useStore(s => s.coords)
   const setCoords = useStore(s => s.setCoords)
+  const locationMode = useStore(s => s.locationMode)
 
   useEffect(() => {
+    if (locationMode !== 'auto') return
     if (coords) return
 
     if ('geolocation' in navigator) {
@@ -13,12 +15,10 @@ export function useGeolocation() {
         (position) => {
           setCoords({ lat: position.coords.latitude, lon: position.coords.longitude })
         },
-        () => {
-          // Silently fail — weather is non-critical
-        }
+        () => {}
       )
     }
-  }, [coords, setCoords])
+  }, [coords, setCoords, locationMode])
 
   return coords
 }
