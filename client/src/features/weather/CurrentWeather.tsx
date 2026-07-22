@@ -35,25 +35,27 @@ export function CurrentWeather() {
 
   if (!coords) {
     return (
-      <div className="glass-panel rounded-xl p-3 min-w-[140px] flex flex-col gap-1">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-slate-500">Weather</span>
+      <div className="relative">
+        <div className="glass-panel rounded-xl p-3 min-w-[140px] min-h-[104px] flex flex-col gap-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-500">Weather</span>
+            <button
+              onClick={() => setShowLocationPicker(true)}
+              className="text-slate-500 hover:text-slate-300 transition-colors"
+              aria-label="Set location"
+            >
+              <Settings className="w-3 h-3" />
+            </button>
+          </div>
           <button
             onClick={() => setShowLocationPicker(true)}
-            className="text-slate-500 hover:text-slate-300 transition-colors"
-            aria-label="Set location"
+            className="text-xs text-blue-400 hover:text-blue-300 transition-colors self-start"
           >
-            <Settings className="w-3 h-3" />
+            Set location
           </button>
         </div>
-        <button
-          onClick={() => setShowLocationPicker(true)}
-          className="text-xs text-blue-400 hover:text-blue-300 transition-colors self-start"
-        >
-          Set location
-        </button>
         {showLocationPicker && (
-          <LocationPicker isOpen={showLocationPicker} onClose={() => setShowLocationPicker(false)} />
+          <LocationPicker onClose={() => setShowLocationPicker(false)} />
         )}
       </div>
     )
@@ -61,20 +63,22 @@ export function CurrentWeather() {
 
   if (!weather) {
     return (
-      <div className="glass-panel rounded-xl p-3 min-w-[140px] flex flex-col gap-1">
-        <div className="flex items-center justify-between">
-          {locationName && <span className="text-xs text-slate-500">{locationName}</span>}
-          <button
-            onClick={() => setShowLocationPicker(true)}
-            className="text-slate-500 hover:text-slate-300 transition-colors ml-auto"
-            aria-label="Change location"
-          >
-            <Settings className="w-3 h-3" />
-          </button>
+      <div className="relative">
+        <div className="glass-panel rounded-xl p-3 min-w-[140px] min-h-[104px] flex flex-col gap-1">
+          <div className="flex items-center justify-between">
+            {locationName && <span className="text-xs text-slate-500">{locationName}</span>}
+            <button
+              onClick={() => setShowLocationPicker(true)}
+              className="text-slate-500 hover:text-slate-300 transition-colors ml-auto"
+              aria-label="Change location"
+            >
+              <Settings className="w-3 h-3" />
+            </button>
+          </div>
+          <span className="text-xs text-slate-500">Loading...</span>
         </div>
-        <span className="text-xs text-slate-500">Loading...</span>
         {showLocationPicker && (
-          <LocationPicker isOpen={showLocationPicker} onClose={() => setShowLocationPicker(false)} />
+          <LocationPicker onClose={() => setShowLocationPicker(false)} />
         )}
       </div>
     )
@@ -83,30 +87,34 @@ export function CurrentWeather() {
   const currentWeather = weather.current_weather
 
   return (
-    <div className="glass-panel rounded-xl p-3 min-w-[140px] flex flex-col gap-1">
-      <div className="flex items-start justify-between">
-        <h2 className="text-2xl font-bold">
-          {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </h2>
-        <button
-          onClick={() => setShowLocationPicker(true)}
-          className="text-slate-500 hover:text-slate-300 transition-colors -mt-0.5"
-          aria-label="Change location"
-        >
-          <Settings className="w-3 h-3" />
-        </button>
-      </div>
-      {currentWeather && (
-        <div className="flex items-center gap-1">
-          {getWeatherIcon(currentWeather.weathercode)}
-          <span className="text-lg">{Math.round(currentWeather.temperature)}°C</span>
+    <div className="relative">
+      <div className="glass-panel rounded-xl p-3 min-w-[140px] min-h-[104px] flex flex-col gap-1">
+        <div className="flex items-start justify-between">
+          <h2 className="text-2xl font-bold">
+            {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </h2>
+          <button
+            onClick={() => setShowLocationPicker(true)}
+            className="text-slate-500 hover:text-slate-300 transition-colors -mt-0.5"
+            aria-label="Change location"
+          >
+            <Settings className="w-3 h-3" />
+          </button>
         </div>
-      )}
-      {locationName && (
-        <span className="text-xs text-slate-500">{locationName}</span>
-      )}
+        {currentWeather && (
+          <div className="flex items-center gap-1">
+            {getWeatherIcon(currentWeather.weathercode)}
+            <span className="text-lg">{Math.round(currentWeather.temperature)}°C</span>
+          </div>
+        )}
+        <div className="min-h-[16px]">
+          {locationName && (
+            <span className="text-xs text-slate-500">{locationName}</span>
+          )}
+        </div>
+      </div>
       {showLocationPicker && (
-        <LocationPicker isOpen={showLocationPicker} onClose={() => setShowLocationPicker(false)} />
+        <LocationPicker onClose={() => setShowLocationPicker(false)} />
       )}
     </div>
   )

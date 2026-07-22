@@ -5,9 +5,10 @@ interface ModalProps {
   onClose: () => void
   title: string
   children: ReactNode
+  className?: string
 }
 
-export function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, className }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const previousFocusRef = useRef<HTMLElement | null>(null)
@@ -66,7 +67,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className="w-full max-w-lg rounded-xl bg-slate-800 p-6 shadow-xl outline-none"
+        className={`w-full max-w-lg rounded-xl bg-slate-800 p-6 shadow-xl outline-none ${className ?? ''}`}
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">{title}</h2>

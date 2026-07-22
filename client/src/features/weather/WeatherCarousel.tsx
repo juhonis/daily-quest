@@ -74,7 +74,9 @@ export function WeatherCarousel() {
               <span className="font-semibold">
                 {Math.round(weather.hourly.temperature_2m[index])}°
               </span>
-              {isCurrentHour && <div className="w-1 h-1 rounded-full bg-blue-400 mt-1" />}
+              <div className={`mt-1 flex items-center justify-center ${isCurrentHour ? '' : 'invisible'}`}>
+                <div className="w-1 h-1 rounded-full bg-blue-400" />
+              </div>
             </div>
           )
         })}
