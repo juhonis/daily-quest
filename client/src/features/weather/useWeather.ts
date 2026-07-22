@@ -14,8 +14,16 @@ export function useWeather(lat: number, lon: number, dateString: string) {
 
       try {
         const res = await fetch(url)
-        const data: WeatherData = await res.json()
-        if (!cancelled) setWeather(data)
+        if (!res.ok) {
+          if (!cancelled) setWeather(null)
+          return
+        }
+        const data = await res.json()
+        if (data.error) {
+          if (!cancelled) setWeather(null)
+          return
+        }
+        if (!cancelled) setWeather(data as WeatherData)
       } catch {
         // Weather fetch failed gracefully
       }

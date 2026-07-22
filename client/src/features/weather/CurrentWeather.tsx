@@ -5,7 +5,14 @@ import { useGeolocation } from '../../hooks/useGeolocation'
 import { useWeather } from './useWeather'
 import { useStore } from '../../store/useStore'
 import { LocationPicker } from './LocationPicker'
-import { getWeatherIcon, getRainLabel } from './weatherIcons'
+import { WeatherIcon } from './weatherIcons'
+
+function rainLabel(rainMm: number): string | null {
+  if (rainMm <= 0) return null
+  if (rainMm < 0.5) return '0.1'
+  if (rainMm < 1.5) return '0.5'
+  return `${Math.round(rainMm)}`
+}
 
 export function CurrentWeather() {
   const locationName = useStore(s => s.locationName)
@@ -94,7 +101,7 @@ export function CurrentWeather() {
         </div>
         {currentWeather && (
           <div className="flex items-center gap-1">
-            {getWeatherIcon(currentWeather.weathercode)}
+            <WeatherIcon code={currentWeather.weathercode} />
             <span className="text-lg">{Math.round(currentWeather.temperature)}°C</span>
           </div>
         )}
@@ -102,8 +109,8 @@ export function CurrentWeather() {
           {locationName && (
             <span className="text-xs text-slate-500">{locationName}</span>
           )}
-          {currentWeather && weather.hourly.rain?.[0] != null && getRainLabel(weather.hourly.rain[0]) && (
-            <span className="text-[10px] text-blue-400">{getRainLabel(weather.hourly.rain[0])}mm</span>
+          {currentWeather && weather.hourly.rain?.[0] != null && rainLabel(weather.hourly.rain[0]) && (
+            <span className="text-[10px] text-blue-400">{rainLabel(weather.hourly.rain[0])}mm</span>
           )}
         </div>
       </div>

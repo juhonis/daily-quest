@@ -1,9 +1,16 @@
 import { useEffect, useRef } from 'react'
-import { format } from 'date-fns'
+import { format, addDays, subDays } from 'date-fns'
 import { useGeolocation } from '../../hooks/useGeolocation'
 import { useWeather } from './useWeather'
 import { useStore } from '../../store/useStore'
-import { getWeatherIcon, getRainLabel } from './weatherIcons'
+import { WeatherIcon } from './weatherIcons'
+
+function rainLabel(rainMm: number): string | null {
+  if (rainMm <= 0) return null
+  if (rainMm < 0.5) return '0.1'
+  if (rainMm < 1.5) return '0.5'
+  return `${Math.round(rainMm)}`
+}
 
 export function WeatherCarousel() {
   const selectedDate = useStore(s => s.selectedDate)
@@ -13,12 +20,14 @@ export function WeatherCarousel() {
 
   const todayStr = format(new Date(), 'yyyy-MM-dd')
   const isToday = selectedDate === todayStr
+  const maxForecastDate = format(addDays(new Date(), 16), 'yyyy-MM-dd')
+  const minPastDate = format(subDays(new Date(), 92), 'yyyy-MM-dd')
 
   const weather = useWeather(lat, lon, coords ? selectedDate : '')
   const carouselRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!isToday || !weather || !carouselRef.current) return
+    if (!isToday || !weather?.hourly || !carouselRef.current) return
 
     const currentHour = new Date().getHours()
     const hourIndex = weather.hourly.time.findIndex(
@@ -30,12 +39,26 @@ export function WeatherCarousel() {
     child?.scrollIntoView({ inline: 'center', behavior: 'auto' })
   }, [isToday, weather])
 
-  if (!coords || !weather) {
+  if (!coords) {
     return (
       <div className="glass-panel rounded-xl p-4 flex items-center justify-center h-full min-h-[104px]">
-        <span className="text-sm text-slate-500">
-          {!coords ? 'Set location to see weather' : 'Loading weather...'}
-        </span>
+        <span className="text-sm text-slate-500">Set location to see weather</span>
+      </div>
+    )
+  }
+
+  if (selectedDate > maxForecastDate || selectedDate < minPastDate) {
+    return (
+      <div className="glass-panel rounded-xl p-4 flex items-center justify-center h-full min-h-[104px]">
+        <span className="text-sm text-slate-500">Forecast unavailable for this date.</span>
+      </div>
+    )
+  }
+
+  if (!weather?.hourly) {
+    return (
+      <div className="glass-panel rounded-xl p-4 flex items-center justify-center h-full min-h-[104px]">
+        <span className="text-sm text-slate-500">Loading weather...</span>
       </div>
     )
   }
@@ -49,7 +72,7 @@ export function WeatherCarousel() {
           const date = new Date(timeString)
           const isCurrentHour = isToday && date.getHours() === now.getHours()
           const rain = weather.hourly.rain?.[index]
-          const rainLabel = rain != null ? getRainLabel(rain) : null
+          const label = rain != null ? rainLabel(rain) : null
           return (
             <div
               key={timeString}
@@ -61,13 +84,13 @@ export function WeatherCarousel() {
                 {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
               <div className="my-2">
-                {getWeatherIcon(weather.hourly.weathercode[index])}
+                <WeatherIcon code={weather.hourly.weathercode[index]} />
               </div>
               <span className="font-semibold">
                 {Math.round(weather.hourly.temperature_2m[index])}°
               </span>
-              {rainLabel && (
-                <span className="text-[10px] text-blue-400 leading-none mt-0.5">{rainLabel}</span>
+              {label && (
+                <span className="text-[10px] text-blue-400 leading-none mt-0.5">{label}</span>
               )}
               <div className={`mt-1 flex items-center justify-center ${isCurrentHour ? '' : 'invisible'}`}>
                 <div className="w-1 h-1 rounded-full bg-blue-400" />
