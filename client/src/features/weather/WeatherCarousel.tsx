@@ -66,7 +66,7 @@ export function WeatherCarousel() {
   const now = new Date()
 
   return (
-    <div className="glass-panel rounded-xl p-4">
+    <div className="h-38 glass-panel rounded-xl p-4">
       <div ref={carouselRef} className="flex overflow-x-auto gap-4 pb-2 no-scrollbar snap-x">
         {weather.hourly.time.map((timeString, index) => {
           const date = new Date(timeString)
@@ -90,7 +90,7 @@ export function WeatherCarousel() {
                 {Math.round(weather.hourly.temperature_2m[index])}°
               </span>
               {label && (
-                <span className="text-[10px] text-blue-400 leading-none mt-0.5">{label}</span>
+                <span className="text-[10px] text-blue-400 leading-none mt-0.5">{label}ml</span>
               )}
               <div className={`mt-1 flex items-center justify-center ${isCurrentHour ? '' : 'invisible'}`}>
                 <div className="w-1 h-1 rounded-full bg-blue-400" />

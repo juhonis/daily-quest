@@ -86,7 +86,7 @@ export function CurrentWeather() {
 
   return (
     <div className="relative">
-      <div className="glass-panel rounded-xl p-3 min-w-[140px] min-h-[104px] flex flex-col gap-1">
+      <div className="h-36 glass-panel rounded-xl p-3 min-w-[140px] min-h-[104px] flex flex-col gap-1">
         <div className="flex items-start justify-between">
           <h2 className="text-2xl font-bold">
             {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
