@@ -45,6 +45,19 @@ interface QuickPreset {
   isUserDefined: boolean
 }
 
+interface WeatherCoords {
+  lat: number
+  lon: number
+}
+
+interface WeatherData {
+  hourly: {
+    time: string[]
+    temperature_2m: number[]
+    weathercode: number[]
+  }
+}
+
 interface AppState {
   quests: Quest[]
   completions: CompletionRecord[]
@@ -52,6 +65,7 @@ interface AppState {
   selectedDate: string
   panelOrder: PanelId[]
   hiddenPanels: PanelId[]
+  coords: WeatherCoords | null
 
   addQuest: (quest: Quest) => void
   updateQuest: (questId: string, updates: Partial<Quest>) => void
@@ -69,6 +83,7 @@ interface AppState {
   togglePanelHidden: (id: PanelId) => void
   filterTags: string[]
   setFilterTags: (tags: string[]) => void
+  setCoords: (coords: WeatherCoords) => void
 }
 
-export type { RepeatType, QuestStatus, PanelId, SubQuest, Quest, CompletionRecord, QuickPreset, AppState }
+export type { RepeatType, QuestStatus, PanelId, SubQuest, Quest, CompletionRecord, QuickPreset, WeatherCoords, WeatherData, AppState }

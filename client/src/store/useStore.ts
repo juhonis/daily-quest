@@ -36,6 +36,7 @@ export const useStore = create<AppState>()(
       panelOrder: defaultPanelOrder,
       hiddenPanels: [],
       filterTags: [],
+      coords: null,
 
       addQuest: (quest) => set((s) => ({ quests: [...s.quests, quest] })),
       updateQuest: (questId, updates) =>
@@ -161,6 +162,8 @@ export const useStore = create<AppState>()(
         })),
 
       setFilterTags: (tags) => set({ filterTags: tags }),
+
+      setCoords: (coords) => set({ coords }),
     }),
     {
       name: 'daily-quest-store',

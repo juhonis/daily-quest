@@ -9,6 +9,7 @@ import { QuickAddBar } from './QuickAddBar'
 import { QuestsPanelsRow } from './QuestsPanelsRow'
 import { QuestCreateForm } from './QuestCreateForm'
 import { EditPanelsModal } from './EditPanelsModal'
+import { WeatherWidget } from '../weather/WeatherWidget'
 
 export function QuestsColumn() {
   const [tab, setTab] = useState<'quests' | 'create'>('quests')
@@ -50,9 +51,7 @@ export function QuestsColumn() {
 
   return (
     <div className="p-4 flex flex-col h-full">
-      <div className="text-center mb-2">
-        <div className="text-xs text-slate-500">Weather placeholder</div>
-      </div>
+      <WeatherWidget />
 
       <div className="flex items-center justify-center gap-3 mb-6">
         <Button

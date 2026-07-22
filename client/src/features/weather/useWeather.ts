@@ -1,0 +1,29 @@
+import { useEffect, useState } from 'react'
+import type { WeatherData } from '../../types'
+
+export function useWeather(lat: number, lon: number, dateString: string) {
+  const [weather, setWeather] = useState<WeatherData | null>(null)
+
+  useEffect(() => {
+    if (!dateString) return
+
+    let cancelled = false
+
+    async function fetchWeather() {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode&start_date=${dateString}&end_date=${dateString}&timezone=auto`
+
+      try {
+        const res = await fetch(url)
+        const data: WeatherData = await res.json()
+        if (!cancelled) setWeather(data)
+      } catch {
+        // Weather fetch failed gracefully
+      }
+    }
+
+    fetchWeather()
+    return () => { cancelled = true }
+  }, [lat, lon, dateString])
+
+  return weather
+}
