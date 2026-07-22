@@ -1,6 +1,7 @@
 type RepeatType = 'none' | 'daily' | 'weekly' | 'monthly' | 'custom'
 type QuestStatus = 'active' | 'inactive'
 type PanelId = 'daily' | 'repeating' | 'important' | 'rollover' | 'done'
+type LocationMode = 'auto' | 'manual'
 
 interface SubQuest {
   id: string
@@ -45,6 +46,25 @@ interface QuickPreset {
   isUserDefined: boolean
 }
 
+interface WeatherCoords {
+  lat: number
+  lon: number
+}
+
+interface WeatherData {
+  current_weather?: {
+    temperature: number
+    weathercode: number
+    time: string
+  }
+  hourly: {
+    time: string[]
+    temperature_2m: number[]
+    weathercode: number[]
+    rain?: number[]
+  }
+}
+
 interface AppState {
   quests: Quest[]
   completions: CompletionRecord[]
@@ -52,6 +72,9 @@ interface AppState {
   selectedDate: string
   panelOrder: PanelId[]
   hiddenPanels: PanelId[]
+  coords: WeatherCoords | null
+  locationMode: LocationMode
+  locationName: string
 
   addQuest: (quest: Quest) => void
   updateQuest: (questId: string, updates: Partial<Quest>) => void
@@ -69,6 +92,9 @@ interface AppState {
   togglePanelHidden: (id: PanelId) => void
   filterTags: string[]
   setFilterTags: (tags: string[]) => void
+  setCoords: (coords: WeatherCoords) => void
+  setLocationMode: (mode: LocationMode) => void
+  setLocationName: (name: string) => void
 }
 
-export type { RepeatType, QuestStatus, PanelId, SubQuest, Quest, CompletionRecord, QuickPreset, AppState }
+export type { RepeatType, QuestStatus, PanelId, SubQuest, Quest, CompletionRecord, QuickPreset, WeatherCoords, WeatherData, LocationMode, AppState }

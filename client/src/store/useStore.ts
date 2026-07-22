@@ -36,6 +36,9 @@ export const useStore = create<AppState>()(
       panelOrder: defaultPanelOrder,
       hiddenPanels: [],
       filterTags: [],
+      coords: null,
+      locationMode: 'auto',
+      locationName: '',
 
       addQuest: (quest) => set((s) => ({ quests: [...s.quests, quest] })),
       updateQuest: (questId, updates) =>
@@ -161,6 +164,10 @@ export const useStore = create<AppState>()(
         })),
 
       setFilterTags: (tags) => set({ filterTags: tags }),
+
+      setCoords: (coords) => set({ coords }),
+      setLocationMode: (mode) => set({ locationMode: mode }),
+      setLocationName: (name) => set({ locationName: name }),
     }),
     {
       name: 'daily-quest-store',
