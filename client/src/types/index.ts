@@ -52,6 +52,11 @@ interface WeatherCoords {
 }
 
 interface WeatherData {
+  current_weather?: {
+    temperature: number
+    weathercode: number
+    time: string
+  }
   hourly: {
     time: string[]
     temperature_2m: number[]

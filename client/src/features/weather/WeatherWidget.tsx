@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Sun, Cloud, CloudRain, Snowflake, CloudFog, CloudLightning, Settings } from 'lucide-react'
-import { format, addDays } from 'date-fns'
+import { format } from 'date-fns'
 import { useGeolocation } from '../../hooks/useGeolocation'
 import { useWeather } from './useWeather'
 import { useStore } from '../../store/useStore'
@@ -22,19 +22,34 @@ export function WeatherWidget() {
   const coords = useGeolocation()
   const lat = coords?.lat ?? 0
   const lon = coords?.lon ?? 0
-  const date = coords ? selectedDate : ''
-  const weather = useWeather(lat, lon, date)
+
+  const todayStr = format(new Date(), 'yyyy-MM-dd')
+  const isToday = selectedDate === todayStr
+
+  const todayWeather = useWeather(lat, lon, coords ? todayStr : '')
+  const selectedWeather = useWeather(lat, lon, coords ? (isToday ? '' : selectedDate) : '')
+  const carouselWeather = isToday ? todayWeather : selectedWeather
+  const currentWeather = todayWeather?.current_weather
 
   const [showLocationPicker, setShowLocationPicker] = useState(false)
   const [now, setNow] = useState(new Date())
-  const isToday = selectedDate === format(new Date(), 'yyyy-MM-dd')
-  const maxForecastDate = format(addDays(new Date(), 14), 'yyyy-MM-dd')
+  const carouselRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!isToday) return
     const id = setInterval(() => setNow(new Date()), 60000)
     return () => clearInterval(id)
-  }, [isToday])
+  }, [])
+
+  useEffect(() => {
+    if (!isToday || !carouselWeather || !carouselRef.current) return
+
+    const currentHour = now.getHours()
+    const hourIndex = carouselWeather.hourly.time.findIndex(t => new Date(t).getHours() === currentHour)
+    if (hourIndex === -1) return
+
+    const child = carouselRef.current.children[hourIndex] as HTMLElement | undefined
+    child?.scrollIntoView({ inline: 'center', behavior: 'auto' })
+  }, [isToday, carouselWeather, now])
 
   if (!coords) {
     return (
@@ -62,13 +77,11 @@ export function WeatherWidget() {
     )
   }
 
-  if (!weather) {
+  if (!todayWeather) {
     return (
       <div className="glass-panel p-4 mb-6 flex flex-col gap-2 rounded-xl">
         <div className="flex items-center justify-between">
-          {locationName && (
-            <span className="text-xs text-slate-500">{locationName}</span>
-          )}
+          {locationName && <span className="text-xs text-slate-500">{locationName}</span>}
           <button
             onClick={() => setShowLocationPicker(true)}
             className="text-slate-500 hover:text-slate-300 transition-colors ml-auto"
@@ -78,9 +91,7 @@ export function WeatherWidget() {
           </button>
         </div>
         <div className="flex items-center justify-center h-12 text-sm text-slate-500">
-          {selectedDate > maxForecastDate
-            ? 'Forecast unavailable for this date.'
-            : 'Loading weather...'}
+          Loading weather...
         </div>
         {showLocationPicker && (
           <LocationPicker isOpen={showLocationPicker} onClose={() => setShowLocationPicker(false)} />
@@ -89,60 +100,85 @@ export function WeatherWidget() {
     )
   }
 
-  const noonIndex = weather.hourly.time.findIndex(t => t.endsWith('T12:00'))
-
   return (
     <div className="glass-panel p-4 mb-6 flex flex-col gap-4 rounded-xl">
-      <div className="flex justify-between items-center border-b border-white/10 pb-4">
+      <div className="flex justify-between items-start">
         <div>
-          {isToday ? (
-            <h2 className="text-3xl font-bold">
-              {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </h2>
-          ) : (
-            <p className="text-sm opacity-70">
-              {format(new Date(selectedDate), 'EEEE, MMM d')}
-            </p>
-          )}
-          <div className="flex items-center gap-1.5">
-            {locationName && (
-              <span className="text-xs opacity-70">{locationName}</span>
+          <h2 className="text-3xl font-bold">
+            {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </h2>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            {locationName ? (
+              <>
+                <span className="text-xs opacity-70">{locationName}</span>
+                <button
+                  onClick={() => setShowLocationPicker(true)}
+                  className="text-slate-500 hover:text-slate-300 transition-colors"
+                  aria-label="Change location"
+                >
+                  <Settings className="w-3 h-3" />
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setShowLocationPicker(true)}
+                className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                Set location
+              </button>
             )}
-            <button
-              onClick={() => setShowLocationPicker(true)}
-              className="text-slate-500 hover:text-slate-300 transition-colors"
-              aria-label="Change location"
-            >
-              <Settings className="w-3 h-3" />
-            </button>
           </div>
         </div>
-        {noonIndex !== -1 && (
-          <div className="flex items-center gap-2 text-2xl">
-            {getWeatherIcon(weather.hourly.weathercode[noonIndex])}
-            <span>{Math.round(weather.hourly.temperature_2m[noonIndex])}°C</span>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {currentWeather && (
+            <>
+              {getWeatherIcon(currentWeather.weathercode)}
+              <span className="text-2xl">{Math.round(currentWeather.temperature)}°C</span>
+            </>
+          )}
+          {locationName && (
+            <button
+              onClick={() => setShowLocationPicker(true)}
+              className="text-slate-500 hover:text-slate-300 transition-colors ml-1"
+              aria-label="Change location"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="flex overflow-x-auto gap-4 pb-2 no-scrollbar snap-x">
-        {weather.hourly.time.map((timeString, index) => {
-          const date = new Date(timeString)
-          return (
-            <div key={timeString} className="flex flex-col items-center min-w-[60px] snap-start">
-              <span className="text-xs opacity-70">
-                {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
-              <div className="my-2">
-                {getWeatherIcon(weather.hourly.weathercode[index])}
+      {!carouselWeather ? (
+        <div className="flex items-center justify-center h-12 text-sm text-slate-500">
+          Loading weather...
+        </div>
+      ) : (
+        <div ref={carouselRef} className="flex overflow-x-auto gap-4 pb-2 no-scrollbar snap-x">
+          {carouselWeather.hourly.time.map((timeString, index) => {
+            const date = new Date(timeString)
+            const isCurrentHour = isToday && date.getHours() === now.getHours()
+            return (
+              <div
+                key={timeString}
+                className={`flex flex-col items-center min-w-[60px] snap-start ${
+                  isCurrentHour ? 'text-slate-200' : 'text-slate-400'
+                }`}
+              >
+                <span className="text-xs opacity-70">
+                  {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+                <div className="my-2">
+                  {getWeatherIcon(carouselWeather.hourly.weathercode[index])}
+                </div>
+                <span className="font-semibold">
+                  {Math.round(carouselWeather.hourly.temperature_2m[index])}°
+                </span>
+                {isCurrentHour && <div className="w-1 h-1 rounded-full bg-blue-400 mt-1" />}
               </div>
-              <span className="font-semibold">
-                {Math.round(weather.hourly.temperature_2m[index])}°
-              </span>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
+      )}
 
       {showLocationPicker && (
         <LocationPicker isOpen={showLocationPicker} onClose={() => setShowLocationPicker(false)} />
