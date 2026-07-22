@@ -10,7 +10,7 @@ export function useWeather(lat: number, lon: number, dateString: string) {
     let cancelled = false
 
     async function fetchWeather() {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,weathercode&start_date=${dateString}&end_date=${dateString}&timezone=auto`
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,weathercode,rain&start_date=${dateString}&end_date=${dateString}&timezone=auto`
 
       try {
         const res = await fetch(url)

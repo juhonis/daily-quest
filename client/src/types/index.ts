@@ -61,6 +61,7 @@ interface WeatherData {
     time: string[]
     temperature_2m: number[]
     weathercode: number[]
+    rain?: number[]
   }
 }
 

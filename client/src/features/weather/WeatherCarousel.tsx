@@ -1,19 +1,9 @@
 import { useEffect, useRef } from 'react'
-import { Sun, Cloud, CloudRain, Snowflake, CloudFog, CloudLightning } from 'lucide-react'
 import { format } from 'date-fns'
 import { useGeolocation } from '../../hooks/useGeolocation'
 import { useWeather } from './useWeather'
 import { useStore } from '../../store/useStore'
-
-function getWeatherIcon(code: number) {
-  if (code === 0) return <Sun className="text-yellow-400" />
-  if (code >= 1 && code <= 3) return <Cloud className="text-gray-300" />
-  if (code >= 45 && code <= 48) return <CloudFog className="text-gray-400" />
-  if (code >= 51 && code <= 67) return <CloudRain className="text-blue-400" />
-  if (code >= 71 && code <= 77) return <Snowflake className="text-blue-200" />
-  if (code >= 95 && code <= 99) return <CloudLightning className="text-purple-400" />
-  return <Sun className="text-yellow-400" />
-}
+import { getWeatherIcon, getRainLabel } from './weatherIcons'
 
 export function WeatherCarousel() {
   const selectedDate = useStore(s => s.selectedDate)
@@ -58,6 +48,8 @@ export function WeatherCarousel() {
         {weather.hourly.time.map((timeString, index) => {
           const date = new Date(timeString)
           const isCurrentHour = isToday && date.getHours() === now.getHours()
+          const rain = weather.hourly.rain?.[index]
+          const rainLabel = rain != null ? getRainLabel(rain) : null
           return (
             <div
               key={timeString}
@@ -74,6 +66,9 @@ export function WeatherCarousel() {
               <span className="font-semibold">
                 {Math.round(weather.hourly.temperature_2m[index])}°
               </span>
+              {rainLabel && (
+                <span className="text-[10px] text-blue-400 leading-none mt-0.5">{rainLabel}</span>
+              )}
               <div className={`mt-1 flex items-center justify-center ${isCurrentHour ? '' : 'invisible'}`}>
                 <div className="w-1 h-1 rounded-full bg-blue-400" />
               </div>

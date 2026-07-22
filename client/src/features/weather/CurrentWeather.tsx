@@ -1,20 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Sun, Cloud, CloudRain, Snowflake, CloudFog, CloudLightning, Settings } from 'lucide-react'
+import { Settings } from 'lucide-react'
 import { format } from 'date-fns'
 import { useGeolocation } from '../../hooks/useGeolocation'
 import { useWeather } from './useWeather'
 import { useStore } from '../../store/useStore'
 import { LocationPicker } from './LocationPicker'
-
-function getWeatherIcon(code: number) {
-  if (code === 0) return <Sun className="text-yellow-400" />
-  if (code >= 1 && code <= 3) return <Cloud className="text-gray-300" />
-  if (code >= 45 && code <= 48) return <CloudFog className="text-gray-400" />
-  if (code >= 51 && code <= 67) return <CloudRain className="text-blue-400" />
-  if (code >= 71 && code <= 77) return <Snowflake className="text-blue-200" />
-  if (code >= 95 && code <= 99) return <CloudLightning className="text-purple-400" />
-  return <Sun className="text-yellow-400" />
-}
+import { getWeatherIcon, getRainLabel } from './weatherIcons'
 
 export function CurrentWeather() {
   const locationName = useStore(s => s.locationName)
@@ -107,9 +98,12 @@ export function CurrentWeather() {
             <span className="text-lg">{Math.round(currentWeather.temperature)}°C</span>
           </div>
         )}
-        <div className="min-h-[16px]">
+        <div className="min-h-[16px] flex items-center gap-2">
           {locationName && (
             <span className="text-xs text-slate-500">{locationName}</span>
+          )}
+          {currentWeather && weather.hourly.rain?.[0] != null && getRainLabel(weather.hourly.rain[0]) && (
+            <span className="text-[10px] text-blue-400">{getRainLabel(weather.hourly.rain[0])}mm</span>
           )}
         </div>
       </div>
