@@ -100,6 +100,28 @@ export function getMonthMatrix(
   return rows
 }
 
+export function repeatDescription(quest: Quest): string | null {
+  switch (quest.repeat) {
+    case 'none':
+      return null
+    case 'daily':
+      return 'Daily'
+    case 'weekly': {
+      const day = parseDate(quest.targetDate).toLocaleDateString('en-US', { weekday: 'long' })
+      return `Weekly on ${day}`
+    }
+    case 'monthly': {
+      const dayOfMonth = parseDate(quest.targetDate).getDate()
+      return `Monthly on day ${dayOfMonth}`
+    }
+    case 'custom':
+      if (!quest.repeatConfig) return null
+      const { interval, unit } = quest.repeatConfig
+      const unitLabel = unit + (interval > 1 ? 's' : '')
+      return `Every ${interval} ${unitLabel}`
+  }
+}
+
 export function hasCompletionOnDate(completions: CompletionRecord[], questId: string, date: string): boolean {
   return completions.some((c) => c.questId === questId && c.completedOn === date)
 }

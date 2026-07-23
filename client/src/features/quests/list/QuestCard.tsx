@@ -3,30 +3,8 @@ import type { Quest, CompletionRecord, SubQuest } from '../../../types'
 import { useStore } from '../../../store/useStore'
 import { Checkbox } from '../../../components/ui/Checkbox'
 import { Button } from '../../../components/ui/Button'
-import { hasCompletionOnDate, parseDate } from '../../../utils/dateUtils'
+import { hasCompletionOnDate, repeatDescription } from '../../../utils/dateUtils'
 import { Trash2, ExternalLink, Pencil, Repeat, Calendar, Award } from 'lucide-react'
-
-function repeatDescription(quest: Quest): string | null {
-  switch (quest.repeat) {
-    case 'none':
-      return null
-    case 'daily':
-      return 'Daily'
-    case 'weekly': {
-      const day = parseDate(quest.targetDate).toLocaleDateString('en-US', { weekday: 'long' })
-      return `Weekly on ${day}`
-    }
-    case 'monthly': {
-      const dayOfMonth = parseDate(quest.targetDate).getDate()
-      return `Monthly on day ${dayOfMonth}`
-    }
-    case 'custom':
-      if (!quest.repeatConfig) return null
-      const { interval, unit } = quest.repeatConfig
-      const unitLabel = unit + (interval > 1 ? 's' : '')
-      return `Every ${interval} ${unitLabel}`
-  }
-}
 
 interface QuestCardProps {
   quest: Quest
