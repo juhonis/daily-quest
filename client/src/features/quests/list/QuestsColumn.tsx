@@ -110,42 +110,6 @@ export function QuestsColumn() {
       {tab === 'quests' && (
         <>
           <div className="px-4">
-            {allTags.length > 0 && (
-              <div className="flex items-center gap-1.5 mb-3 flex-wrap">
-                <button
-                  onClick={() => setFilterTags([])}
-                  className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-                    filterTags.length === 0
-                      ? 'bg-slate-700 text-white'
-                      : 'text-slate-500 hover:text-slate-300'
-                  }`}
-                >
-                  All
-                </button>
-                {allTags.map((tag) => {
-                  const color = tagColors[tag] ?? '#3B82F6'
-                  return (
-                    <button
-                      key={tag}
-                      onClick={() => {
-                        setFilterTags(
-                          filterTags.includes(tag)
-                            ? filterTags.filter((t) => t !== tag)
-                            : [...filterTags, tag],
-                        )
-                      }}
-                      className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
-                        filterTags.includes(tag) ? 'text-white border-transparent' : 'hover:brightness-125'
-                      }`}
-                      style={filterTags.includes(tag) ? { backgroundColor: color } : { borderColor: color, color }}
-                    >
-                      {tag}
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-
             <div className="flex items-center gap-2 justify-between">
               <QuickAddBar
                 presets={quickPresets}
@@ -154,6 +118,41 @@ export function QuestsColumn() {
                 onManageAdd={addQuickPreset}
                 onManageDelete={deleteQuickPreset}
               />
+              {allTags.length > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                  <button
+                    onClick={() => setFilterTags([])}
+                    className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+                      filterTags.length === 0
+                        ? 'bg-slate-700 text-white'
+                        : 'text-slate-500 hover:text-slate-300'
+                    }`}
+                  >
+                    All
+                  </button>
+                  {allTags.map((tag) => {
+                    const color = tagColors[tag] ?? '#3B82F6'
+                    return (
+                      <button
+                        key={tag}
+                        onClick={() => {
+                          setFilterTags(
+                            filterTags.includes(tag)
+                              ? filterTags.filter((t) => t !== tag)
+                              : [...filterTags, tag],
+                          )
+                        }}
+                        className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
+                          filterTags.includes(tag) ? 'text-white border-transparent' : 'hover:brightness-125'
+                        }`}
+                        style={filterTags.includes(tag) ? { backgroundColor: color } : { borderColor: color, color }}
+                      >
+                        {tag}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
               <Button variant="icon" aria-label="Edit panels" onClick={() => setShowEditPanels(true)}>
                 <Settings className="w-5 h-5" />
               </Button>
