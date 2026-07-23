@@ -38,6 +38,20 @@ export function WeatherCarousel() {
     child?.scrollIntoView({ inline: 'center', behavior: 'auto' })
   }, [isToday, weather])
 
+  useEffect(() => {
+    const el = carouselRef.current
+    if (!el) return
+
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaX !== 0) return
+      e.preventDefault()
+      el.scrollLeft += e.deltaY
+    }
+
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [weather?.hourly])
+
   if (!coords) {
     return (
       <div className="glass-panel rounded-xl p-4 flex items-center justify-center h-full min-h-[104px]">
