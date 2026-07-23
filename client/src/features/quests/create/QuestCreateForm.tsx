@@ -3,6 +3,7 @@ import type { Quest, QuickPreset, QuestStatus, RepeatType } from '../../../types
 import { useStore } from '../../../store/useStore'
 import { Button } from '../../../components/ui/Button'
 import { Modal } from '../../../components/ui/Modal'
+import { QuestHistoryPanel } from './QuestHistoryPanel'
 import { X, Settings, Pencil, Trash2 } from 'lucide-react'
 
 interface QuestCreateFormProps {
@@ -49,9 +50,19 @@ function questToForm(q: Quest): ReturnType<typeof emptyForm> {
 
 export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onSavePreset }: QuestCreateFormProps) {
   const [form, setForm] = useState(initialData ? questToForm(initialData) : emptyForm(defaultDate))
+  const quests = useStore((s) => s.quests)
+  const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null)
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
+  }
+
+  function handleSelectQuest(questId: string) {
+    const quest = quests.find((q) => q.id === questId)
+    if (quest) {
+      setForm(questToForm(quest))
+      setSelectedQuestId(questId)
+    }
   }
 
   const [subQuestInput, setSubQuestInput] = useState('')
@@ -78,7 +89,7 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
 
     const now = new Date().toISOString()
     const quest: Quest = {
-      id: initialData?.id ?? crypto.randomUUID(),
+      id: selectedQuestId ?? initialData?.id ?? crypto.randomUUID(),
       title: form.title.trim(),
       description: form.description.trim() || undefined,
       createdAt: initialData?.createdAt ?? now,
@@ -116,177 +127,185 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-3xl mx-auto w-full">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-4">
-          <SectionCard title="Details">
-            <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Title *</label>
-              <input
-                type="text"
-                value={form.title}
-                onChange={(e) => update('title', e.target.value)}
-                placeholder="What do you want to do?"
-                required
-                className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Description</label>
-              <textarea
-                value={form.description}
-                onChange={(e) => update('description', e.target.value)}
-                placeholder="Optional details..."
-                rows={2}
-                className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              />
-            </div>
-          </SectionCard>
-
-          <SectionCard title="Sub-quests">
-            <div className="space-y-2">
-              {form.subQuestInputs.map((sq) => (
-                <div key={sq.id} className="flex items-center gap-2">
+    <div className="max-w-5xl mx-auto w-full">
+      <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-4 items-start">
+        <QuestHistoryPanel
+          selectedQuestId={selectedQuestId}
+          onSelectQuest={handleSelectQuest}
+        />
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-4">
+              <SectionCard title="Details">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Title *</label>
                   <input
                     type="text"
-                    value={sq.title}
-                    onChange={(e) => updateSubQuest(sq.id, e.target.value)}
-                    placeholder="Sub-quest title"
+                    value={form.title}
+                    onChange={(e) => update('title', e.target.value)}
+                    placeholder="What do you want to do?"
+                    required
+                    className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Description</label>
+                  <textarea
+                    value={form.description}
+                    onChange={(e) => update('description', e.target.value)}
+                    placeholder="Optional details..."
+                    rows={2}
+                    className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  />
+                </div>
+              </SectionCard>
+
+              <SectionCard title="Sub-quests">
+                <div className="space-y-2">
+                  {form.subQuestInputs.map((sq) => (
+                    <div key={sq.id} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={sq.title}
+                        onChange={(e) => updateSubQuest(sq.id, e.target.value)}
+                        placeholder="Sub-quest title"
+                        className="flex-1 rounded-lg border border-slate-600 bg-slate-700 px-3 py-1.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeSubQuest(sq.id)}
+                        className="text-slate-500 hover:text-red-400 transition-colors shrink-0"
+                        aria-label="Remove sub-quest"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  {form.subQuestInputs.length === 0 && (
+                    <p className="text-xs text-slate-600">No sub-quests yet.</p>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={subQuestInput}
+                    onChange={(e) => setSubQuestInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSubQuest(subQuestInput) } }}
+                    placeholder="Add a sub-quest..."
                     className="flex-1 rounded-lg border border-slate-600 bg-slate-700 px-3 py-1.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  <button
-                    type="button"
-                    onClick={() => removeSubQuest(sq.id)}
-                    className="text-slate-500 hover:text-red-400 transition-colors shrink-0"
-                    aria-label="Remove sub-quest"
-                  >
-                    <X className="w-4 h-4" />
+                  <button type="button" onClick={() => addSubQuest(subQuestInput)} className="shrink-0 rounded-lg bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-700 transition-colors">
+                    Add
                   </button>
                 </div>
-              ))}
-              {form.subQuestInputs.length === 0 && (
-                <p className="text-xs text-slate-600">No sub-quests yet.</p>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={subQuestInput}
-                onChange={(e) => setSubQuestInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSubQuest(subQuestInput) } }}
-                placeholder="Add a sub-quest..."
-                className="flex-1 rounded-lg border border-slate-600 bg-slate-700 px-3 py-1.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button type="button" onClick={() => addSubQuest(subQuestInput)} className="shrink-0 rounded-lg bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-700 transition-colors">
-                Add
-              </button>
-            </div>
-          </SectionCard>
-        </div>
-
-        <div className="space-y-4">
-          <SectionCard title="Schedule">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Target Date</label>
-                <input
-                  type="date"
-                  value={form.targetDate}
-                  onChange={(e) => update('targetDate', e.target.value)}
-                  className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Repeat</label>
-                <select
-                  value={form.repeat}
-                  onChange={(e) => update('repeat', e.target.value as RepeatType)}
-                  className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="none">None</option>
-                  <option value="daily">Daily</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="monthly">Monthly</option>
-                  <option value="custom">Custom</option>
-                </select>
-              </div>
+              </SectionCard>
             </div>
 
-            {form.repeat === 'custom' && (
-              <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-4">
+              <SectionCard title="Schedule">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Target Date</label>
+                    <input
+                      type="date"
+                      value={form.targetDate}
+                      onChange={(e) => update('targetDate', e.target.value)}
+                      className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Repeat</label>
+                    <select
+                      value={form.repeat}
+                      onChange={(e) => update('repeat', e.target.value as RepeatType)}
+                      className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="none">None</option>
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="monthly">Monthly</option>
+                      <option value="custom">Custom</option>
+                    </select>
+                  </div>
+                </div>
+
+                {form.repeat === 'custom' && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-1">Interval</label>
+                      <input
+                        type="number"
+                        min={1}
+                        value={form.repeatInterval}
+                        onChange={(e) => update('repeatInterval', Math.max(1, Number(e.target.value)))}
+                        className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-1">Unit</label>
+                      <select
+                        value={form.repeatUnit}
+                        onChange={(e) => update('repeatUnit', e.target.value as 'day' | 'week' | 'month')}
+                        className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="day">Days</option>
+                        <option value="week">Weeks</option>
+                        <option value="month">Months</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.rollover}
+                    onChange={(e) => update('rollover', e.target.checked)}
+                    className="h-4 w-4 accent-blue-600"
+                  />
+                  <span className="text-xs text-slate-400">Rollover (appears daily until done)</span>
+                </label>
+              </SectionCard>
+
+              <SectionCard title="Tags & XP">
+                <TagInput tags={form.tags} onAddTag={(tag) => update('tags', [...form.tags, tag])} onRemoveTag={(tag) => update('tags', form.tags.filter((t) => t !== tag))} />
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Interval</label>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">XP (optional)</label>
                   <input
                     type="number"
-                    min={1}
-                    value={form.repeatInterval}
-                    onChange={(e) => update('repeatInterval', Math.max(1, Number(e.target.value)))}
-                    className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    min={0}
+                    value={form.xp ?? ''}
+                    onChange={(e) => update('xp', e.target.value ? Number(e.target.value) : null)}
+                    placeholder="e.g. 10"
+                    className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Unit</label>
-                  <select
-                    value={form.repeatUnit}
-                    onChange={(e) => update('repeatUnit', e.target.value as 'day' | 'week' | 'month')}
-                    className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="day">Days</option>
-                    <option value="week">Weeks</option>
-                    <option value="month">Months</option>
-                  </select>
-                </div>
-              </div>
-            )}
-
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.rollover}
-                onChange={(e) => update('rollover', e.target.checked)}
-                className="h-4 w-4 accent-blue-600"
-              />
-              <span className="text-xs text-slate-400">Rollover (appears daily until done)</span>
-            </label>
-          </SectionCard>
-
-          <SectionCard title="Tags & XP">
-            <TagInput tags={form.tags} onAddTag={(tag) => update('tags', [...form.tags, tag])} onRemoveTag={(tag) => update('tags', form.tags.filter((t) => t !== tag))} />
-            <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">XP (optional)</label>
-              <input
-                type="number"
-                min={0}
-                value={form.xp ?? ''}
-                onChange={(e) => update('xp', e.target.value ? Number(e.target.value) : null)}
-                placeholder="e.g. 10"
-                className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+                {!initialData && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.addToQuickAdd}
+                      onChange={(e) => update('addToQuickAdd', e.target.checked)}
+                      className="h-4 w-4 accent-blue-600"
+                    />
+                    <span className="text-xs text-slate-400">Add to Quick Add</span>
+                  </label>
+                )}
+              </SectionCard>
             </div>
-            {!initialData && (
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.addToQuickAdd}
-                  onChange={(e) => update('addToQuickAdd', e.target.checked)}
-                  className="h-4 w-4 accent-blue-600"
-                />
-                <span className="text-xs text-slate-400">Add to Quick Add</span>
-              </label>
-            )}
-          </SectionCard>
-        </div>
-      </div>
+          </div>
 
-      <div className="flex justify-end gap-2 mt-4">
-        <Button type="button" variant="ghost" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={!form.title.trim()}>
-          {initialData ? 'Save Changes' : 'Create Quest'}
-        </Button>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button type="button" variant="ghost" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!form.title.trim()}>
+              {selectedQuestId || initialData ? 'Update Quest' : 'Create Quest'}
+            </Button>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   )
 }
 

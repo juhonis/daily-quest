@@ -183,7 +183,8 @@ export function QuestsColumn() {
             defaultDate={selectedDate}
             onSavePreset={(preset) => addQuickPreset(preset)}
             onSave={(quest) => {
-              if (editingQuest) {
+              const exists = quests.some((q) => q.id === quest.id)
+              if (exists) {
                 updateQuest(quest.id, quest)
               } else {
                 addQuest(quest)
