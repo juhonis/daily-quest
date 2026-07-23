@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Settings } from 'lucide-react'
 import { format } from 'date-fns'
-import { useGeolocation } from '../../hooks/useGeolocation'
 import { useWeather } from './useWeather'
 import { useStore } from '../../store/useStore'
 import { LocationPicker } from './LocationPicker'
@@ -16,7 +15,7 @@ function rainLabel(rainMm: number): string | null {
 
 export function CurrentWeather() {
   const locationName = useStore(s => s.locationName)
-  const coords = useGeolocation()
+  const coords = useStore(s => s.coords)
   const lat = coords?.lat ?? 0
   const lon = coords?.lon ?? 0
 
