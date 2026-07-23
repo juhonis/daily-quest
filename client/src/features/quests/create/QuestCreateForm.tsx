@@ -127,8 +127,8 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
   }
 
   return (
-    <div className="relative flex flex-col md:block">
-      <form onSubmit={handleSubmit} className="max-w-3xl w-full md:mx-auto">
+    <div className="relative flex flex-col lg:block">
+      <form onSubmit={handleSubmit} className="max-w-3xl w-full lg:mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-4">
               <SectionCard title="Details">
@@ -299,7 +299,7 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
             </Button>
           </div>
         </form>
-        <div className="md:absolute md:left-4 md:top-0 w-full md:w-[280px] mb-4 md:mb-0">
+        <div className="lg:absolute lg:left-4 lg:top-0 w-full lg:w-[280px] mb-4 lg:mb-0">
           <QuestHistoryPanel
             selectedQuestId={selectedQuestId}
             onSelectQuest={handleSelectQuest}
