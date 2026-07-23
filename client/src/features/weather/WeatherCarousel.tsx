@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react'
 import { format, addDays, subDays } from 'date-fns'
-import { useGeolocation } from '../../hooks/useGeolocation'
 import { useWeather } from './useWeather'
 import { useStore } from '../../store/useStore'
 import { WeatherIcon } from './weatherIcons'
@@ -14,7 +13,7 @@ function rainLabel(rainMm: number): string | null {
 
 export function WeatherCarousel() {
   const selectedDate = useStore(s => s.selectedDate)
-  const coords = useGeolocation()
+  const coords = useStore(s => s.coords)
   const lat = coords?.lat ?? 0
   const lon = coords?.lon ?? 0
 
