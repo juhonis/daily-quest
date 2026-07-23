@@ -141,7 +141,7 @@ export function QuestsPanelsRow(props: QuestsPanelsRowProps) {
       onDragEnd={handleDragEnd}
     >
       <SortableContext items={visiblePanels} strategy={rectSortingStrategy}>
-        <div className="flex flex-row gap-3 h-full overflow-x-auto items-stretch">
+        <div className="flex flex-row gap-3 h-full items-stretch min-w-0">
           {visiblePanels.map((id) => (
             <SortablePanel
               key={id}

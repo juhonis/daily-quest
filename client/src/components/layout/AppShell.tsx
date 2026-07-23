@@ -8,7 +8,7 @@ export function AppShell() {
       <div className="border-r border-slate-700 overflow-y-auto max-h-screen">
         <CalendarColumn />
       </div>
-      <div className="overflow-y-auto max-h-screen">
+      <div className="overflow-y-auto overflow-x-hidden max-h-screen min-w-0">
         <QuestsColumn />
       </div>
       <div className="border-l border-slate-700 overflow-y-auto max-h-screen">
