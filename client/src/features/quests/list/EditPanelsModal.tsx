@@ -15,9 +15,9 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Modal } from '../../components/ui/Modal'
-import { useStore } from '../../store/useStore'
-import type { PanelId } from '../../types'
+import { Modal } from '../../../components/ui/Modal'
+import { useStore } from '../../../store/useStore'
+import type { PanelId } from '../../../types'
 
 interface EditPanelsModalProps {
   onClose: () => void

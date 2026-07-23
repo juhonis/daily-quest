@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react'
-import type { Quest, CompletionRecord, SubQuest } from '../../types'
-import { Checkbox } from '../../components/ui/Checkbox'
-import { Button } from '../../components/ui/Button'
-import { hasCompletionOnDate, parseDate } from '../../utils/dateUtils'
+import type { Quest, CompletionRecord, SubQuest } from '../../../types'
+import { Checkbox } from '../../../components/ui/Checkbox'
+import { Button } from '../../../components/ui/Button'
+import { hasCompletionOnDate, parseDate } from '../../../utils/dateUtils'
 import { Trash2, ExternalLink, Pencil, Repeat, Calendar, Award } from 'lucide-react'
 
 function repeatDescription(quest: Quest): string | null {

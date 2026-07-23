@@ -1,7 +1,7 @@
-import type { Quest, CompletionRecord } from '../../../types'
+import type { Quest, CompletionRecord } from '../../../../types'
 import { BasePanel } from './BasePanel'
 
-interface RepeatingQuestsPanelProps {
+interface ImportantQuestsPanelProps {
   quests: Quest[]
   selectedDate: string
   completions: CompletionRecord[]
@@ -13,6 +13,6 @@ interface RepeatingQuestsPanelProps {
   onHide?: () => void
 }
 
-export function RepeatingQuestsPanel(props: RepeatingQuestsPanelProps) {
-  return <BasePanel {...props} label="Repeating" emptyHint="No repeating quests for today." />
+export function ImportantQuestsPanel(props: ImportantQuestsPanelProps) {
+  return <BasePanel {...props} label="Important today" emptyHint="No specific quests for this date." />
 }

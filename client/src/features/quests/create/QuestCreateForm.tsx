@@ -1,7 +1,7 @@
 import { useState, useMemo, type FormEvent } from 'react'
-import type { Quest, QuickPreset, QuestStatus, RepeatType } from '../../types'
-import { useStore } from '../../store/useStore'
-import { Button } from '../../components/ui/Button'
+import type { Quest, QuickPreset, QuestStatus, RepeatType } from '../../../types'
+import { useStore } from '../../../store/useStore'
+import { Button } from '../../../components/ui/Button'
 import { X } from 'lucide-react'
 
 interface QuestCreateFormProps {

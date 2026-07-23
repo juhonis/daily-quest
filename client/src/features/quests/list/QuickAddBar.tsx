@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Zap } from 'lucide-react'
-import type { QuickPreset, RepeatType } from '../../types'
+import type { QuickPreset, RepeatType } from '../../../types'
 
 type QuestType = 'today' | 'daily' | 'repeating' | 'important'
 

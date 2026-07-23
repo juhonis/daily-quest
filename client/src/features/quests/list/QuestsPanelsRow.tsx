@@ -15,12 +15,12 @@ import {
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { Quest, CompletionRecord, PanelId } from '../../types'
-import { useStore } from '../../store/useStore'
+import type { Quest, CompletionRecord, PanelId } from '../../../types'
+import { useStore } from '../../../store/useStore'
 import {
   groupQuestsByActivityReason,
   getFinishedQuestsForDate,
-} from '../../utils/dateUtils'
+} from '../../../utils/dateUtils'
 import { DailyQuestsPanel } from './panels/DailyQuestsPanel'
 import { RepeatingQuestsPanel } from './panels/RepeatingQuestsPanel'
 import { ImportantQuestsPanel } from './panels/ImportantQuestsPanel'
