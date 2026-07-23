@@ -34,6 +34,7 @@ export function QuestsColumn() {
   const hiddenPanels = useStore((s) => s.hiddenPanels)
   const filterTags = useStore((s) => s.filterTags)
   const setFilterTags = useStore((s) => s.setFilterTags)
+  const tagColors = useStore((s) => s.tagColors)
 
   const allTags = useMemo(() => {
     const set = new Set<string>()
@@ -121,25 +122,27 @@ export function QuestsColumn() {
                 >
                   All
                 </button>
-                {allTags.map((tag) => (
-                  <button
-                    key={tag}
-                    onClick={() => {
-                      setFilterTags(
-                        filterTags.includes(tag)
-                          ? filterTags.filter((t) => t !== tag)
-                          : [...filterTags, tag],
-                      )
-                    }}
-                    className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-                      filterTags.includes(tag)
-                        ? 'bg-blue-600 text-white'
-                        : 'text-slate-500 hover:text-slate-300'
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
+                {allTags.map((tag) => {
+                  const color = tagColors[tag] ?? '#3B82F6'
+                  return (
+                    <button
+                      key={tag}
+                      onClick={() => {
+                        setFilterTags(
+                          filterTags.includes(tag)
+                            ? filterTags.filter((t) => t !== tag)
+                            : [...filterTags, tag],
+                        )
+                      }}
+                      className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+                        filterTags.includes(tag) ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+                      }`}
+                      style={filterTags.includes(tag) ? { backgroundColor: color } : {}}
+                    >
+                      {tag}
+                    </button>
+                  )
+                })}
               </div>
             )}
 

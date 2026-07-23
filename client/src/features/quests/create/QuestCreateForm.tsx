@@ -4,6 +4,7 @@ import { useStore } from '../../../store/useStore'
 import { Button } from '../../../components/ui/Button'
 import { Modal } from '../../../components/ui/Modal'
 import { QuestHistoryPanel } from './QuestHistoryPanel'
+import { TAG_PALETTE, assignTagColor, getTagStyle } from '../tagColors'
 import { X, Settings, Pencil, Trash2 } from 'lucide-react'
 
 interface QuestCreateFormProps {
@@ -324,8 +325,10 @@ function TagInput({ tags, onAddTag, onRemoveTag }: { tags: string[]; onAddTag: (
   const [editingTag, setEditingTag] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
   const quests = useStore((s) => s.quests)
+  const tagColors = useStore((s) => s.tagColors)
   const deleteTag = useStore((s) => s.deleteTag)
   const renameTag = useStore((s) => s.renameTag)
+  const setTagColor = useStore((s) => s.setTagColor)
   const allTags = useMemo(() => {
     const set = new Set<string>()
     quests.forEach((q) => q.tags?.forEach((t) => set.add(t)))
@@ -336,10 +339,17 @@ function TagInput({ tags, onAddTag, onRemoveTag }: { tags: string[]; onAddTag: (
     ? allTags.filter((t) => t.toLowerCase().includes(input.toLowerCase()) && !tags.includes(t))
     : []
 
+  function ensureColor(tag: string) {
+    if (!tagColors[tag]) {
+      setTagColor(tag, assignTagColor(tag, tagColors))
+    }
+  }
+
   function handleAdd() {
     const trimmed = input.trim()
     if (trimmed && !tags.includes(trimmed)) {
       onAddTag(trimmed)
+      ensureColor(trimmed)
     }
     setInput('')
   }
@@ -363,85 +373,113 @@ function TagInput({ tags, onAddTag, onRemoveTag }: { tags: string[]; onAddTag: (
           <p className="text-sm text-slate-500">No tags yet.</p>
         ) : (
           <div className="space-y-2">
-            {allTags.map((tag) => (
-              <div key={tag} className="flex items-center gap-2">
-                {editingTag === tag ? (
-                  <input
-                    type="text"
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
+            {allTags.map((tag) => {
+              const color = tagColors[tag] ?? '#3B82F6'
+              return (
+                <div key={tag} className="flex items-center gap-2">
+                  {editingTag === tag ? (
+                    <input
+                      type="text"
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          const val = editValue.trim()
+                          if (val && val !== tag) renameTag(tag, val)
+                          setEditingTag(null)
+                          setShowTagMgr(false)
+                        }
+                        if (e.key === 'Escape') setEditingTag(null)
+                      }}
+                      onBlur={() => {
                         const val = editValue.trim()
                         if (val && val !== tag) renameTag(tag, val)
                         setEditingTag(null)
-                        setShowTagMgr(false)
+                      }}
+                      autoFocus
+                      className="flex-1 rounded border border-slate-600 bg-slate-700 px-2 py-1 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <span className="flex-1 text-sm text-slate-200">{tag}</span>
+                  )}
+                  <div className="flex gap-1 items-center">
+                    {TAG_PALETTE.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setTagColor(tag, c)}
+                        className={`w-4 h-4 rounded-full border-2 transition-all ${
+                          color === c ? 'border-white scale-125' : 'border-transparent'
+                        }`}
+                        style={{ backgroundColor: c }}
+                        aria-label={`Set color ${c}`}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setEditingTag(tag); setEditValue(tag) }}
+                    className="text-slate-500 hover:text-blue-400 transition-colors shrink-0"
+                    aria-label={`Edit tag ${tag}`}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm(`Delete tag "${tag}"? This will remove it from all quests.`)) {
+                        deleteTag(tag)
                       }
-                      if (e.key === 'Escape') setEditingTag(null)
                     }}
-                    onBlur={() => {
-                      const val = editValue.trim()
-                      if (val && val !== tag) renameTag(tag, val)
-                      setEditingTag(null)
-                    }}
-                    autoFocus
-                    className="flex-1 rounded border border-slate-600 bg-slate-700 px-2 py-1 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                ) : (
-                  <span className="flex-1 text-sm text-slate-200">{tag}</span>
-                )}
-                <button
-                  type="button"
-                  onClick={() => { setEditingTag(tag); setEditValue(tag) }}
-                  className="text-slate-500 hover:text-blue-400 transition-colors shrink-0"
-                  aria-label={`Edit tag ${tag}`}
-                >
-                  <Pencil className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (window.confirm(`Delete tag "${tag}"? This will remove it from all quests.`)) {
-                      deleteTag(tag)
-                    }
-                  }}
-                  className="text-slate-500 hover:text-red-400 transition-colors shrink-0"
-                  aria-label={`Delete tag ${tag}`}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
+                    className="text-slate-500 hover:text-red-400 transition-colors shrink-0"
+                    aria-label={`Delete tag ${tag}`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              )
+            })}
           </div>
         )}
       </Modal>
 
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-2">
-          {tags.map((tag) => (
-            <span key={tag} className="inline-flex items-center gap-1 rounded-md bg-blue-600/20 border border-blue-600/30 px-2 py-0.5 text-xs text-blue-300">
-              {tag}
-              <button type="button" onClick={() => onRemoveTag(tag)} className="text-blue-400 hover:text-blue-200">
-                <X className="w-3 h-3" />
-              </button>
-            </span>
-          ))}
+          {tags.map((tag) => {
+            const color = tagColors[tag] ?? '#3B82F6'
+            return (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs"
+                style={getTagStyle(color)}
+              >
+                {tag}
+                <button type="button" onClick={() => onRemoveTag(tag)} className="opacity-70 hover:opacity-100 transition-opacity" style={{ color }}>
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )
+          })}
         </div>
       )}
 
       {allTags.filter((t) => !tags.includes(t)).length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-2">
-          {allTags.filter((t) => !tags.includes(t)).map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              onClick={() => { onAddTag(tag); setInput('') }}
-              className="shrink-0 rounded-lg border border-slate-700 bg-slate-700/60 px-2 py-1 text-xs text-slate-300 hover:bg-slate-600 hover:text-white transition-colors"
-            >
-              {tag}
-            </button>
-          ))}
+          {allTags.filter((t) => !tags.includes(t)).map((tag) => {
+            const color = tagColors[tag] ?? '#3B82F6'
+            return (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => { onAddTag(tag); ensureColor(tag); setInput('') }}
+                className="shrink-0 rounded-lg border px-2 py-1 text-xs transition-colors hover:opacity-80"
+                style={{ borderColor: `${color}4D`, backgroundColor: `${color}1A`, color }}
+              >
+                {tag}
+              </button>
+            )
+          })}
         </div>
       )}
 
@@ -460,16 +498,20 @@ function TagInput({ tags, onAddTag, onRemoveTag }: { tags: string[]; onAddTag: (
       </div>
       {suggestions.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-1.5">
-          {suggestions.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => { onAddTag(s); setInput('') }}
-              className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
-            >
-              + {s}
-            </button>
-          ))}
+          {suggestions.map((s) => {
+            const color = tagColors[s] ?? '#3B82F6'
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => { onAddTag(s); ensureColor(s); setInput('') }}
+                className="text-xs transition-colors hover:opacity-80"
+                style={{ color }}
+              >
+                + {s}
+              </button>
+            )
+          })}
         </div>
       )}
     </div>

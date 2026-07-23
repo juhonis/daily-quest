@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import type { Quest, CompletionRecord, SubQuest } from '../../../types'
+import { useStore } from '../../../store/useStore'
 import { Checkbox } from '../../../components/ui/Checkbox'
 import { Button } from '../../../components/ui/Button'
 import { hasCompletionOnDate, parseDate } from '../../../utils/dateUtils'
@@ -52,6 +53,7 @@ export function QuestCard({
   const hideTimer = useRef<ReturnType<typeof setTimeout>>(null)
   const isChecked = hasCompletionOnDate(completions, quest.id, selectedDate)
   const repeatInfo = repeatDescription(quest)
+  const tagColors = useStore((s) => s.tagColors)
 
   function handleMouseEnter() {
     if (hideTimer.current) clearTimeout(hideTimer.current)
@@ -122,11 +124,14 @@ export function QuestCard({
 
               {quest.tags && quest.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
-                  {quest.tags.map((tag) => (
-                    <span key={tag} className="rounded-md bg-blue-600/15 border border-blue-600/20 px-1.5 py-0.5 text-xs text-blue-300">
-                      {tag}
-                    </span>
-                  ))}
+                  {quest.tags.map((tag) => {
+                    const color = tagColors[tag] ?? '#3B82F6'
+                    return (
+                      <span key={tag} className="rounded-md px-1.5 py-0.5 text-xs" style={{ backgroundColor: `${color}26`, borderColor: `${color}33`, color }}>
+                        {tag}
+                      </span>
+                    )
+                  })}
                 </div>
               )}
 

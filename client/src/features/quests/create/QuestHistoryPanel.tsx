@@ -8,6 +8,7 @@ interface QuestHistoryPanelProps {
 
 export function QuestHistoryPanel({ selectedQuestId, onSelectQuest }: QuestHistoryPanelProps) {
   const quests = useStore((s) => s.quests)
+  const tagColors = useStore((s) => s.tagColors)
   const [filterTags, setFilterTags] = useState<string[]>([])
 
   const allTags = useMemo(() => {
@@ -40,25 +41,27 @@ export function QuestHistoryPanel({ selectedQuestId, onSelectQuest }: QuestHisto
           >
             All
           </button>
-          {allTags.map((tag) => (
-            <button
-              key={tag}
-              onClick={() => {
-                setFilterTags(
-                  filterTags.includes(tag)
-                    ? filterTags.filter((t) => t !== tag)
-                    : [...filterTags, tag],
-                )
-              }}
-              className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-                filterTags.includes(tag)
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-500 hover:text-slate-300'
-              }`}
-            >
-              {tag}
-            </button>
-          ))}
+          {allTags.map((tag) => {
+            const color = tagColors[tag] ?? '#3B82F6'
+            return (
+              <button
+                key={tag}
+                onClick={() => {
+                  setFilterTags(
+                    filterTags.includes(tag)
+                      ? filterTags.filter((t) => t !== tag)
+                      : [...filterTags, tag],
+                  )
+                }}
+                className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+                  filterTags.includes(tag) ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+                }`}
+                style={filterTags.includes(tag) ? { backgroundColor: color } : {}}
+              >
+                {tag}
+              </button>
+            )
+          })}
         </div>
       )}
 
@@ -69,18 +72,24 @@ export function QuestHistoryPanel({ selectedQuestId, onSelectQuest }: QuestHisto
             onClick={() => onSelectQuest(quest.id)}
             className={`w-full text-left rounded-lg px-3 py-2 transition-colors ${
               selectedQuestId === quest.id
-                ? 'bg-blue-600/20 border border-blue-600/30'
+                ? 'border border-blue-600/30'
                 : 'hover:bg-slate-700/50 border border-transparent'
             }`}
+            style={selectedQuestId === quest.id ? { backgroundColor: '#3B82F633' } : {}}
           >
             <div className="text-sm font-medium text-slate-200 truncate">{quest.title}</div>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="text-[10px] text-slate-500">{quest.targetDate}</span>
               {quest.tags && quest.tags.length > 0 && (
                 <div className="flex gap-1 flex-wrap">
-                  {quest.tags.map((t) => (
-                    <span key={t} className="text-[10px] text-blue-400 bg-blue-600/20 px-1 rounded">{t}</span>
-                  ))}
+                  {quest.tags.map((t) => {
+                    const c = tagColors[t] ?? '#3B82F6'
+                    return (
+                      <span key={t} className="text-[10px] px-1 rounded" style={{ backgroundColor: `${c}33`, color: c }}>
+                        {t}
+                      </span>
+                    )
+                  })}
                 </div>
               )}
             </div>
