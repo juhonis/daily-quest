@@ -51,8 +51,9 @@ export function QuestsColumn() {
   const dateLabel = format(parseDate(selectedDate), 'dd/MM/yyyy')
 
   return (
-    <div className="p-4 flex flex-col h-full">
-      <div className="flex gap-4 mb-6">
+    <div className="flex flex-col h-full">
+      <div className="px-4 pt-4">
+        <div className="flex gap-4 mb-6">
         <CurrentWeather />
         <div className="flex-1 min-w-0">
           <WeatherCarousel />
@@ -103,60 +104,64 @@ export function QuestsColumn() {
           }}
         />
       </div>
+    </div>
 
       {tab === 'quests' && (
         <>
-          {allTags.length > 0 && (
-            <div className="flex items-center gap-1.5 mb-3 flex-wrap">
-              <button
-                onClick={() => setFilterTags([])}
-                className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-                  filterTags.length === 0
-                    ? 'bg-slate-700 text-white'
-                    : 'text-slate-500 hover:text-slate-300'
-                }`}
-              >
-                All
-              </button>
-              {allTags.map((tag) => (
+          <div className="px-4">
+            {allTags.length > 0 && (
+              <div className="flex items-center gap-1.5 mb-3 flex-wrap">
                 <button
-                  key={tag}
-                  onClick={() => {
-                    setFilterTags(
-                      filterTags.includes(tag)
-                        ? filterTags.filter((t) => t !== tag)
-                        : [...filterTags, tag],
-                    )
-                  }}
+                  onClick={() => setFilterTags([])}
                   className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-                    filterTags.includes(tag)
-                      ? 'bg-blue-600 text-white'
+                    filterTags.length === 0
+                      ? 'bg-slate-700 text-white'
                       : 'text-slate-500 hover:text-slate-300'
                   }`}
                 >
-                  {tag}
+                  All
                 </button>
-              ))}
-            </div>
-          )}
+                {allTags.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => {
+                      setFilterTags(
+                        filterTags.includes(tag)
+                          ? filterTags.filter((t) => t !== tag)
+                          : [...filterTags, tag],
+                      )
+                    }}
+                    className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+                      filterTags.includes(tag)
+                        ? 'bg-blue-600 text-white'
+                        : 'text-slate-500 hover:text-slate-300'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            )}
 
-          <div className="flex items-center gap-2 justify-between">
-            <QuickAddBar
-              presets={quickPresets}
-              selectedDate={selectedDate}
-               onInstantAdd={(preset, config) => addQuestFromPreset(preset, selectedDate, config)}
-              onManageAdd={addQuickPreset}
-              onManageDelete={deleteQuickPreset}
-            />
-            <Button variant="icon" aria-label="Edit panels" onClick={() => setShowEditPanels(true)}>
-              <Settings className="w-5 h-5" />
-            </Button>
+            <div className="flex items-center gap-2 justify-between">
+              <QuickAddBar
+                presets={quickPresets}
+                selectedDate={selectedDate}
+                 onInstantAdd={(preset, config) => addQuestFromPreset(preset, selectedDate, config)}
+                onManageAdd={addQuickPreset}
+                onManageDelete={deleteQuickPreset}
+              />
+              <Button variant="icon" aria-label="Edit panels" onClick={() => setShowEditPanels(true)}>
+                <Settings className="w-5 h-5" />
+              </Button>
+            </div>
+            {allVisibleHidden && (
+              <p className="text-sm text-slate-500 text-center py-8">
+                No panels visible. Tap Edit panels to show some.
+              </p>
+            )}
           </div>
-          {allVisibleHidden ? (
-            <p className="text-sm text-slate-500 text-center py-8">
-              No panels visible. Tap Edit panels to show some.
-            </p>
-          ) : (
+          {!allVisibleHidden && (
             <div className="flex-1 overflow-y-auto">
                <QuestsPanelsRow
                 quests={filteredQuests}
