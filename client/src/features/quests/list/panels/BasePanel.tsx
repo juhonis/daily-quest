@@ -1,4 +1,4 @@
-import type { Quest, CompletionRecord } from '../../../types'
+import type { Quest, CompletionRecord } from '../../../../types'
 import { QuestCard } from '../QuestCard'
 import { X, GripVertical } from 'lucide-react'
 

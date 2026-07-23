@@ -36,6 +36,7 @@ export const useStore = create<AppState>()(
       panelOrder: defaultPanelOrder,
       hiddenPanels: [],
       filterTags: [],
+      tagColors: {},
       coords: null,
       locationMode: 'auto',
       locationName: '',
@@ -164,6 +165,32 @@ export const useStore = create<AppState>()(
         })),
 
       setFilterTags: (tags) => set({ filterTags: tags }),
+      deleteTag: (tag) =>
+        set((s) => {
+          const { [tag]: _, ...rest } = s.tagColors
+          return {
+            quests: s.quests.map((q) => ({
+              ...q,
+              tags: q.tags?.filter((t) => t !== tag),
+            })),
+            tagColors: rest,
+          }
+        }),
+      renameTag: (oldTag, newTag) =>
+        set((s) => {
+          const { [oldTag]: color, ...rest } = s.tagColors
+          return {
+            quests: s.quests.map((q) => ({
+              ...q,
+              tags: q.tags?.map((t) => (t === oldTag ? newTag : t)),
+            })),
+            tagColors: color ? { ...rest, [newTag]: color } : rest,
+          }
+        }),
+      setTagColor: (tag, color) =>
+        set((s) => ({
+          tagColors: { ...s.tagColors, [tag]: color },
+        })),
 
       setCoords: (coords) => set({ coords }),
       setLocationMode: (mode) => set({ locationMode: mode }),

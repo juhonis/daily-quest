@@ -1,7 +1,7 @@
-import type { Quest, CompletionRecord } from '../../../types'
+import type { Quest, CompletionRecord } from '../../../../types'
 import { BasePanel } from './BasePanel'
 
-interface RolloverQuestsPanelProps {
+interface DailyQuestsPanelProps {
   quests: Quest[]
   selectedDate: string
   completions: CompletionRecord[]
@@ -13,6 +13,6 @@ interface RolloverQuestsPanelProps {
   onHide?: () => void
 }
 
-export function RolloverQuestsPanel(props: RolloverQuestsPanelProps) {
-  return <BasePanel {...props} label="Rollover" emptyHint="Nothing rolling over. All caught up." />
+export function DailyQuestsPanel(props: DailyQuestsPanelProps) {
+  return <BasePanel {...props} label="Daily" emptyHint="No daily quests repeating today." />
 }

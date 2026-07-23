@@ -1,5 +1,5 @@
 import { CalendarColumn } from '../../features/calendar/CalendarColumn'
-import { QuestsColumn } from '../../features/quests/QuestsColumn'
+import { QuestsColumn } from '../../features/quests/list/QuestsColumn'
 import { DoneColumn } from '../../features/done/DoneColumn'
 
 export function AppShell() {

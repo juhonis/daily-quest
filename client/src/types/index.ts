@@ -92,6 +92,10 @@ interface AppState {
   togglePanelHidden: (id: PanelId) => void
   filterTags: string[]
   setFilterTags: (tags: string[]) => void
+  tagColors: Record<string, string>
+  setTagColor: (tag: string, color: string) => void
+  deleteTag: (tag: string) => void
+  renameTag: (oldTag: string, newTag: string) => void
   setCoords: (coords: WeatherCoords) => void
   setLocationMode: (mode: LocationMode) => void
   setLocationName: (name: string) => void
