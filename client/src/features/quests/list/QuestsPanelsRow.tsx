@@ -35,6 +35,14 @@ const PANEL_MAP: Record<PanelId, typeof DailyQuestsPanel> = {
   done: DoneQuestsPanel,
 }
 
+const PANEL_LABELS: Record<PanelId, string> = {
+  daily: 'Daily',
+  repeating: 'Repeating',
+  important: 'Important today',
+  rollover: 'Rollover',
+  done: 'Done',
+}
+
 interface QuestsPanelsRowProps {
   quests: Quest[]
   completions: CompletionRecord[]
@@ -48,8 +56,9 @@ interface QuestsPanelsRowProps {
 function SortablePanel({
   id,
   quests,
+  labelOverride,
   ...rest
-}: { id: PanelId; quests: Quest[] } & Omit<QuestsPanelsRowProps, 'quests'>) {
+}: { id: PanelId; quests: Quest[]; labelOverride?: string } & Omit<QuestsPanelsRowProps, 'quests'>) {
   const {
     attributes,
     listeners,
@@ -79,6 +88,7 @@ function SortablePanel({
       <Panel
         quests={quests}
         {...rest}
+        labelOverride={labelOverride}
         dragHandleProps={dragHandleProps}
         onHide={() => togglePanelHidden(id)}
       />
@@ -89,6 +99,7 @@ function SortablePanel({
 export function QuestsPanelsRow(props: QuestsPanelsRowProps) {
   const panelOrder = useStore((s) => s.panelOrder)
   const hiddenPanels = useStore((s) => s.hiddenPanels)
+  const mergedPanels = useStore((s) => s.mergedPanels)
   const setPanelOrder = useStore((s) => s.setPanelOrder)
 
   const groups = groupQuestsByActivityReason(
@@ -116,7 +127,15 @@ export function QuestsPanelsRow(props: QuestsPanelsRowProps) {
     done: finished,
   }
 
-  const visiblePanels = panelOrder.filter((id) => !hiddenPanels.includes(id))
+  const visiblePanels = panelOrder.filter((id) => !hiddenPanels.includes(id) && !(id in mergedPanels))
+
+  const mergedQuestMap = { ...questMap }
+  for (const [source, target] of Object.entries(mergedPanels)) {
+    mergedQuestMap[target as PanelId] = [
+      ...mergedQuestMap[target as PanelId],
+      ...questMap[source as PanelId],
+    ]
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -141,15 +160,24 @@ export function QuestsPanelsRow(props: QuestsPanelsRowProps) {
       onDragEnd={handleDragEnd}
     >
       <SortableContext items={visiblePanels} strategy={rectSortingStrategy}>
-        <div className="flex flex-row gap-3 h-full overflow-x-auto items-stretch">
-          {visiblePanels.map((id) => (
-            <SortablePanel
-              key={id}
-              id={id}
-              {...props}
-              quests={questMap[id]}
-            />
-          ))}
+        <div className="flex flex-row gap-3 h-full items-stretch min-w-0">
+          {visiblePanels.map((id) => {
+            const mergedSources = Object.entries(mergedPanels)
+              .filter(([, target]) => target === id)
+              .map(([source]) => PANEL_LABELS[source as PanelId])
+            const labelOverride = mergedSources.length > 0
+              ? `${PANEL_LABELS[id]} + ${mergedSources.join(', ')}`
+              : undefined
+            return (
+              <SortablePanel
+                key={id}
+                id={id}
+                {...props}
+                quests={mergedQuestMap[id]}
+                labelOverride={labelOverride}
+              />
+            )
+          })}
         </div>
       </SortableContext>
     </DndContext>

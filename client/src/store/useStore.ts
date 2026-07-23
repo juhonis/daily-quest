@@ -37,6 +37,7 @@ export const useStore = create<AppState>()(
       hiddenPanels: [],
       filterTags: [],
       tagColors: {},
+      mergedPanels: {},
       coords: null,
       locationMode: 'auto',
       locationName: '',
@@ -192,6 +193,19 @@ export const useStore = create<AppState>()(
           tagColors: { ...s.tagColors, [tag]: color },
         })),
 
+      mergePanel: (source, target) =>
+        set((s) => {
+          if (source === target) return s
+          if (Object.values(s.mergedPanels).includes(source)) return s
+          const { [source]: _, ...withoutSource } = s.mergedPanels
+          return { mergedPanels: { ...withoutSource, [source]: target } }
+        }),
+      unmergePanel: (source) =>
+        set((s) => {
+          const { [source]: _, ...rest } = s.mergedPanels
+          return { mergedPanels: rest }
+        }),
+
       setCoords: (coords) => set({ coords }),
       setLocationMode: (mode) => set({ locationMode: mode }),
       setLocationName: (name) => set({ locationName: name }),
@@ -205,6 +219,7 @@ export const useStore = create<AppState>()(
           ...p,
           panelOrder: p.panelOrder ?? current.panelOrder,
           hiddenPanels: p.hiddenPanels ?? current.hiddenPanels,
+          mergedPanels: p.mergedPanels ?? current.mergedPanels,
         }
       },
     },

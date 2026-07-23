@@ -59,18 +59,18 @@ export function QuestCard({
         />
         <div className="flex-1 min-w-0">
           <span
-            className="relative inline-block"
+            className="relative inline-block max-w-full"
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >
             <span
-              className={`text-sm font-medium cursor-pointer hover:text-blue-400 transition-colors ${isChecked ? 'line-through text-slate-500' : 'text-slate-200'}`}
+              className={`text-sm font-medium cursor-pointer hover:text-blue-400 transition-colors break-words ${isChecked ? 'line-through text-slate-500' : 'text-slate-200'}`}
             >
               {quest.title}
             </span>
             <div
               className={`absolute left-0 top-full mt-1 z-50 w-72 rounded-lg border border-slate-700 bg-slate-900 p-3 shadow-xl transition-opacity duration-150 ${
-                hoverOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
+                hoverOpen ? 'opacity-100 block' : 'opacity-0 hidden pointer-events-none'
               }`}
             >
               {quest.description && (

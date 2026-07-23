@@ -11,6 +11,7 @@ interface RepeatingQuestsPanelProps {
   onEdit: (questId: string) => void
   dragHandleProps?: Record<string, unknown>
   onHide?: () => void
+  labelOverride?: string
 }
 
 export function RepeatingQuestsPanel(props: RepeatingQuestsPanelProps) {
