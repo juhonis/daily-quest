@@ -134,10 +134,10 @@ export function QuestsColumn() {
                             : [...filterTags, tag],
                         )
                       }}
-                      className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-                        filterTags.includes(tag) ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+                      className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
+                        filterTags.includes(tag) ? 'text-white border-transparent' : 'hover:brightness-125'
                       }`}
-                      style={filterTags.includes(tag) ? { backgroundColor: color } : {}}
+                      style={filterTags.includes(tag) ? { backgroundColor: color } : { borderColor: color, color }}
                     >
                       {tag}
                     </button>
