@@ -164,6 +164,20 @@ export const useStore = create<AppState>()(
         })),
 
       setFilterTags: (tags) => set({ filterTags: tags }),
+      deleteTag: (tag) =>
+        set((s) => ({
+          quests: s.quests.map((q) => ({
+            ...q,
+            tags: q.tags?.filter((t) => t !== tag),
+          })),
+        })),
+      renameTag: (oldTag, newTag) =>
+        set((s) => ({
+          quests: s.quests.map((q) => ({
+            ...q,
+            tags: q.tags?.map((t) => (t === oldTag ? newTag : t)),
+          })),
+        })),
 
       setCoords: (coords) => set({ coords }),
       setLocationMode: (mode) => set({ locationMode: mode }),

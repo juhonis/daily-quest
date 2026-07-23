@@ -2,7 +2,8 @@ import { useState, useMemo, type FormEvent } from 'react'
 import type { Quest, QuickPreset, QuestStatus, RepeatType } from '../../../types'
 import { useStore } from '../../../store/useStore'
 import { Button } from '../../../components/ui/Button'
-import { X } from 'lucide-react'
+import { Modal } from '../../../components/ui/Modal'
+import { X, Settings, Pencil, Trash2 } from 'lucide-react'
 
 interface QuestCreateFormProps {
   initialData?: Quest
@@ -18,7 +19,7 @@ function emptyForm(defaultDate: string) {
     description: '',
     targetDate: defaultDate,
     status: 'active' as QuestStatus,
-    rollover: false,
+    rollover: true,
     repeat: 'none' as RepeatType,
     repeatInterval: 1,
     repeatUnit: 'day' as 'day' | 'week' | 'month',
@@ -300,7 +301,12 @@ function SectionCard({ title, children }: { title: string; children: React.React
 
 function TagInput({ tags, onAddTag, onRemoveTag }: { tags: string[]; onAddTag: (tag: string) => void; onRemoveTag: (tag: string) => void }) {
   const [input, setInput] = useState('')
+  const [showTagMgr, setShowTagMgr] = useState(false)
+  const [editingTag, setEditingTag] = useState<string | null>(null)
+  const [editValue, setEditValue] = useState('')
   const quests = useStore((s) => s.quests)
+  const deleteTag = useStore((s) => s.deleteTag)
+  const renameTag = useStore((s) => s.renameTag)
   const allTags = useMemo(() => {
     const set = new Set<string>()
     quests.forEach((q) => q.tags?.forEach((t) => set.add(t)))
@@ -321,7 +327,77 @@ function TagInput({ tags, onAddTag, onRemoveTag }: { tags: string[]; onAddTag: (
 
   return (
     <div>
-      <label className="block text-xs font-medium text-slate-400 mb-1">Tags</label>
+      <div className="flex items-center justify-between mb-1">
+        <label className="block text-xs font-medium text-slate-400">Tags</label>
+        <button
+          type="button"
+          onClick={() => setShowTagMgr(!showTagMgr)}
+          className="text-slate-500 hover:text-slate-300 transition-colors"
+          aria-label="Manage tags"
+        >
+          <Settings className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      <Modal isOpen={showTagMgr} onClose={() => setShowTagMgr(false)} title="Manage Tags">
+        {allTags.length === 0 ? (
+          <p className="text-sm text-slate-500">No tags yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {allTags.map((tag) => (
+              <div key={tag} className="flex items-center gap-2">
+                {editingTag === tag ? (
+                  <input
+                    type="text"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        const val = editValue.trim()
+                        if (val && val !== tag) renameTag(tag, val)
+                        setEditingTag(null)
+                        setShowTagMgr(false)
+                      }
+                      if (e.key === 'Escape') setEditingTag(null)
+                    }}
+                    onBlur={() => {
+                      const val = editValue.trim()
+                      if (val && val !== tag) renameTag(tag, val)
+                      setEditingTag(null)
+                    }}
+                    autoFocus
+                    className="flex-1 rounded border border-slate-600 bg-slate-700 px-2 py-1 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <span className="flex-1 text-sm text-slate-200">{tag}</span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => { setEditingTag(tag); setEditValue(tag) }}
+                  className="text-slate-500 hover:text-blue-400 transition-colors shrink-0"
+                  aria-label={`Edit tag ${tag}`}
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm(`Delete tag "${tag}"? This will remove it from all quests.`)) {
+                      deleteTag(tag)
+                    }
+                  }}
+                  className="text-slate-500 hover:text-red-400 transition-colors shrink-0"
+                  aria-label={`Delete tag ${tag}`}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
+
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-2">
           {tags.map((tag) => (
