@@ -96,6 +96,9 @@ interface AppState {
   setTagColor: (tag: string, color: string) => void
   deleteTag: (tag: string) => void
   renameTag: (oldTag: string, newTag: string) => void
+  mergedPanels: Partial<Record<PanelId, PanelId>>
+  mergePanel: (source: PanelId, target: PanelId) => void
+  unmergePanel: (source: PanelId) => void
   setCoords: (coords: WeatherCoords) => void
   setLocationMode: (mode: LocationMode) => void
   setLocationName: (name: string) => void

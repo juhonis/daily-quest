@@ -15,6 +15,7 @@ interface BasePanelProps {
   isDone?: boolean
   dragHandleProps?: Record<string, unknown>
   onHide?: () => void
+  labelOverride?: string
 }
 
 export function BasePanel({
@@ -30,6 +31,7 @@ export function BasePanel({
   isDone,
   dragHandleProps,
   onHide,
+  labelOverride,
 }: BasePanelProps) {
   return (
     <div className="rounded-lg border border-slate-700 bg-slate-800/30 p-3 h-full flex flex-col min-w-0">
@@ -39,8 +41,8 @@ export function BasePanel({
             <GripVertical className="w-3.5 h-3.5" />
           </button>
         )}
-        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex-1 min-w-0 truncate" title={label}>
-          {label}
+        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex-1 min-w-0 truncate" title={labelOverride ?? label}>
+          {labelOverride ?? label}
         </h3>
         {onHide && (
           <button onClick={onHide} className="p-0.5 text-slate-500 hover:text-red-400 flex-shrink-0">
