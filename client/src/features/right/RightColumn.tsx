@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useStore } from '../../store/useStore'
 import { BasePanel } from '../quests/list/panels/BasePanel'
+import { hasCompletionOnDate } from '../../utils/dateUtils'
 
 const UNTAGGED = '__untagged__'
 const HIDE_ALL = '__hide__'
@@ -15,6 +16,7 @@ export function RightColumn() {
   const tagColors = useStore((s) => s.tagColors)
 
   const [filterTags, setFilterTags] = useState<string[]>([])
+  const [doneFilter, setDoneFilter] = useState<'not-done' | 'done'>('not-done')
 
   const allTags = useMemo(() => {
     const set = new Set<string>()
@@ -36,6 +38,13 @@ export function RightColumn() {
       return matchesTag || matchesUntagged
     })
   }, [quests, filterTags])
+
+  const toggledQuests = useMemo(() => {
+    return filteredQuests.filter((q) => {
+      const isCompleted = hasCompletionOnDate(completions, q.id, selectedDate)
+      return doneFilter === 'done' ? isCompleted : !isCompleted
+    })
+  }, [filteredQuests, completions, selectedDate, doneFilter])
 
   return (
     <div className="p-4 h-full flex flex-col min-w-0">
@@ -110,7 +119,7 @@ export function RightColumn() {
       )}
       <div className="flex-1 min-w-0">
         <BasePanel
-          quests={filteredQuests}
+          quests={toggledQuests}
           selectedDate={selectedDate}
           completions={completions}
           onToggleCompletion={toggleCompletion}
@@ -119,6 +128,30 @@ export function RightColumn() {
           onEdit={() => {}}
           label="All Quests"
           emptyHint="No quests found."
+          titleExtra={
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setDoneFilter('not-done')}
+                className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
+                  doneFilter === 'not-done'
+                    ? 'bg-blue-700/40 text-blue-400'
+                    : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                Not done
+              </button>
+              <button
+                onClick={() => setDoneFilter('done')}
+                className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
+                  doneFilter === 'done'
+                    ? 'bg-green-700/40 text-green-400'
+                    : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                Done
+              </button>
+            </div>
+          }
         />
       </div>
     </div>

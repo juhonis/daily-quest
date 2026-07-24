@@ -16,6 +16,7 @@ interface BasePanelProps {
   dragHandleProps?: Record<string, unknown>
   onHide?: () => void
   labelOverride?: string
+  titleExtra?: React.ReactNode
 }
 
 export function BasePanel({
@@ -32,6 +33,7 @@ export function BasePanel({
   dragHandleProps,
   onHide,
   labelOverride,
+  titleExtra,
 }: BasePanelProps) {
   return (
     <div className="rounded-lg border border-slate-700 bg-slate-800/30 p-3 h-full flex flex-col min-w-0">
@@ -44,6 +46,7 @@ export function BasePanel({
         <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex-1 min-w-0 truncate" title={labelOverride ?? label}>
           {labelOverride ?? label}
         </h3>
+        {titleExtra}
         {onHide && (
           <button onClick={onHide} className="p-0.5 text-slate-500 hover:text-red-400 flex-shrink-0">
             <X className="w-3.5 h-3.5" />
