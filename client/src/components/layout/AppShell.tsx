@@ -1,6 +1,6 @@
 import { CalendarColumn } from '../../features/calendar/CalendarColumn'
 import { QuestsColumn } from '../../features/quests/list/QuestsColumn'
-import { DoneColumn } from '../../features/done/DoneColumn'
+import { RightColumn } from '../../features/right/RightColumn'
 
 export function AppShell() {
   return (
@@ -12,7 +12,7 @@ export function AppShell() {
         <QuestsColumn />
       </div>
       <div className="border-l border-slate-700 overflow-y-auto max-h-screen">
-        <DoneColumn />
+        <RightColumn />
       </div>
     </div>
   )

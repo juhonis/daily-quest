@@ -1,4 +1,4 @@
-export function DoneColumn() {
+export function RightColumn() {
   return (
     <div className="p-4 text-slate-500 text-sm">
       Stats (coming soon)
