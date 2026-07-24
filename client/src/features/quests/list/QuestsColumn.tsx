@@ -36,15 +36,29 @@ export function QuestsColumn() {
   const setFilterTags = useStore((s) => s.setFilterTags)
   const tagColors = useStore((s) => s.tagColors)
 
+  const UNTAGGED = '__untagged__'
+  const HIDE_ALL = '__hide__'
+
   const allTags = useMemo(() => {
     const set = new Set<string>()
     quests.forEach((q) => q.tags?.forEach((t) => set.add(t)))
     return [...set].sort()
   }, [quests])
 
-  const filteredQuests = filterTags.length > 0
-    ? quests.filter((q) => q.tags?.some((t) => filterTags.includes(t)))
-    : quests
+  const hasUntaggedQuests = quests.some((q) => !q.tags || q.tags.length === 0)
+
+  const allTagsSelected = allTags.length > 0 && allTags.every((t) => filterTags.includes(t)) && !filterTags.includes(HIDE_ALL)
+
+  const filteredQuests = useMemo(() => {
+    if (filterTags.length === 0) return quests
+    if (filterTags.includes(HIDE_ALL)) return []
+    return quests.filter((q) => {
+      const hasTags = q.tags && q.tags.length > 0
+      const matchesTag = hasTags && q.tags!.some((t) => filterTags.includes(t))
+      const matchesUntagged = !hasTags && filterTags.includes(UNTAGGED)
+      return matchesTag || matchesUntagged
+    })
+  }, [quests, filterTags])
 
   const allVisibleHidden = hiddenPanels.length === 5
   const isToday = selectedDate === getTodayLocal()
@@ -118,12 +132,20 @@ export function QuestsColumn() {
                 onManageAdd={addQuickPreset}
                 onManageDelete={deleteQuickPreset}
               />
-              {allTags.length > 0 && (
+              {(allTags.length > 0 || hasUntaggedQuests) && (
                 <div className="flex items-center gap-1.5 flex-wrap justify-center">
                   <button
-                    onClick={() => setFilterTags([])}
+                    onClick={() => {
+                      if (filterTags.length === 0) {
+                        setFilterTags([...allTags, UNTAGGED])
+                      } else if (allTagsSelected) {
+                        setFilterTags([HIDE_ALL])
+                      } else {
+                        setFilterTags([...allTags, UNTAGGED])
+                      }
+                    }}
                     className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-                      filterTags.length === 0
+                      filterTags.length === 0 || allTagsSelected
                         ? 'bg-slate-700 text-white'
                         : 'text-slate-500 hover:text-slate-300'
                     }`}
@@ -136,11 +158,15 @@ export function QuestsColumn() {
                       <button
                         key={tag}
                         onClick={() => {
-                          setFilterTags(
-                            filterTags.includes(tag)
-                              ? filterTags.filter((t) => t !== tag)
-                              : [...filterTags, tag],
-                          )
+                          if (filterTags.includes(HIDE_ALL)) {
+                            setFilterTags([tag])
+                          } else {
+                            setFilterTags(
+                              filterTags.includes(tag)
+                                ? filterTags.filter((t) => t !== tag)
+                                : [...filterTags, tag],
+                            )
+                          }
                         }}
                         className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
                           filterTags.includes(tag) ? 'text-white border-transparent' : 'hover:brightness-125'
@@ -151,6 +177,28 @@ export function QuestsColumn() {
                       </button>
                     )
                   })}
+                  {hasUntaggedQuests && (
+                    <button
+                      onClick={() => {
+                        if (filterTags.includes(HIDE_ALL)) {
+                          setFilterTags([UNTAGGED])
+                        } else {
+                          setFilterTags(
+                            filterTags.includes(UNTAGGED)
+                              ? filterTags.filter((t) => t !== UNTAGGED)
+                              : [...filterTags, UNTAGGED],
+                          )
+                        }
+                      }}
+                      className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
+                        filterTags.includes(UNTAGGED) && !filterTags.includes(HIDE_ALL)
+                          ? 'bg-slate-600 text-white border-transparent'
+                          : 'text-slate-400 border-slate-500 hover:text-slate-300 hover:border-slate-400'
+                      }`}
+                    >
+                      No tag
+                    </button>
+                  )}
                 </div>
               )}
               <Button variant="icon" aria-label="Edit panels" onClick={() => setShowEditPanels(true)}>
