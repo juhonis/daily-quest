@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useStore } from '../../../store/useStore'
 import { Button } from '../../../components/ui/Button'
-import { Settings, ChevronLeft, ChevronRight, CalendarCheck } from 'lucide-react'
+import { Settings, Plus, ChevronLeft, ChevronRight, CalendarCheck } from 'lucide-react'
 import { format } from 'date-fns'
 import { addDays, getTodayLocal, parseDate } from '../../../utils/dateUtils'
 import { QuestsTabs } from '../QuestsTabs'
@@ -35,6 +35,22 @@ export function QuestsColumn() {
   const filterTags = useStore((s) => s.filterTags)
   const setFilterTags = useStore((s) => s.setFilterTags)
   const tagColors = useStore((s) => s.tagColors)
+  const tagPanels = useStore((s) => s.tagPanels)
+  const addTagPanel = useStore((s) => s.addTagPanel)
+
+  const [showTagPicker, setShowTagPicker] = useState(false)
+  const tagPickerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showTagPicker) return
+    function handler(e: MouseEvent) {
+      if (tagPickerRef.current && !tagPickerRef.current.contains(e.target as Node)) {
+        setShowTagPicker(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showTagPicker])
 
   const UNTAGGED = '__untagged__'
   const HIDE_ALL = '__hide__'
@@ -48,6 +64,7 @@ export function QuestsColumn() {
   const hasUntaggedQuests = quests.some((q) => !q.tags || q.tags.length === 0)
 
   const allTagsSelected = allTags.length > 0 && allTags.every((t) => filterTags.includes(t)) && !filterTags.includes(HIDE_ALL)
+  const availableTags = allTags.filter((t) => !tagPanels.includes(t))
 
   const filteredQuests = useMemo(() => {
     if (filterTags.length === 0) return quests
@@ -60,7 +77,7 @@ export function QuestsColumn() {
     })
   }, [quests, filterTags])
 
-  const allVisibleHidden = hiddenPanels.length === 5
+  const allVisibleHidden = hiddenPanels.length === 5 && tagPanels.length === 0
   const isToday = selectedDate === getTodayLocal()
   const dayName = format(parseDate(selectedDate), 'EEEE')
   const dateLabel = format(parseDate(selectedDate), 'dd/MM/yyyy')
@@ -201,13 +218,40 @@ export function QuestsColumn() {
                   )}
                 </div>
               )}
-              <Button variant="icon" aria-label="Edit panels" onClick={() => setShowEditPanels(true)}>
-                <Settings className="w-5 h-5" />
-              </Button>
+              <div className="relative flex items-center gap-1" ref={tagPickerRef}>
+                {availableTags.length > 0 && (
+                  <Button variant="icon" aria-label="Add tag panel" onClick={() => setShowTagPicker((o) => !o)}>
+                    <Plus className="w-5 h-5" />
+                  </Button>
+                )}
+                {showTagPicker && (
+                  <div className="absolute right-0 top-full mt-1 z-50 rounded-lg border border-slate-600 bg-slate-800 shadow-xl py-1 min-w-[140px]">
+                    {availableTags.map((tag) => {
+                      const color = tagColors[tag] ?? '#3B82F6'
+                      return (
+                        <button
+                          key={tag}
+                          onClick={() => {
+                            addTagPanel(tag)
+                            setShowTagPicker(false)
+                          }}
+                          className="w-full text-left px-3 py-1 text-xs text-slate-300 hover:bg-slate-600 transition-colors flex items-center gap-2"
+                        >
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+                          {tag}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+                <Button variant="icon" aria-label="Edit panels" onClick={() => setShowEditPanels(true)}>
+                  <Settings className="w-5 h-5" />
+                </Button>
+              </div>
             </div>
             {allVisibleHidden && (
               <p className="text-sm text-slate-500 text-center py-8">
-                No panels visible. Tap Edit panels to show some.
+                No panels visible. Tap Edit panels to show some, or add a tag panel with the + button.
               </p>
             )}
           </div>

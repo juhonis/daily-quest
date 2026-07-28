@@ -161,6 +161,8 @@ export function QuestHistoryPanel({ selectedQuestId, onSelectQuest }: QuestHisto
 
       <div className="space-y-1 max-h-[60vh] overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
         {filtered.map((quest) => {
+          const firstTag = quest.tags?.[0]
+          const tagColor = firstTag ? tagColors[firstTag] : undefined
           return (
             <button
               key={quest.id}
@@ -170,7 +172,7 @@ export function QuestHistoryPanel({ selectedQuestId, onSelectQuest }: QuestHisto
                   ? 'border border-blue-600/30'
                   : 'hover:bg-slate-700/50 border border-transparent'
               }`}
-              style={selectedQuestId === quest.id ? { backgroundColor: '#3B82F633' } : {}}
+              style={tagColor ? { backgroundColor: `${tagColor}19` } : {}}
             >
               <div className="text-sm font-medium text-slate-200 truncate">
                 <span
