@@ -104,6 +104,7 @@ export function QuestsPanelsRow(props: QuestsPanelsRowProps) {
   const setPanelOrder = useStore((s) => s.setPanelOrder)
   const tagPanels = useStore((s) => s.tagPanels)
   const removeTagPanel = useStore((s) => s.removeTagPanel)
+  const tagColors = useStore((s) => s.tagColors)
   const allQuests = useStore((s) => s.quests)
 
   const groups = groupQuestsByActivityReason(
@@ -189,6 +190,7 @@ export function QuestsPanelsRow(props: QuestsPanelsRowProps) {
           <TagPanel
             tag={tag}
             quests={allQuests}
+            color={tagColors[tag] ?? '#3B82F6'}
             {...props}
             onHide={() => removeTagPanel(tag)}
           />
