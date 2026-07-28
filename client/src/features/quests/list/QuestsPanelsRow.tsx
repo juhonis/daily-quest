@@ -26,6 +26,7 @@ import { RepeatingQuestsPanel } from './panels/RepeatingQuestsPanel'
 import { ImportantQuestsPanel } from './panels/ImportantQuestsPanel'
 import { RolloverQuestsPanel } from './panels/RolloverQuestsPanel'
 import { DoneQuestsPanel } from './panels/DoneQuestsPanel'
+import { TagPanel } from './panels/TagPanel'
 
 const PANEL_MAP: Record<PanelId, typeof DailyQuestsPanel> = {
   daily: DailyQuestsPanel,
@@ -101,6 +102,9 @@ export function QuestsPanelsRow(props: QuestsPanelsRowProps) {
   const hiddenPanels = useStore((s) => s.hiddenPanels)
   const mergedPanels = useStore((s) => s.mergedPanels)
   const setPanelOrder = useStore((s) => s.setPanelOrder)
+  const tagPanels = useStore((s) => s.tagPanels)
+  const removeTagPanel = useStore((s) => s.removeTagPanel)
+  const allQuests = useStore((s) => s.quests)
 
   const groups = groupQuestsByActivityReason(
     props.quests,
@@ -154,13 +158,13 @@ export function QuestsPanelsRow(props: QuestsPanelsRowProps) {
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext items={visiblePanels} strategy={rectSortingStrategy}>
-        <div className="flex flex-row gap-3 h-full items-stretch min-w-0">
+    <div className="flex flex-row gap-3 h-full items-stretch min-w-0">
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={visiblePanels} strategy={rectSortingStrategy}>
           {visiblePanels.map((id) => {
             const mergedSources = Object.entries(mergedPanels)
               .filter(([, target]) => target === id)
@@ -178,8 +182,18 @@ export function QuestsPanelsRow(props: QuestsPanelsRowProps) {
               />
             )
           })}
+        </SortableContext>
+      </DndContext>
+      {tagPanels.map((tag) => (
+        <div key={tag} className="flex-1 min-w-0">
+          <TagPanel
+            tag={tag}
+            quests={allQuests}
+            {...props}
+            onHide={() => removeTagPanel(tag)}
+          />
         </div>
-      </SortableContext>
-    </DndContext>
+      ))}
+    </div>
   )
 }

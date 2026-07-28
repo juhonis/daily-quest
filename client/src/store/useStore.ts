@@ -38,6 +38,7 @@ export const useStore = create<AppState>()(
       filterTags: [],
       tagColors: {},
       mergedPanels: {},
+      tagPanels: [],
       coords: null,
       locationMode: 'auto',
       locationName: '',
@@ -166,6 +167,16 @@ export const useStore = create<AppState>()(
         })),
 
       setFilterTags: (tags) => set({ filterTags: tags }),
+
+      addTagPanel: (tag) =>
+        set((s) => ({
+          tagPanels: s.tagPanels.includes(tag) ? s.tagPanels : [...s.tagPanels, tag],
+        })),
+      removeTagPanel: (tag) =>
+        set((s) => ({
+          tagPanels: s.tagPanels.filter((t) => t !== tag),
+        })),
+
       deleteTag: (tag) =>
         set((s) => {
           const { [tag]: _, ...rest } = s.tagColors
@@ -220,6 +231,7 @@ export const useStore = create<AppState>()(
           panelOrder: p.panelOrder ?? current.panelOrder,
           hiddenPanels: p.hiddenPanels ?? current.hiddenPanels,
           mergedPanels: p.mergedPanels ?? current.mergedPanels,
+          tagPanels: p.tagPanels ?? current.tagPanels,
         }
       },
     },
