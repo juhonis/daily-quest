@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import type { Quest, CompletionRecord, SubQuest } from '../../../types'
 import { useStore } from '../../../store/useStore'
 import { Checkbox } from '../../../components/ui/Checkbox'
@@ -32,6 +32,12 @@ export function QuestCard({
   const isChecked = hasCompletionOnDate(completions, quest.id, selectedDate)
   const repeatInfo = repeatDescription(quest)
   const tagColors = useStore((s) => s.tagColors)
+  const firstTag = quest.tags?.[0]
+  const tagBg = useMemo(() => {
+    const color = firstTag ? tagColors[firstTag] : undefined
+    if (!color) return undefined
+    return isDone ? `${color}12` : `${color}1A`
+  }, [firstTag, tagColors, isDone])
 
   function handleMouseEnter() {
     if (hideTimer.current) clearTimeout(hideTimer.current)
@@ -49,7 +55,7 @@ export function QuestCard({
   }
 
   return (
-    <div className={`rounded-lg border p-3 transition-colors ${isDone ? 'border-slate-700 bg-slate-800/40' : 'border-slate-700 bg-slate-800'}`}>
+    <div className={`rounded-lg border p-3 transition-colors ${isDone ? 'border-slate-700 bg-slate-800/40' : 'border-slate-700 bg-slate-800'}`} style={tagBg ? { backgroundColor: tagBg } : undefined}>
       <div className="flex items-start gap-3">
         <Checkbox
           checked={isChecked}
