@@ -1,3 +1,6 @@
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import type { Components } from 'react-markdown'
 import type { Note } from '../../types'
 import { useStore } from '../../store/useStore'
 
@@ -8,6 +11,31 @@ interface NoteViewModalProps {
   onArchive: (noteId: string) => void
   onUnarchive: (noteId: string) => void
   onDelete: (noteId: string) => void
+}
+
+const markdownComponents: Components = {
+  a: ({ href, children }) => (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">
+      {children}
+    </a>
+  ),
+  pre: ({ children }) => (
+    <pre className="rounded-lg bg-slate-900/80 p-3 overflow-x-auto text-xs">{children}</pre>
+  ),
+  code: ({ children }) => (
+    <code className="text-pink-300 bg-slate-900/60 px-1 rounded text-xs">{children}</code>
+  ),
+  table: ({ children }) => (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm border-collapse">{children}</table>
+    </div>
+  ),
+  th: ({ children }) => (
+    <th className="border border-slate-600 px-2 py-1 text-left text-slate-200 font-medium">{children}</th>
+  ),
+  td: ({ children }) => (
+    <td className="border border-slate-600 px-2 py-1 text-slate-300">{children}</td>
+  ),
 }
 
 export function NoteViewModal({ note, onClose, onEdit, onArchive, onUnarchive, onDelete }: NoteViewModalProps) {
@@ -60,9 +88,11 @@ export function NoteViewModal({ note, onClose, onEdit, onArchive, onUnarchive, o
 
           <div className="max-h-80 overflow-y-auto -mx-6 px-6">
             {note.content ? (
-              <p className="text-sm text-slate-200 whitespace-pre-wrap leading-relaxed">
-                {note.content}
-              </p>
+              <div className="prose prose-invert prose-sm max-w-none text-slate-200">
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                  {note.content}
+                </ReactMarkdown>
+              </div>
             ) : (
               <p className="text-sm text-slate-500 italic">No content</p>
             )}
