@@ -1,5 +1,8 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { X } from 'lucide-react'
 import { Modal } from '../../components/ui/Modal'
+import { useStore } from '../../store/useStore'
+import { NOTE_TAG_PALETTE, assignNoteTagColor, getNoteTagStyle } from './noteTagColors'
 import type { Note } from '../../types'
 
 const NOTE_COLORS = [
@@ -23,6 +26,40 @@ export function NoteCreateModal({ isOpen, onClose, onSave, initialData }: NoteCr
   const [title, setTitle] = useState(initialData?.title ?? '')
   const [content, setContent] = useState(initialData?.content ?? '')
   const [color, setColor] = useState(initialData?.color ?? NOTE_COLORS[0].value)
+  const [tags, setTags] = useState<string[]>(initialData?.tags ?? [])
+  const [tagInput, setTagInput] = useState('')
+
+  const noteTagColors = useStore((s) => s.noteTagColors)
+  const setNoteTagColor = useStore((s) => s.setNoteTagColor)
+
+  const allNoteTags = useMemo(() => {
+    const set = new Set<string>()
+    Object.keys(noteTagColors).forEach((t) => set.add(t))
+    return [...set].sort()
+  }, [noteTagColors])
+
+  const suggestions = tagInput.trim()
+    ? allNoteTags.filter((t) => t.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(t))
+    : []
+
+  function ensureColor(tag: string) {
+    if (!noteTagColors[tag]) {
+      setNoteTagColor(tag, assignNoteTagColor(tag, noteTagColors))
+    }
+  }
+
+  function addTag(raw: string) {
+    const trimmed = raw.trim()
+    if (trimmed && !tags.includes(trimmed)) {
+      setTags([...tags, trimmed])
+      ensureColor(trimmed)
+    }
+    setTagInput('')
+  }
+
+  function removeTag(tag: string) {
+    setTags(tags.filter((t) => t !== tag))
+  }
 
   function handleSave() {
     if (!title.trim()) return
@@ -32,6 +69,7 @@ export function NoteCreateModal({ isOpen, onClose, onSave, initialData }: NoteCr
       title: title.trim(),
       content: content.trim(),
       color,
+      tags: tags.length > 0 ? tags : undefined,
       createdAt: initialData?.createdAt ?? now,
       updatedAt: now,
     })
@@ -39,6 +77,7 @@ export function NoteCreateModal({ isOpen, onClose, onSave, initialData }: NoteCr
       setTitle('')
       setContent('')
       setColor(NOTE_COLORS[0].value)
+      setTags([])
     }
     onClose()
   }
@@ -71,6 +110,64 @@ export function NoteCreateModal({ isOpen, onClose, onSave, initialData }: NoteCr
             rows={8}
             className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white placeholder-slate-400 outline-none focus:border-blue-500 resize-none"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-1">Tags</label>
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {tags.map((tag) => {
+                const color = noteTagColors[tag] ?? '#3B82F6'
+                return (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs"
+                    style={getNoteTagStyle(color)}
+                  >
+                    {tag}
+                    <button type="button" onClick={() => removeTag(tag)} className="opacity-70 hover:opacity-100" style={{ color }}>
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )
+              })}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput) } }}
+              placeholder="Add a tag..."
+              className="flex-1 rounded-lg border border-slate-600 bg-slate-700 px-3 py-1.5 text-sm text-white placeholder-slate-500 outline-none focus:border-blue-500"
+            />
+            <button
+              type="button"
+              onClick={() => addTag(tagInput)}
+              className="shrink-0 rounded-lg bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-500 transition-colors"
+            >
+              Add
+            </button>
+          </div>
+          {suggestions.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
+              {suggestions.map((s) => {
+                const color = noteTagColors[s] ?? '#3B82F6'
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => { addTag(s) }}
+                    className="text-xs transition-colors hover:opacity-80"
+                    style={{ color }}
+                  >
+                    + {s}
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         <div>

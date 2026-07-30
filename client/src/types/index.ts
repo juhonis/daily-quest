@@ -70,6 +70,7 @@ interface Note {
   title: string
   content: string
   color: string
+  tags?: string[]
   createdAt: string
   updatedAt: string
 }
@@ -100,6 +101,8 @@ interface AppState {
   setPanelOrder: (order: PanelId[]) => void
   togglePanelHidden: (id: PanelId) => void
   notes: Note[]
+  noteTagColors: Record<string, string>
+  filterNoteTags: string[]
   filterTags: string[]
   setFilterTags: (tags: string[]) => void
   tagColors: Record<string, string>
@@ -115,6 +118,9 @@ interface AppState {
   addNote: (note: Note) => void
   updateNote: (noteId: string, updates: Partial<Note>) => void
   deleteNote: (noteId: string) => void
+  setNoteTagColor: (tag: string, color: string) => void
+  deleteNoteTag: (tag: string) => void
+  setFilterNoteTags: (tags: string[]) => void
   setCoords: (coords: WeatherCoords) => void
   setLocationMode: (mode: LocationMode) => void
   setLocationName: (name: string) => void

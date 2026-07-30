@@ -31,6 +31,8 @@ export const useStore = create<AppState>()(
     (set) => ({
       quests: [],
       notes: [],
+      noteTagColors: {},
+      filterNoteTags: [],
       completions: [],
       quickPresets: seededPresets,
       selectedDate: getTodayLocal(),
@@ -59,6 +61,24 @@ export const useStore = create<AppState>()(
         })),
       deleteNote: (noteId) =>
         set((s) => ({ notes: s.notes.filter((n) => n.id !== noteId) })),
+
+      setNoteTagColor: (tag, color) =>
+        set((s) => ({
+          noteTagColors: { ...s.noteTagColors, [tag]: color },
+        })),
+      deleteNoteTag: (tag) =>
+        set((s) => {
+          const { [tag]: _, ...rest } = s.noteTagColors
+          return {
+            notes: s.notes.map((n) => ({
+              ...n,
+              tags: n.tags?.filter((t) => t !== tag),
+            })),
+            noteTagColors: rest,
+            filterNoteTags: s.filterNoteTags.filter((t) => t !== tag),
+          }
+        }),
+      setFilterNoteTags: (tags) => set({ filterNoteTags: tags }),
 
       activateQuest: (questId, targetDate) =>
         set((s) => ({
