@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Plus, StickyNote, Archive, RotateCcw } from 'lucide-react'
+import { Plus, StickyNote, Archive } from 'lucide-react'
 import { useStore } from '../../store/useStore'
 import { NoteCard } from './NoteCard'
 import { NoteViewModal } from './NoteViewModal'
