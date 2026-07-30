@@ -19,6 +19,7 @@ export function NotesGrid() {
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [editingNote, setEditingNote] = useState<Note | null>(null)
   const [formKey, setFormKey] = useState(0)
+  const [sortNewest, setSortNewest] = useState(true)
 
   const allNoteTags = useMemo(() => {
     const set = new Set<string>()
@@ -28,9 +29,15 @@ export function NotesGrid() {
   }, [notes, noteTagColors])
 
   const filteredNotes = useMemo(() => {
-    if (filterNoteTags.length === 0) return notes
-    return notes.filter((n) => n.tags?.some((t) => filterNoteTags.includes(t)))
-  }, [notes, filterNoteTags])
+    const filtered = filterNoteTags.length === 0
+      ? [...notes]
+      : notes.filter((n) => n.tags?.some((t) => filterNoteTags.includes(t)))
+    filtered.sort((a, b) => {
+      const cmp = a.createdAt.localeCompare(b.createdAt)
+      return sortNewest ? -cmp : cmp
+    })
+    return filtered
+  }, [notes, filterNoteTags, sortNewest])
 
   function handleSave(note: Note) {
     const exists = notes.some((n) => n.id === note.id)
@@ -61,8 +68,27 @@ export function NotesGrid() {
 
   return (
     <div className="h-full flex flex-col">
-      {allNoteTags.length > 0 && (
-        <div className="flex items-center gap-1.5 flex-wrap px-4 pt-3 pb-1">
+      <div className="flex items-center justify-between px-4 pt-3 pb-1">
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setSortNewest(true)}
+            className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+              sortNewest ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            Newest
+          </button>
+          <button
+            onClick={() => setSortNewest(false)}
+            className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+              !sortNewest ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            Oldest
+          </button>
+        </div>
+        {allNoteTags.length > 0 && (
+          <div className="flex items-center gap-1.5 flex-wrap">
           <button
             onClick={() => setFilterNoteTags([])}
             className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
@@ -95,7 +121,8 @@ export function NotesGrid() {
             )
           })}
         </div>
-      )}
+        )}
+      </div>
 
       <div className="flex-1 overflow-y-auto relative">
         {notes.length === 0 ? (
