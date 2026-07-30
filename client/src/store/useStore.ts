@@ -30,6 +30,9 @@ export const useStore = create<AppState>()(
   persist(
     (set) => ({
       quests: [],
+      notes: [],
+      noteTagColors: {},
+      filterNoteTags: [],
       completions: [],
       quickPresets: seededPresets,
       selectedDate: getTodayLocal(),
@@ -50,6 +53,44 @@ export const useStore = create<AppState>()(
         })),
       deleteQuest: (questId) =>
         set((s) => ({ quests: s.quests.filter((q) => q.id !== questId) })),
+
+      addNote: (note) => set((s) => ({ notes: [...s.notes, note] })),
+      updateNote: (noteId, updates) =>
+        set((s) => ({
+          notes: s.notes.map((n) => (n.id === noteId ? { ...n, ...updates } : n)),
+        })),
+      deleteNote: (noteId) =>
+        set((s) => ({ notes: s.notes.filter((n) => n.id !== noteId) })),
+      archiveNote: (noteId) =>
+        set((s) => ({
+          notes: s.notes.map((n) =>
+            n.id === noteId ? { ...n, archivedAt: new Date().toISOString() } : n,
+          ),
+        })),
+      unarchiveNote: (noteId) =>
+        set((s) => ({
+          notes: s.notes.map((n) =>
+            n.id === noteId ? { ...n, archivedAt: null } : n,
+          ),
+        })),
+
+      setNoteTagColor: (tag, color) =>
+        set((s) => ({
+          noteTagColors: { ...s.noteTagColors, [tag]: color },
+        })),
+      deleteNoteTag: (tag) =>
+        set((s) => {
+          const { [tag]: _, ...rest } = s.noteTagColors
+          return {
+            notes: s.notes.map((n) => ({
+              ...n,
+              tags: n.tags?.filter((t) => t !== tag),
+            })),
+            noteTagColors: rest,
+            filterNoteTags: s.filterNoteTags.filter((t) => t !== tag),
+          }
+        }),
+      setFilterNoteTags: (tags) => set({ filterNoteTags: tags }),
 
       activateQuest: (questId, targetDate) =>
         set((s) => ({
