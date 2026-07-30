@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Plus, StickyNote } from 'lucide-react'
 import { useStore } from '../../store/useStore'
 import { NoteCard } from './NoteCard'
+import { NoteViewModal } from './NoteViewModal'
 import { NoteCreateModal } from './NoteCreateModal'
 import type { Note } from '../../types'
 
@@ -14,8 +15,10 @@ export function NotesGrid() {
   const updateNote = useStore((s) => s.updateNote)
   const deleteNote = useStore((s) => s.deleteNote)
 
-  const [modalOpen, setModalOpen] = useState(false)
+  const [viewingNote, setViewingNote] = useState<Note | null>(null)
+  const [editModalOpen, setEditModalOpen] = useState(false)
   const [editingNote, setEditingNote] = useState<Note | null>(null)
+  const [formKey, setFormKey] = useState(0)
 
   const allNoteTags = useMemo(() => {
     const set = new Set<string>()
@@ -39,14 +42,21 @@ export function NotesGrid() {
     setEditingNote(null)
   }
 
-  function handleEdit(note: Note) {
+  function handleView(note: Note) {
+    setViewingNote(note)
+  }
+
+  function handleEditFromView(note: Note) {
+    setViewingNote(null)
     setEditingNote(note)
-    setModalOpen(true)
+    setFormKey((k) => k + 1)
+    setEditModalOpen(true)
   }
 
   function handleCreate() {
     setEditingNote(null)
-    setModalOpen(true)
+    setFormKey((k) => k + 1)
+    setEditModalOpen(true)
   }
 
   return (
@@ -117,7 +127,7 @@ export function NotesGrid() {
               <NoteCard
                 key={note.id}
                 note={note}
-                onEdit={handleEdit}
+                onView={handleView}
                 onDelete={deleteNote}
               />
             ))}
@@ -135,10 +145,19 @@ export function NotesGrid() {
         )}
       </div>
 
+      {viewingNote && (
+        <NoteViewModal
+          note={viewingNote}
+          onClose={() => setViewingNote(null)}
+          onEdit={handleEditFromView}
+        />
+      )}
+
       <NoteCreateModal
-        isOpen={modalOpen}
+        key={`${editingNote?.id ?? 'new'}-${formKey}`}
+        isOpen={editModalOpen}
         onClose={() => {
-          setModalOpen(false)
+          setEditModalOpen(false)
           setEditingNote(null)
         }}
         onSave={handleSave}

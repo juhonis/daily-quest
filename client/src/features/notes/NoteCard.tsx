@@ -3,14 +3,14 @@ import { X } from 'lucide-react'
 
 interface NoteCardProps {
   note: Note
-  onEdit: (note: Note) => void
+  onView: (note: Note) => void
   onDelete: (noteId: string) => void
 }
 
-export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
+export function NoteCard({ note, onView, onDelete }: NoteCardProps) {
   return (
     <div
-      onClick={() => onEdit(note)}
+      onClick={() => onView(note)}
       className="group relative rounded-lg p-4 cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]"
       style={{ backgroundColor: note.color }}
     >
