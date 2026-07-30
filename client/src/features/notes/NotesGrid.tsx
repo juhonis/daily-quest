@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Plus, StickyNote } from 'lucide-react'
+import { Plus, StickyNote, Archive, RotateCcw } from 'lucide-react'
 import { useStore } from '../../store/useStore'
 import { NoteCard } from './NoteCard'
 import { NoteViewModal } from './NoteViewModal'
@@ -14,30 +14,37 @@ export function NotesGrid() {
   const addNote = useStore((s) => s.addNote)
   const updateNote = useStore((s) => s.updateNote)
   const deleteNote = useStore((s) => s.deleteNote)
+  const archiveNote = useStore((s) => s.archiveNote)
+  const unarchiveNote = useStore((s) => s.unarchiveNote)
 
   const [viewingNote, setViewingNote] = useState<Note | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [editingNote, setEditingNote] = useState<Note | null>(null)
   const [formKey, setFormKey] = useState(0)
   const [sortNewest, setSortNewest] = useState(true)
+  const [showArchived, setShowArchived] = useState(false)
+
+  const activeNotes = useMemo(() => notes.filter((n) => !n.archivedAt), [notes])
+  const archivedNotes = useMemo(() => notes.filter((n) => n.archivedAt), [notes])
+  const displayNotes = showArchived ? archivedNotes : activeNotes
 
   const allNoteTags = useMemo(() => {
     const set = new Set<string>()
     Object.keys(noteTagColors).forEach((t) => set.add(t))
-    notes.forEach((n) => n.tags?.forEach((t) => set.add(t)))
+    displayNotes.forEach((n) => n.tags?.forEach((t) => set.add(t)))
     return [...set].sort()
-  }, [notes, noteTagColors])
+  }, [displayNotes, noteTagColors])
 
   const filteredNotes = useMemo(() => {
     const filtered = filterNoteTags.length === 0
-      ? [...notes]
-      : notes.filter((n) => n.tags?.some((t) => filterNoteTags.includes(t)))
+      ? [...displayNotes]
+      : displayNotes.filter((n) => n.tags?.some((t) => filterNoteTags.includes(t)))
     filtered.sort((a, b) => {
       const cmp = a.createdAt.localeCompare(b.createdAt)
       return sortNewest ? -cmp : cmp
     })
     return filtered
-  }, [notes, filterNoteTags, sortNewest])
+  }, [displayNotes, filterNoteTags, sortNewest])
 
   function handleSave(note: Note) {
     const exists = notes.some((n) => n.id === note.id)
@@ -70,55 +77,77 @@ export function NotesGrid() {
     <div className="h-full flex flex-col">
       <div className="flex flex-wrap items-center gap-1.5 px-4 pt-3 pb-1">
         <button
-          onClick={() => setSortNewest(true)}
+          onClick={() => setShowArchived(false)}
           className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-            sortNewest ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'
+            !showArchived ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'
           }`}
         >
-          Newest
+          Notes
         </button>
         <button
-          onClick={() => setSortNewest(false)}
+          onClick={() => setShowArchived(true)}
           className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-            !sortNewest ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'
+            showArchived ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'
           }`}
         >
-          Oldest
+          Archived {archivedNotes.length > 0 && `(${archivedNotes.length})`}
         </button>
-        {allNoteTags.length > 0 && (
+
+        {!showArchived && (
           <>
             <span className="w-px h-4 bg-slate-600 mx-1" />
             <button
-              onClick={() => setFilterNoteTags([])}
+              onClick={() => setSortNewest(true)}
               className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-                filterNoteTags.length === 0
-                  ? 'bg-slate-700 text-white'
-                  : 'text-slate-500 hover:text-slate-300'
+                sortNewest ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'
               }`}
             >
-              All
+              Newest
             </button>
-            {allNoteTags.map((tag) => {
-              const color = noteTagColors[tag] ?? '#3B82F6'
-              return (
+            <button
+              onClick={() => setSortNewest(false)}
+              className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+                !sortNewest ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              Oldest
+            </button>
+            {allNoteTags.length > 0 && (
+              <>
+                <span className="w-px h-4 bg-slate-600 mx-1" />
                 <button
-                  key={tag}
-                  onClick={() => {
-                    setFilterNoteTags(
-                      filterNoteTags.includes(tag)
-                        ? filterNoteTags.filter((t) => t !== tag)
-                        : [...filterNoteTags, tag],
-                    )
-                  }}
-                  className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
-                    filterNoteTags.includes(tag) ? 'text-white border-transparent' : 'hover:brightness-125'
+                  onClick={() => setFilterNoteTags([])}
+                  className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+                    filterNoteTags.length === 0
+                      ? 'bg-slate-700 text-white'
+                      : 'text-slate-500 hover:text-slate-300'
                   }`}
-                  style={filterNoteTags.includes(tag) ? { backgroundColor: color } : { borderColor: color, color }}
                 >
-                  {tag}
+                  All
                 </button>
-              )
-            })}
+                {allNoteTags.map((tag) => {
+                  const color = noteTagColors[tag] ?? '#3B82F6'
+                  return (
+                    <button
+                      key={tag}
+                      onClick={() => {
+                        setFilterNoteTags(
+                          filterNoteTags.includes(tag)
+                            ? filterNoteTags.filter((t) => t !== tag)
+                            : [...filterNoteTags, tag],
+                        )
+                      }}
+                      className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
+                        filterNoteTags.includes(tag) ? 'text-white border-transparent' : 'hover:brightness-125'
+                      }`}
+                      style={filterNoteTags.includes(tag) ? { backgroundColor: color } : { borderColor: color, color }}
+                    >
+                      {tag}
+                    </button>
+                  )
+                })}
+              </>
+            )}
           </>
         )}
       </div>
@@ -134,6 +163,22 @@ export function NotesGrid() {
             >
               <Plus className="w-4 h-4" />
               Create your first note
+            </button>
+          </div>
+        ) : showArchived && archivedNotes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-slate-500 gap-3">
+            <Archive className="w-12 h-12" />
+            <p className="text-sm">No archived notes</p>
+          </div>
+        ) : !showArchived && activeNotes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-slate-500 gap-3">
+            <StickyNote className="w-12 h-12" />
+            <p className="text-sm">All notes archived</p>
+            <button
+              onClick={() => setShowArchived(true)}
+              className="rounded-lg bg-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-600 transition-colors"
+            >
+              View archived
             </button>
           </div>
         ) : filteredNotes.length === 0 ? (
@@ -154,19 +199,34 @@ export function NotesGrid() {
                 key={note.id}
                 note={note}
                 onView={handleView}
-                onDelete={deleteNote}
+                onArchive={archiveNote}
+                onUnarchive={unarchiveNote}
               />
             ))}
           </div>
         )}
 
-        {notes.length > 0 && (
+        {!showArchived && activeNotes.length > 0 && (
           <button
             onClick={handleCreate}
             className="absolute bottom-6 right-6 z-10 flex items-center justify-center w-12 h-12 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-500 transition-colors"
             aria-label="Create note"
           >
             <Plus className="w-6 h-6" />
+          </button>
+        )}
+        {showArchived && archivedNotes.length > 0 && (
+          <button
+            onClick={() => {
+              if (window.confirm('Delete all archived notes permanently?')) {
+                archivedNotes.forEach((n) => deleteNote(n.id))
+              }
+            }}
+            className="absolute bottom-6 right-6 z-10 flex items-center justify-center px-4 h-12 rounded-full bg-red-600 text-white shadow-lg hover:bg-red-500 transition-colors gap-2"
+            aria-label="Delete all archived"
+          >
+            <Archive className="w-4 h-4" />
+            <span className="text-xs font-medium">Clear all</span>
           </button>
         )}
       </div>
@@ -176,6 +236,9 @@ export function NotesGrid() {
           note={viewingNote}
           onClose={() => setViewingNote(null)}
           onEdit={handleEditFromView}
+          onArchive={archiveNote}
+          onUnarchive={unarchiveNote}
+          onDelete={deleteNote}
         />
       )}
 

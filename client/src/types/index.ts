@@ -73,6 +73,7 @@ interface Note {
   tags?: string[]
   createdAt: string
   updatedAt: string
+  archivedAt?: string | null
 }
 
 interface AppState {
@@ -118,6 +119,8 @@ interface AppState {
   addNote: (note: Note) => void
   updateNote: (noteId: string, updates: Partial<Note>) => void
   deleteNote: (noteId: string) => void
+  archiveNote: (noteId: string) => void
+  unarchiveNote: (noteId: string) => void
   setNoteTagColor: (tag: string, color: string) => void
   deleteNoteTag: (tag: string) => void
   setFilterNoteTags: (tags: string[]) => void

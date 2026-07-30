@@ -61,6 +61,18 @@ export const useStore = create<AppState>()(
         })),
       deleteNote: (noteId) =>
         set((s) => ({ notes: s.notes.filter((n) => n.id !== noteId) })),
+      archiveNote: (noteId) =>
+        set((s) => ({
+          notes: s.notes.map((n) =>
+            n.id === noteId ? { ...n, archivedAt: new Date().toISOString() } : n,
+          ),
+        })),
+      unarchiveNote: (noteId) =>
+        set((s) => ({
+          notes: s.notes.map((n) =>
+            n.id === noteId ? { ...n, archivedAt: null } : n,
+          ),
+        })),
 
       setNoteTagColor: (tag, color) =>
         set((s) => ({
