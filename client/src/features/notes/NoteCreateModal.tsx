@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { X } from 'lucide-react'
 import { Modal } from '../../components/ui/Modal'
 import { useStore } from '../../store/useStore'
-import { NOTE_TAG_PALETTE, assignNoteTagColor, getNoteTagStyle } from './noteTagColors'
+import { assignNoteTagColor, getNoteTagStyle } from './noteTagColors'
 import type { Note } from '../../types'
 
 const NOTE_COLORS = [
