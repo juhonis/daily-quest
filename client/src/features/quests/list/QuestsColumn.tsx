@@ -9,11 +9,12 @@ import { QuickAddBar } from './QuickAddBar'
 import { QuestsPanelsRow } from './QuestsPanelsRow'
 import { QuestCreateForm } from '../create/QuestCreateForm'
 import { EditPanelsModal } from './EditPanelsModal'
+import { NotesGrid } from '../../notes/NotesGrid'
 import { CurrentWeather } from '../../weather/CurrentWeather'
 import { WeatherCarousel } from '../../weather/WeatherCarousel'
 
 export function QuestsColumn() {
-  const [tab, setTab] = useState<'quests' | 'create'>('quests')
+  const [tab, setTab] = useState<'quests' | 'create' | 'notes'>('quests')
   const [editingQuest, setEditingQuest] = useState<string | null>(null)
   const [formKey, setFormKey] = useState(0)
   const [showEditPanels, setShowEditPanels] = useState(false)
@@ -272,6 +273,12 @@ export function QuestsColumn() {
             </div>
           )}
         </>
+      )}
+
+      {tab === 'notes' && (
+        <div className="flex-1 overflow-y-auto">
+          <NotesGrid />
+        </div>
       )}
 
       {tab === 'create' && (

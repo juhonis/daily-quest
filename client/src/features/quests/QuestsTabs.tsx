@@ -1,6 +1,6 @@
 interface QuestsTabsProps {
   activeTab: string
-  onChange: (tab: 'quests' | 'create') => void
+  onChange: (tab: 'quests' | 'create' | 'notes') => void
 }
 
 export function QuestsTabs({ activeTab, onChange }: QuestsTabsProps) {
@@ -29,6 +29,18 @@ export function QuestsTabs({ activeTab, onChange }: QuestsTabsProps) {
         role="tab"
       >
         Create Quests (+)
+      </button>
+      <button
+        onClick={() => onChange('notes')}
+        className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+          activeTab === 'notes'
+            ? 'bg-blue-600 text-white'
+            : 'text-slate-400 hover:text-white'
+        }`}
+        aria-selected={activeTab === 'notes'}
+        role="tab"
+      >
+        Notes
       </button>
     </div>
   )

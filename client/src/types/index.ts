@@ -65,6 +65,15 @@ interface WeatherData {
   }
 }
 
+interface Note {
+  id: string
+  title: string
+  content: string
+  color: string
+  createdAt: string
+  updatedAt: string
+}
+
 interface AppState {
   quests: Quest[]
   completions: CompletionRecord[]
@@ -90,6 +99,7 @@ interface AppState {
   addQuestFromPreset: (preset: QuickPreset, date: string, overrides?: { repeat?: RepeatType; rollover?: boolean; repeatConfig?: { interval: number; unit: 'day' | 'week' | 'month' }; tags?: string[] }) => void
   setPanelOrder: (order: PanelId[]) => void
   togglePanelHidden: (id: PanelId) => void
+  notes: Note[]
   filterTags: string[]
   setFilterTags: (tags: string[]) => void
   tagColors: Record<string, string>
@@ -102,9 +112,12 @@ interface AppState {
   mergedPanels: Partial<Record<PanelId, PanelId>>
   mergePanel: (source: PanelId, target: PanelId) => void
   unmergePanel: (source: PanelId) => void
+  addNote: (note: Note) => void
+  updateNote: (noteId: string, updates: Partial<Note>) => void
+  deleteNote: (noteId: string) => void
   setCoords: (coords: WeatherCoords) => void
   setLocationMode: (mode: LocationMode) => void
   setLocationName: (name: string) => void
 }
 
-export type { RepeatType, QuestStatus, PanelId, SubQuest, Quest, CompletionRecord, QuickPreset, WeatherCoords, WeatherData, LocationMode, AppState }
+export type { RepeatType, QuestStatus, PanelId, SubQuest, Quest, CompletionRecord, QuickPreset, Note, WeatherCoords, WeatherData, LocationMode, AppState }

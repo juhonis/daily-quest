@@ -30,6 +30,7 @@ export const useStore = create<AppState>()(
   persist(
     (set) => ({
       quests: [],
+      notes: [],
       completions: [],
       quickPresets: seededPresets,
       selectedDate: getTodayLocal(),
@@ -50,6 +51,14 @@ export const useStore = create<AppState>()(
         })),
       deleteQuest: (questId) =>
         set((s) => ({ quests: s.quests.filter((q) => q.id !== questId) })),
+
+      addNote: (note) => set((s) => ({ notes: [...s.notes, note] })),
+      updateNote: (noteId, updates) =>
+        set((s) => ({
+          notes: s.notes.map((n) => (n.id === noteId ? { ...n, ...updates } : n)),
+        })),
+      deleteNote: (noteId) =>
+        set((s) => ({ notes: s.notes.filter((n) => n.id !== noteId) })),
 
       activateQuest: (questId, targetDate) =>
         set((s) => ({
