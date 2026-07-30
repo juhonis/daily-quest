@@ -68,59 +68,58 @@ export function NotesGrid() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between px-4 pt-3 pb-1">
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => setSortNewest(true)}
-            className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-              sortNewest ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'
-            }`}
-          >
-            Newest
-          </button>
-          <button
-            onClick={() => setSortNewest(false)}
-            className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-              !sortNewest ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'
-            }`}
-          >
-            Oldest
-          </button>
-        </div>
+      <div className="flex flex-wrap items-center gap-1.5 px-4 pt-3 pb-1">
+        <button
+          onClick={() => setSortNewest(true)}
+          className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+            sortNewest ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'
+          }`}
+        >
+          Newest
+        </button>
+        <button
+          onClick={() => setSortNewest(false)}
+          className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+            !sortNewest ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'
+          }`}
+        >
+          Oldest
+        </button>
         {allNoteTags.length > 0 && (
-          <div className="flex items-center gap-1.5 flex-wrap">
-          <button
-            onClick={() => setFilterNoteTags([])}
-            className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-              filterNoteTags.length === 0
-                ? 'bg-slate-700 text-white'
-                : 'text-slate-500 hover:text-slate-300'
-            }`}
-          >
-            All
-          </button>
-          {allNoteTags.map((tag) => {
-            const color = noteTagColors[tag] ?? '#3B82F6'
-            return (
-              <button
-                key={tag}
-                onClick={() => {
-                  setFilterNoteTags(
-                    filterNoteTags.includes(tag)
-                      ? filterNoteTags.filter((t) => t !== tag)
-                      : [...filterNoteTags, tag],
-                  )
-                }}
-                className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
-                  filterNoteTags.includes(tag) ? 'text-white border-transparent' : 'hover:brightness-125'
-                }`}
-                style={filterNoteTags.includes(tag) ? { backgroundColor: color } : { borderColor: color, color }}
-              >
-                {tag}
-              </button>
-            )
-          })}
-        </div>
+          <>
+            <span className="w-px h-4 bg-slate-600 mx-1" />
+            <button
+              onClick={() => setFilterNoteTags([])}
+              className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+                filterNoteTags.length === 0
+                  ? 'bg-slate-700 text-white'
+                  : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              All
+            </button>
+            {allNoteTags.map((tag) => {
+              const color = noteTagColors[tag] ?? '#3B82F6'
+              return (
+                <button
+                  key={tag}
+                  onClick={() => {
+                    setFilterNoteTags(
+                      filterNoteTags.includes(tag)
+                        ? filterNoteTags.filter((t) => t !== tag)
+                        : [...filterNoteTags, tag],
+                    )
+                  }}
+                  className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
+                    filterNoteTags.includes(tag) ? 'text-white border-transparent' : 'hover:brightness-125'
+                  }`}
+                  style={filterNoteTags.includes(tag) ? { backgroundColor: color } : { borderColor: color, color }}
+                >
+                  {tag}
+                </button>
+              )
+            })}
+          </>
         )}
       </div>
 
