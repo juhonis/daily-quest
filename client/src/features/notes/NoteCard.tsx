@@ -8,11 +8,11 @@ function stripMarkdown(text: string): string {
     .replace(/(\*{1,3}|_{1,3})(.*?)\1/g, '$2')
     .replace(/`{1,3}(.*?)`{1,3}/g, '$1')
     .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/^[-*+]\s+/gm, '')
-    .replace(/^\d+\.\s+/gm, '')
+    .replace(/^[-*+]\s+/gm, '• ')
+    .replace(/^\d+\.\s+/gm, '• ')
     .replace(/^>\s+/gm, '')
-    .replace(/[-*]{3,}/g, '')
-    .replace(/\|/g, '')
+    .replace(/\|/g, ' ')
+    .split('\n').filter(l => l.trim()).join('\n')
     .trim()
 }
 
