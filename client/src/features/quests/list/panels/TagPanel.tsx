@@ -3,7 +3,7 @@ import { BasePanel } from './BasePanel'
 
 interface TagPanelProps {
   tag: string
-  quests: Quest[]
+  questList: Quest[]
   selectedDate: string
   completions: CompletionRecord[]
   onToggleCompletion: (questId: string, date: string) => void
@@ -24,7 +24,7 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-export function TagPanel({ tag, quests, color, ...rest }: TagPanelProps) {
+export function TagPanel({ tag, questList: quests, color, ...rest }: TagPanelProps) {
   const filtered = quests.filter((q) => q.tags?.includes(tag))
   return (
     <BasePanel

@@ -189,7 +189,7 @@ export function QuestsPanelsRow(props: QuestsPanelsRowProps) {
         <div key={tag} className="flex-1 min-w-0">
           <TagPanel
             tag={tag}
-            quests={allQuests}
+            questList={allQuests}
             color={tagColors[tag] ?? '#3B82F6'}
             {...props}
             onHide={() => removeTagPanel(tag)}
