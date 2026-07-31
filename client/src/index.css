@@ -50,6 +50,16 @@
   color: #475569;
   background: rgba(255, 255, 255, 0.05);
 }
+.radar-map .leaflet-control-attribution {
+  font-size: 7px;
+  line-height: 1.4;
+  padding: 1px 4px;
+  color: #64748b;
+  background: rgba(15, 23, 42, 0.7);
+}
+.radar-map .leaflet-control-attribution a {
+  color: #94a3b8;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *,

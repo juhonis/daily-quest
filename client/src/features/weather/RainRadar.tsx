@@ -138,7 +138,7 @@ export function RainRadar({ onClose }: RainRadarProps) {
                 className="text-slate-500 hover:text-slate-300 transition-colors"
                 aria-label="Close radar"
               >
-                <X className="w-2 h-2" />
+                <X className="w-3 h-3" />
               </button>
             )}
           </div>
@@ -168,7 +168,7 @@ export function RainRadar({ onClose }: RainRadarProps) {
                 className="text-slate-500 hover:text-slate-300 transition-colors"
                 aria-label="Close radar"
               >
-                <X className="w-2 h-2" />
+                <X className="w-3 h-3" />
               </button>
             )}
           </div>
@@ -207,7 +207,7 @@ export function RainRadar({ onClose }: RainRadarProps) {
                 className="text-slate-500 hover:text-slate-300 transition-colors"
                 aria-label="Close radar"
               >
-                <X className="w-2 h-2" />
+                <X className="w-3 h-3" />
               </button>
             )}
           </div>
