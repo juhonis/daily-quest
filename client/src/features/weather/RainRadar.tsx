@@ -138,7 +138,7 @@ export function RainRadar({ onClose }: RainRadarProps) {
                 className="text-slate-500 hover:text-slate-300 transition-colors"
                 aria-label="Close radar"
               >
-                <X className="w-3 h-3" />
+                <X className="w-2 h-2" />
               </button>
             )}
           </div>
@@ -168,7 +168,7 @@ export function RainRadar({ onClose }: RainRadarProps) {
                 className="text-slate-500 hover:text-slate-300 transition-colors"
                 aria-label="Close radar"
               >
-                <X className="w-3 h-3" />
+                <X className="w-2 h-2" />
               </button>
             )}
           </div>
@@ -207,7 +207,7 @@ export function RainRadar({ onClose }: RainRadarProps) {
                 className="text-slate-500 hover:text-slate-300 transition-colors"
                 aria-label="Close radar"
               >
-                <X className="w-3 h-3" />
+                <X className="w-2 h-2" />
               </button>
             )}
           </div>
@@ -216,16 +216,20 @@ export function RainRadar({ onClose }: RainRadarProps) {
           <div ref={mapContainerRef} className="h-72 w-full" />
         </div>
         <div className="flex items-center justify-center gap-1">
-          {frames.map((f, i) => (
-            <button
-              key={f.time}
-              onClick={() => { setFrameIndex(i); setPlaying(false) }}
-              className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                i === frameIndex ? 'bg-blue-400' : 'bg-slate-600 hover:bg-slate-400'
-              }`}
-              aria-label={`Show radar frame ${frameTime(f.time)}`}
-            />
-          ))}
+          {frames.map((f, i) =>
+            i === frameIndex ? (
+              <span key={f.time} className="text-[10px] text-blue-400 leading-none">
+                {frameTime(f.time)}
+              </span>
+            ) : (
+              <button
+                key={f.time}
+                onClick={() => { setFrameIndex(i); setPlaying(false) }}
+                className="w-1.5 h-1.5 rounded-full bg-slate-600 hover:bg-slate-400 transition-colors"
+                aria-label={`Show radar frame ${frameTime(f.time)}`}
+              />
+            )
+          )}
         </div>
       </div>
       {showLocationPicker && (
