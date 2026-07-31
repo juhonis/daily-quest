@@ -13,7 +13,8 @@ const RADAR_SNOW = 1
 const FRAME_INTERVAL_MS = 800
 const INITIAL_ZOOM = 7
 const MIN_ZOOM = 3
-const MAX_ZOOM = 7
+const MAX_ZOOM = 12
+const RADAR_MAX_NATIVE_ZOOM = 7
 const RADAR_OPACITY = 0.85
 
 const BASEMAP_URL = 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'
@@ -60,7 +61,7 @@ export function RainRadar() {
       zoom: INITIAL_ZOOM,
       minZoom: MIN_ZOOM,
       maxZoom: MAX_ZOOM,
-      zoomControl: false,
+      zoomControl: true,
       scrollWheelZoom: false,
     })
     mapRef.current = map
@@ -98,6 +99,7 @@ export function RainRadar() {
     } else {
       radarLayerRef.current = L.tileLayer(url, {
         maxZoom: MAX_ZOOM,
+        maxNativeZoom: RADAR_MAX_NATIVE_ZOOM,
         opacity: RADAR_OPACITY,
       }).addTo(map)
     }
@@ -175,7 +177,7 @@ export function RainRadar() {
             </button>
           </div>
         </div>
-        <div className="relative z-0 rounded-lg overflow-hidden bg-slate-900">
+        <div className="relative z-0 radar-map rounded-lg overflow-hidden bg-slate-900">
           <div ref={mapContainerRef} className="h-60 w-full" />
         </div>
         <div className="flex items-center justify-center gap-1">
