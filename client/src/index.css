@@ -28,6 +28,39 @@
   scrollbar-width: none;
 }
 
+.radar-map .leaflet-control-zoom {
+  border: none;
+  box-shadow: none;
+}
+.radar-map .leaflet-control-zoom a {
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+  font-size: 14px;
+  color: #cbd5e1;
+  border: 1px solid var(--color-glass-border);
+  border-radius: 4px;
+  background: var(--color-glass-bg);
+}
+.radar-map .leaflet-control-zoom a:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+}
+.radar-map .leaflet-control-zoom a.leaflet-disabled {
+  color: #475569;
+  background: rgba(255, 255, 255, 0.05);
+}
+.radar-map .leaflet-control-attribution {
+  font-size: 7px;
+  line-height: 1.4;
+  padding: 1px 4px;
+  color: #64748b;
+  background: rgba(15, 23, 42, 0.7);
+}
+.radar-map .leaflet-control-attribution a {
+  color: #94a3b8;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

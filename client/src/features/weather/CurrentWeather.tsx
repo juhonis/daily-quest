@@ -1,10 +1,23 @@
-import { useState, useEffect } from 'react'
-import { Settings } from 'lucide-react'
+import { useState, useEffect, lazy, Suspense } from 'react'
+import { Settings, Radar } from 'lucide-react'
 import { format } from 'date-fns'
 import { useWeather } from './useWeather'
 import { useStore } from '../../store/useStore'
 import { LocationPicker } from './LocationPicker'
 import { WeatherIcon } from './weatherIcons'
+
+const RainRadar = lazy(() =>
+  import('./RainRadar').then(m => ({ default: m.RainRadar }))
+)
+
+function RadarFallback() {
+  return (
+    <div className="glass-panel rounded-xl p-3 w-[340px] flex flex-col gap-1">
+      <span className="text-xs text-slate-500">Radar</span>
+      <span className="text-xs text-slate-500">Loading...</span>
+    </div>
+  )
+}
 
 function rainLabel(rainMm: number): string | null {
   if (rainMm <= 0) return null
@@ -23,12 +36,18 @@ export function CurrentWeather() {
   const weather = useWeather(lat, lon, coords ? todayStr : '')
 
   const [showLocationPicker, setShowLocationPicker] = useState(false)
+  const [showRadar, setShowRadar] = useState(false)
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60000)
     return () => clearInterval(id)
   }, [])
+
+  function openLocationPicker() {
+    setShowRadar(false)
+    setShowLocationPicker(true)
+  }
 
   if (!coords) {
     return (
@@ -90,13 +109,24 @@ export function CurrentWeather() {
           <h2 className="text-2xl font-bold">
             {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </h2>
-          <button
-            onClick={() => setShowLocationPicker(true)}
-            className="text-slate-500 hover:text-slate-300 transition-colors -mt-0.5"
-            aria-label="Change location"
-          >
-            <Settings className="w-3 h-3" />
-          </button>
+          <div className="flex items-center gap-1 -mt-0.5">
+            <button
+              onClick={() => setShowRadar(s => !s)}
+              className={`transition-colors ${
+                showRadar ? 'text-blue-400' : 'text-slate-500 hover:text-slate-300'
+              }`}
+              aria-label={showRadar ? 'Hide radar' : 'Show radar'}
+            >
+              <Radar className="w-3 h-3" />
+            </button>
+            <button
+              onClick={openLocationPicker}
+              className="text-slate-500 hover:text-slate-300 transition-colors"
+              aria-label="Change location"
+            >
+              <Settings className="w-3 h-3" />
+            </button>
+          </div>
         </div>
         {currentWeather && (
           <div className="flex items-center gap-1">
@@ -113,6 +143,11 @@ export function CurrentWeather() {
           )}
         </div>
       </div>
+      {showRadar && (
+        <Suspense fallback={<RadarFallback />}>
+          <RainRadar onClose={() => setShowRadar(false)} />
+        </Suspense>
+      )}
       {showLocationPicker && (
         <LocationPicker onClose={() => setShowLocationPicker(false)} />
       )}
