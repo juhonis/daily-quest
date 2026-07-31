@@ -20,6 +20,12 @@ const BASEMAP_URL = 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'
 const BASEMAP_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
 
+const LOCATION_PIN_HTML = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" style="filter: drop-shadow(0 1px 1px rgba(0,0,0,0.8));">
+    <circle cx="4" cy="4" r="3.5" fill="#3b82f6" stroke="#ffffff" stroke-width="1.5"/>
+  </svg>
+`
+
 function radarLayerUrl(host: string, path: string): string {
   return `${host}${path}/${RADAR_SIZE}/{z}/{x}/{y}/${RADAR_COLOR}/${RADAR_SMOOTH}_${RADAR_SNOW}.png`
 }
@@ -63,6 +69,14 @@ export function RainRadar() {
       attribution: BASEMAP_ATTRIBUTION,
       maxZoom: MAX_ZOOM,
     }).addTo(map)
+
+    const pinIcon = L.divIcon({
+      className: '',
+      html: LOCATION_PIN_HTML,
+      iconSize: [8, 8],
+      iconAnchor: [4, 4],
+    })
+    L.marker([coords.lat, coords.lon], { icon: pinIcon, zIndexOffset: 1000 }).addTo(map)
 
     return () => {
       map.remove()
