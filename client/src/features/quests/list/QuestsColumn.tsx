@@ -11,6 +11,7 @@ import { QuestCreateForm } from '../create/QuestCreateForm'
 import { EditPanelsModal } from './EditPanelsModal'
 import { NotesGrid } from '../../notes/NotesGrid'
 import { CurrentWeather } from '../../weather/CurrentWeather'
+import { RainRadar } from '../../weather/RainRadar'
 import { WeatherCarousel } from '../../weather/WeatherCarousel'
 
 export function QuestsColumn() {
@@ -87,7 +88,10 @@ export function QuestsColumn() {
     <div className="flex flex-col h-full">
       <div className="px-4 pt-4">
         <div className="flex gap-4 mb-6">
-        <CurrentWeather />
+        <div className="flex flex-col gap-4">
+          <CurrentWeather />
+          <RainRadar />
+        </div>
         <div className="flex-1 min-w-0">
           <WeatherCarousel />
         </div>
