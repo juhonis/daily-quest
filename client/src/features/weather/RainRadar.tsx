@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, type ReactNode } from 'react'
 import * as L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { Play, Pause, Settings } from 'lucide-react'
+import { Play, Pause, Settings, X } from 'lucide-react'
 import { useRainRadar } from './useRainRadar'
 import { useStore } from '../../store/useStore'
 import { LocationPicker } from './LocationPicker'
@@ -38,7 +38,20 @@ function frameTime(frameTimeSec: number): string {
   })
 }
 
-export function RainRadar() {
+function PopupShell({ onClose, children }: { onClose?: () => void; children: ReactNode }) {
+  return (
+    <>
+      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div className="absolute left-0 top-full mt-2 z-50">{children}</div>
+    </>
+  )
+}
+
+interface RainRadarProps {
+  onClose?: () => void
+}
+
+export function RainRadar({ onClose }: RainRadarProps) {
   const coords = useStore(s => s.coords)
   const radar = useRainRadar()
 
@@ -115,17 +128,19 @@ export function RainRadar() {
 
   if (!coords) {
     return (
-      <div className="relative">
-        <div className="glass-panel rounded-xl p-3 min-w-[140px] min-h-[104px] flex flex-col gap-1">
+      <PopupShell onClose={onClose}>
+        <div className="glass-panel rounded-xl p-3 w-[340px] flex flex-col gap-1">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500">Radar</span>
-            <button
-              onClick={() => setShowLocationPicker(true)}
-              className="text-slate-500 hover:text-slate-300 transition-colors"
-              aria-label="Set location"
-            >
-              <Settings className="w-3 h-3" />
-            </button>
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="text-slate-500 hover:text-slate-300 transition-colors"
+                aria-label="Close radar"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
           </div>
           <button
             onClick={() => setShowLocationPicker(true)}
@@ -137,26 +152,37 @@ export function RainRadar() {
         {showLocationPicker && (
           <LocationPicker onClose={() => setShowLocationPicker(false)} />
         )}
-      </div>
+      </PopupShell>
     )
   }
 
   if (!radar || frames.length === 0) {
     return (
-      <div className="relative">
-        <div className="glass-panel rounded-xl p-3 min-w-[140px] min-h-[104px] flex flex-col gap-1">
-          <span className="text-xs text-slate-500">Radar</span>
+      <PopupShell onClose={onClose}>
+        <div className="glass-panel rounded-xl p-3 w-[340px] flex flex-col gap-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-500">Radar</span>
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="text-slate-500 hover:text-slate-300 transition-colors"
+                aria-label="Close radar"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
           <span className="text-xs text-slate-500">Loading...</span>
         </div>
-      </div>
+      </PopupShell>
     )
   }
 
   const frame = frames[frameIndex % frames.length]
 
   return (
-    <div className="relative">
-      <div className="glass-panel rounded-xl p-3 flex flex-col gap-2 w-[256px]">
+    <PopupShell onClose={onClose}>
+      <div className="glass-panel rounded-xl p-3 flex flex-col gap-2 w-[340px]">
         <div className="flex items-center justify-between">
           <span className="text-xs text-slate-500">Radar</span>
           <div className="flex items-center gap-2">
@@ -175,10 +201,19 @@ export function RainRadar() {
             >
               <Settings className="w-3 h-3" />
             </button>
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="text-slate-500 hover:text-slate-300 transition-colors"
+                aria-label="Close radar"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
           </div>
         </div>
         <div className="relative z-0 radar-map rounded-lg overflow-hidden bg-slate-900">
-          <div ref={mapContainerRef} className="h-60 w-full" />
+          <div ref={mapContainerRef} className="h-72 w-full" />
         </div>
         <div className="flex items-center justify-center gap-1">
           {frames.map((f, i) => (
@@ -196,6 +231,6 @@ export function RainRadar() {
       {showLocationPicker && (
         <LocationPicker onClose={() => setShowLocationPicker(false)} />
       )}
-    </div>
+    </PopupShell>
   )
 }

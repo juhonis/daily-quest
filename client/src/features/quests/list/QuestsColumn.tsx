@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect, lazy, Suspense } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useStore } from '../../../store/useStore'
 import { Button } from '../../../components/ui/Button'
 import { Settings, Plus, ChevronLeft, ChevronRight, CalendarCheck } from 'lucide-react'
@@ -12,19 +12,6 @@ import { EditPanelsModal } from './EditPanelsModal'
 import { NotesGrid } from '../../notes/NotesGrid'
 import { CurrentWeather } from '../../weather/CurrentWeather'
 import { WeatherCarousel } from '../../weather/WeatherCarousel'
-
-const RainRadar = lazy(() =>
-  import('../../weather/RainRadar').then(m => ({ default: m.RainRadar }))
-)
-
-function RadarFallback() {
-  return (
-    <div className="glass-panel rounded-xl p-3 w-[256px] min-h-[104px] flex flex-col gap-1">
-      <span className="text-xs text-slate-500">Radar</span>
-      <span className="text-xs text-slate-500">Loading...</span>
-    </div>
-  )
-}
 
 export function QuestsColumn() {
   const [tab, setTab] = useState<'quests' | 'create' | 'notes'>('quests')
@@ -100,12 +87,7 @@ export function QuestsColumn() {
     <div className="flex flex-col h-full">
       <div className="px-4 pt-4">
         <div className="flex gap-4 mb-6">
-        <div className="flex flex-col gap-4">
-          <CurrentWeather />
-          <Suspense fallback={<RadarFallback />}>
-            <RainRadar />
-          </Suspense>
-        </div>
+        <CurrentWeather />
         <div className="flex-1 min-w-0">
           <WeatherCarousel />
         </div>
