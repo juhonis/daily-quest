@@ -58,7 +58,7 @@ export function BasePanel({
       {quests.length === 0 ? (
         <p className="text-xs text-slate-600 text-center py-4 flex-1">{emptyHint}</p>
       ) : (
-        <div className="space-y-2 flex-1 min-w-0">
+        <div className="space-y-2 flex-1 min-w-0 min-h-0 overflow-y-auto pr-1">
           {quests.map((q) => (
             <QuestCard
               key={q.id}
