@@ -43,12 +43,11 @@ export function AppShell() {
   const showRight = rightOverride ?? isDesktop
 
   const gridTemplateColumns = isDesktop
-    ? `${showLeft ? '280px ' : ''}minmax(0, 1fr)${showRight ? ' 320px' : ''}`
+    ? '280px minmax(0, 1fr) 320px'
     : 'minmax(0, 1fr)'
 
-  const needsCenterTopPad = !(showLeft && showRight)
-  const centerClassName = `overflow-y-auto overflow-x-hidden max-h-screen min-w-0 ${
-    needsCenterTopPad ? 'pt-10 w-full mx-auto max-w-[1280px]' : ''
+  const centerClassName = `overflow-y-auto overflow-x-hidden max-h-screen min-w-0 w-full mx-auto max-w-[1280px] ${
+    isDesktop ? '' : 'pt-10'
   }`
 
   const toggleButtonClass = (active: boolean) =>
@@ -64,35 +63,41 @@ export function AppShell() {
       style={{ gridTemplateColumns }}
     >
       {isDesktop ? (
-        showLeft && (
-          <div className="border-r border-slate-700 overflow-y-auto max-h-screen min-w-0 pt-10">
-            <CalendarColumn />
+        <>
+          <div
+            className={`overflow-y-auto max-h-screen min-w-0 pt-10 ${
+              showLeft ? 'border-r border-slate-700' : ''
+            }`}
+          >
+            {showLeft && <CalendarColumn />}
           </div>
-        )
-      ) : (
-        showLeft && (
-          <Drawer side="left" onClose={() => setLeftOverride(false)}>
-            <CalendarColumn />
-          </Drawer>
-        )
-      )}
-
-      <div className={centerClassName}>
-        <QuestsColumn />
-      </div>
-
-      {isDesktop ? (
-        showRight && (
-          <div className="border-l border-slate-700 overflow-y-auto max-h-screen min-w-0 pt-10">
-            <RightColumn />
+          <div className={centerClassName}>
+            <QuestsColumn />
           </div>
-        )
+          <div
+            className={`overflow-y-auto max-h-screen min-w-0 pt-10 ${
+              showRight ? 'border-l border-slate-700' : ''
+            }`}
+          >
+            {showRight && <RightColumn />}
+          </div>
+        </>
       ) : (
-        showRight && (
-          <Drawer side="right" onClose={() => setRightOverride(false)}>
-            <RightColumn />
-          </Drawer>
-        )
+        <>
+          {showLeft && (
+            <Drawer side="left" onClose={() => setLeftOverride(false)}>
+              <CalendarColumn />
+            </Drawer>
+          )}
+          <div className={centerClassName}>
+            <QuestsColumn />
+          </div>
+          {showRight && (
+            <Drawer side="right" onClose={() => setRightOverride(false)}>
+              <RightColumn />
+            </Drawer>
+          )}
+        </>
       )}
 
       <button
