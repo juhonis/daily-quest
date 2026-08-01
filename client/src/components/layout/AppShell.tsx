@@ -46,7 +46,7 @@ export function AppShell() {
     ? '280px minmax(0, 1fr) 320px'
     : 'minmax(0, 1fr)'
 
-  const centerClassName = `overflow-y-auto overflow-x-hidden max-h-screen min-w-0 w-full mx-auto max-w-[1280px] ${
+  const centerClassName = `overflow-y-auto overflow-x-hidden max-h-screen min-w-0 ${
     isDesktop ? '' : 'pt-10'
   }`
 
