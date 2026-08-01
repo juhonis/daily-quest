@@ -113,6 +113,10 @@ interface AppState {
   tagPanels: string[]
   addTagPanel: (tag: string) => void
   removeTagPanel: (tag: string) => void
+  leftColumnOverride: boolean | null
+  rightColumnOverride: boolean | null
+  setLeftColumnOverride: (visible: boolean | null) => void
+  setRightColumnOverride: (visible: boolean | null) => void
   mergedPanels: Partial<Record<PanelId, PanelId>>
   mergePanel: (source: PanelId, target: PanelId) => void
   unmergePanel: (source: PanelId) => void

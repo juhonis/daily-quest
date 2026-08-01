@@ -38,7 +38,7 @@ export function BasePanel({
   containerStyle,
 }: BasePanelProps) {
   return (
-    <div className="rounded-lg border border-slate-700 bg-slate-800/30 p-3 h-full flex flex-col min-w-0" style={containerStyle}>
+    <div className="rounded-lg border border-slate-700 bg-slate-800/30 px-2 py-3 h-full flex flex-col min-w-0" style={containerStyle}>
       <div className="flex items-center gap-1 mb-3 min-w-0">
         {dragHandleProps && (
           <button {...dragHandleProps} className="p-0.5 cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-300 flex-shrink-0">
@@ -58,7 +58,7 @@ export function BasePanel({
       {quests.length === 0 ? (
         <p className="text-xs text-slate-600 text-center py-4 flex-1">{emptyHint}</p>
       ) : (
-        <div className="space-y-2 flex-1 min-w-0">
+        <div className="space-y-2 flex-1 min-w-0 min-h-0 overflow-y-auto pr-1">
           {quests.map((q) => (
             <QuestCard
               key={q.id}

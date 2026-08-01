@@ -257,7 +257,7 @@ export function QuestsColumn() {
             )}
           </div>
           {!allVisibleHidden && (
-            <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 px-4 pb-4">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 px-2 pb-4">
                <QuestsPanelsRow
                 quests={filteredQuests}
                 completions={completions}

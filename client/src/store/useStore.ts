@@ -42,6 +42,8 @@ export const useStore = create<AppState>()(
       tagColors: {},
       mergedPanels: {},
       tagPanels: [],
+      leftColumnOverride: null,
+      rightColumnOverride: null,
       coords: null,
       locationMode: 'auto',
       locationName: '',
@@ -261,6 +263,9 @@ export const useStore = create<AppState>()(
       setCoords: (coords) => set({ coords }),
       setLocationMode: (mode) => set({ locationMode: mode }),
       setLocationName: (name) => set({ locationName: name }),
+
+      setLeftColumnOverride: (visible) => set({ leftColumnOverride: visible }),
+      setRightColumnOverride: (visible) => set({ rightColumnOverride: visible }),
     }),
     {
       name: 'daily-quest-store',
@@ -273,6 +278,8 @@ export const useStore = create<AppState>()(
           hiddenPanels: p.hiddenPanels ?? current.hiddenPanels,
           mergedPanels: p.mergedPanels ?? current.mergedPanels,
           tagPanels: p.tagPanels ?? current.tagPanels,
+          leftColumnOverride: p.leftColumnOverride ?? current.leftColumnOverride,
+          rightColumnOverride: p.rightColumnOverride ?? current.rightColumnOverride,
         }
       },
     },

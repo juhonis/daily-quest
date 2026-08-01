@@ -114,11 +114,12 @@ export function repeatDescription(quest: Quest): string | null {
       const dayOfMonth = parseDate(quest.targetDate).getDate()
       return `Monthly on day ${dayOfMonth}`
     }
-    case 'custom':
+    case 'custom': {
       if (!quest.repeatConfig) return null
       const { interval, unit } = quest.repeatConfig
       const unitLabel = unit + (interval > 1 ? 's' : '')
       return `Every ${interval} ${unitLabel}`
+    }
   }
 }
 
