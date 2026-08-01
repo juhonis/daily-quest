@@ -48,7 +48,7 @@ export function AppShell() {
 
   const needsCenterTopPad = !(showLeft && showRight)
   const centerClassName = `overflow-y-auto overflow-x-hidden max-h-screen min-w-0 ${
-    needsCenterTopPad ? 'pt-10' : ''
+    needsCenterTopPad ? 'pt-10 w-full mx-auto max-w-[1280px]' : ''
   }`
 
   const toggleButtonClass = (active: boolean) =>
