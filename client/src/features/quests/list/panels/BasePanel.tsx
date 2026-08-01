@@ -38,7 +38,7 @@ export function BasePanel({
   containerStyle,
 }: BasePanelProps) {
   return (
-    <div className="rounded-lg border border-slate-700 bg-slate-800/30 p-3 h-full flex flex-col min-w-0" style={containerStyle}>
+    <div className="rounded-lg border border-slate-700 bg-slate-800/30 px-2 py-3 h-full flex flex-col min-w-0" style={containerStyle}>
       <div className="flex items-center gap-1 mb-3 min-w-0">
         {dragHandleProps && (
           <button {...dragHandleProps} className="p-0.5 cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-300 flex-shrink-0">
