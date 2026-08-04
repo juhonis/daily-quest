@@ -62,7 +62,7 @@ Versioned JSON so future schema changes stay loadable:
 `Quest` and `CompletionRecord` now carry an `updatedAt: string` field (added in Phase A, required by Phase B's last-write-wins sync); `Note` already has it.
 
 **Included:** user data + durable preferences (everything above).
-**Excluded:** transient view state and device-specific data — `selectedDate`, `leftColumnOverride`, `rightColumnOverride`, `filterTags`, `filterNoteTags`, `coords`. Rationale: a *view* (current day, active filters, open columns) shouldn't be restored on a different device; the app computes its own "today". `coords` is device-specific — importing it would pin the new device to stale coordinates. (`locationMode`/`locationName` stay exported; after an import that restores `manual` mode, the user re-picks a location so `coords` is re-fetched.)
+**Excluded:** transient view state and device-specific data — `selectedDate`, `leftColumnOverride`, `rightColumnOverride`, `filterTags`, `filterNoteTags`, `coords`. Rationale: a *view* (current day, active filters, open columns) shouldn't be restored on a different device; the app computes its own "today". `coords` is device-specific — importing it would pin the new device to stale coordinates. (`locationMode`/`locationName` stay exported; after an import that restores `manual` mode, the user re-picks a location so `coords` is re-fetched. Weather renders nothing when `coords` is `null` (`CurrentWeather.tsx`/`WeatherCarousel.tsx`/`RainRadar.tsx` early-return), so the modal should add a small hint after import: "if you use a manual location, re-pick it to restore weather".)
 
 ### 2.2 Export
 
@@ -92,13 +92,15 @@ Flow in the Settings/Data modal:
 ### 2.4 Store changes
 
 - Add `importData(payload: ImportPayload): void` to `useStore.ts` / `AppState` in `types/index.ts`. Sets all user-data + preference slices; resets state that isn't part of the export — `filterTags`/`filterNoteTags` → `[]`, `coords` → `null` — and leaves `selectedDate` + column overrides as-is.
-- `importData` builds a **complete state slice**, filling defaults for missing optional fields (`description`, `repeatConfig`, `sortOrder`, `tags`, `archivedAt`, `xp`, `maxRolloverDays`, `updatedAt`, ...). It must not rely on the persist `merge` — that runs only on localStorage rehydration, not on `set()`.
+- `importData` builds a **complete state slice**, filling defaults for missing optional fields (`description`, `repeatConfig`, `sortOrder`, `tags`, `archivedAt`, `xp`, `maxRolloverDays`, ...). It must not rely on the persist `merge` — that runs only on localStorage rehydration, not on `set()`. Missing `updatedAt` is defaulted via the **same shared normalize helpers** the `merge` uses (below), so both paths stamp identical values.
 - Mutations stamp `updatedAt` on `Quest`/`CompletionRecord` — **every mutator**, not just the obvious ones:
   - quests: `addQuest`, `updateQuest`, `addQuestFromPreset`, `activateQuest`, `archiveQuest`
   - completions: `toggleCompletion` (on create; removal just deletes the record), `toggleSubQuest` (sub-quest state **and** the completion it creates/removes)
   - notes: `NoteCreateModal` already stamps; extend `updateNote`, `archiveNote`, `unarchiveNote` to stamp too
+  - tag operations mutate entities in bulk and must stamp **each affected entity**: `deleteTag`/`renameTag` (all `quests` with that tag), `deleteNoteTag` (all `notes` with that tag)
   - the `QuestCreateForm` save path stamps through `addQuest`/`updateQuest` (store-side), so no form change is needed
-- **Entity-level migration in the persist `merge`:** the current `merge` (`useStore.ts:272`) only defaults top-level keys; extend it to also normalize each quest/completion/note on rehydration — filling `updatedAt` (`createdAt` for quests, derived from `completedOn` for completions). This is how pre-upgrade localStorage data migrates; it keeps the live store consistent for Phase B and guarantees exports always carry `updatedAt`. `importData` intentionally does **not** rely on this — it self-defaults (§2.3).
+  - `addQuestFromPreset` also switches `createdAt` from `getTodayLocal()` (`YYYY-MM-DD`) to `new Date().toISOString()` — one line, zero risk (`createdAt` is display-sort only), removes mixed-format `createdAt` from new exports.
+- **Shared entity normalization + entity-level migration:** extract `normalizeQuest`/`normalizeCompletion`/`normalizeNote` into a single module (export from `exportImport.ts` or a small `normalize.ts`), used by **both** the persist `merge` and `importData`, so they stamp identical defaults. Each normalizer fills missing `updatedAt` as full ISO (`new Date(createdAt).toISOString()` for quests, `new Date(completedOn).toISOString()` for completions) with an **invalid-date guard**: if `Number.isNaN(date.getTime())` (covers empty/undefined/`null`/garbage), fall back to `new Date(0).toISOString()` (epoch — a valid ISO that sorts oldest, so a corrupt value loses LWW cleanly) rather than throwing a `RangeError` during hydration. Normalizing to one format matters because `createdAt` is already mixed-format today (`QuestCreateForm.tsx` writes ISO, `addQuestFromPreset` writes `YYYY-MM-DD`); a single format keeps Phase B LWW string compares unambiguous. This is how pre-upgrade localStorage data migrates; it keeps the live store consistent for Phase B and guarantees exports always carry `updatedAt`. `importData` intentionally does **not** rely on the merge running — it calls the same normalizers itself (§2.3).
 - No changes to how `persist` stores state — import just writes the same shape back through `set()`.
 
 ### 2.5 UI
@@ -114,9 +116,10 @@ Flow in the Settings/Data modal:
 ### 2.6 Tests (vitest)
 
 - Validator: accepts a valid export; rejects wrong app name, unsupported/above-current `schemaVersion`, truncated/malformed JSON, wrong field types, missing required fields. Accepts a missing `updatedAt` (defaulted, not rejected).
-- Roundtrip: `exportData(state)` → `parseImport(json)` → produces equivalent state, including `updatedAt`.
+- Roundtrip: `exportData(state)` → `parseImport(json)` → produces equivalent state, including `updatedAt`. The fixture seeds non-empty `coords`/`filterTags`/`filterNoteTags` and asserts they are omitted from the payload and reset by `importData` (otherwise equivalence passes trivially on empty state).
 - Store-level `importData` test: user-data + preference slices replaced, view/device state reset (`filterTags`, `coords`), missing optional fields defaulted.
-- `merge` migration test: rehydrating pre-upgrade localStorage entities fills `updatedAt` (quests → `createdAt`, completions → derived from `completedOn`).
+- `merge` migration test: rehydrating pre-upgrade localStorage entities fills `updatedAt` normalized to ISO (quests → `new Date(createdAt).toISOString()`, completions → `new Date(completedOn).toISOString()`).
+- `merge` test for the invalid-date guard: corrupt/empty/`null` `createdAt` or `completedOn` in persisted state does not throw and falls back to `new Date(0).toISOString()` (epoch).
 - Co-located as `client/src/utils/exportImport.test.ts` (matches `dateUtils.test.ts` pattern).
 
 ---
@@ -194,6 +197,11 @@ Keep components store-only. Add a sync engine under `src/features/sync/` (e.g. `
 - Import preserves imported `updatedAt` verbatim (backup-restore semantics).
 - `schemaVersion` above the current version is a hard reject.
 - `.bak` gate is a soft click-gate (browser may block/redirect the download).
+- `updatedAt` stamped on tag mutations too: `deleteTag`/`renameTag` (affected quests), `deleteNoteTag` (affected notes).
+- `updatedAt` defaults are normalized to full ISO (`new Date(createdAt).toISOString()` / `new Date(completedOn).toISOString()`) because `createdAt` is already mixed-format today.
+- Roundtrip fixture seeds `coords`/`filterTags` so the test asserts they are excluded and reset, not just present-by-default.
+- Shared `normalizeQuest`/`normalizeCompletion`/`normalizeNote` used by both `merge` and `importData` (identical defaults), each with an invalid-date guard falling back to `new Date(0).toISOString()` (epoch).
+- `addQuestFromPreset` writes ISO `createdAt` so new exports are uniform.
 
 **Open questions (deferred):**
 - Exact UI placement of Export/Import (candidate: top-right of right column) and whether it should be a separate `SettingsModal` or a section inside `EditPanelsModal`.
