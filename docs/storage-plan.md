@@ -7,10 +7,13 @@ Two-phase update to the current `localStorage`-only persistence:
 
 **Decisions locked in:**
 - Cloud backend: **Firebase** (Firestore) — easy + free tier sufficient.
-- Import behavior: **Replace, with backup** (confirmation dialog; auto-download a backup first).
+- Import behavior: **Replace, with backup** (two-step confirm — a *Download backup* button must be used before *Replace & import* is enabled).
 - Export format: **Plain JSON** (no encryption). No secrets exist in the data today; encryption can be added later if cloud accounts introduce sensitive data.
 - UI: **Reuse the Settings gear** (currently opens `EditPanelsModal`) to open a Settings/Data modal with Export & Import. Exact placement (candidate: top-right of the right column) decided later.
 - Validation: **Hand-rolled validator** (typed guard functions + vitest). No new dependency.
+- `updatedAt` on `Quest` + `CompletionRecord` lands in **Phase A**, stamped on every create/update (Note already has it). Phase A exports carry timestamps, so backups are forward-compatible with Phase B LWW sync.
+- Import confirm is **two-step:** a *Download backup* button gates the *Replace & import* button, so data is never replaced without an initiated backup.
+- `importData` **self-defaults** missing optional fields — the persist `merge` runs only on localStorage rehydration, not on `set()`.
 
 ---
 
@@ -57,6 +60,8 @@ Versioned JSON so future schema changes stay loadable:
 }
 ```
 
+`Quest` and `CompletionRecord` now carry an `updatedAt: string` field (added in Phase A, required by Phase B's last-write-wins sync); `Note` already has it.
+
 **Included:** user data + preferences (everything above).
 **Excluded:** transient UI only — `selectedDate`, `leftColumnOverride`, `rightColumnOverride`. Rationale: the user's *view* shouldn't be restored on a different device; the app computes its own "today".
 
@@ -66,6 +71,7 @@ Versioned JSON so future schema changes stay loadable:
   - `exportData(state: AppState): string` — builds the versioned JSON from store state.
   - Reads via `useStore.getState()` at call time.
 - Download as `daily-quest-<YYYY-MM-DD>.json` using a `Blob` + anchor click (works on desktop and mobile browsers).
+- Exports roundtrip `updatedAt`. Pre-upgrade localStorage data (no `updatedAt`) is defaulted by the persist `merge` at rehydration, not by export.
 
 ### 2.3 Import (Replace, with backup)
 
@@ -77,13 +83,18 @@ Flow in the Settings/Data modal:
    - `schemaVersion` is a supported number
    - per-collection shape checks (arrays, required fields, type guards for `Quest`, `CompletionRecord`, `Note`, `QuickPreset`, etc.)
    - reject with a clear, user-facing error message on failure (never partially apply).
-3. Confirmation dialog: *"This replaces all current local data. A backup of your current data will be downloaded first."*
-4. On confirm: auto-download current data as `<same-name>.bak.json`, then call a new store action `importData(data)` which overwrites the relevant slices via `set()` — bypassing the persist `merge` (that merge is only for missing-field migration, not import).
-5. UI updates immediately (store write re-renders); no page reload needed.
+3. Confirmation dialog: *"This replaces all current local data. Download a backup of your current data first."* Offers a **Download backup** button (saves current data as `<same-name>.bak.json`).
+4. **Replace & import** stays disabled until the backup download has been initiated — the gate guarantees a backup exists before data is replaced, even if the browser later blocks the download.
+5. On confirm: call a new store action `importData(data)` which overwrites the relevant slices via `set()` — bypassing the persist `merge` (that merge is only for missing-field migration, not import).
+6. UI updates immediately (store write re-renders); no page reload needed.
+
+**Validation is lenient:** missing optional fields (incl. `updatedAt`) are defaulted by `importData`, never rejected — older backups stay loadable.
 
 ### 2.4 Store changes
 
 - Add `importData(payload: ImportPayload): void` to `useStore.ts` / `AppState` in `types/index.ts`. Sets all user-data + preference slices, leaves transient UI untouched (or resets to sensible defaults).
+- `importData` builds a **complete state slice**, filling defaults for missing optional fields (`description`, `repeatConfig`, `sortOrder`, `tags`, `archivedAt`, `xp`, `maxRolloverDays`, `updatedAt`, ...). It must not rely on the persist `merge` — that runs only on localStorage rehydration, not on `set()`.
+- Mutations stamp `updatedAt` on `Quest`/`CompletionRecord`: `addQuest`, `updateQuest`, `addQuestFromPreset`, `toggleCompletion`, `toggleSubQuest` (+ the `QuestCreateForm` save path).
 - No changes to how `persist` stores state — import just writes the same shape back through `set()`.
 
 ### 2.5 UI
@@ -97,8 +108,9 @@ Flow in the Settings/Data modal:
 
 ### 2.6 Tests (vitest)
 
-- Validator: accepts a valid export; rejects wrong app name, unsupported `schemaVersion`, truncated/malformed JSON, wrong field types, missing required fields.
-- Roundtrip: `exportData(state)` → `parseImport(json)` → produces equivalent state.
+- Validator: accepts a valid export; rejects wrong app name, unsupported `schemaVersion`, truncated/malformed JSON, wrong field types, missing required fields. Accepts a missing `updatedAt` (defaulted, not rejected).
+- Roundtrip: `exportData(state)` → `parseImport(json)` → produces equivalent state, including `updatedAt`.
+- Store-level `importData` test: user-data + preference slices replaced, transient UI untouched, missing optional fields defaulted.
 - Co-located as `client/src/utils/exportImport.test.ts` (matches `dateUtils.test.ts` pattern).
 
 ---
@@ -129,9 +141,8 @@ Top-level collections, every document carrying an `ownerId` gated by security ru
 
 ### 3.3 Schema evolution (local types)
 
-- Add `updatedAt: string` to `Quest` and `CompletionRecord` (Note already has it). Required for last-write-wins sync.
+- `updatedAt: string` is added to `Quest` and `CompletionRecord` in **Phase A** (§2.1) — Note already has it. Phase A exports carry timestamps natively, so backups are forward-compatible; Phase B only consumes them for last-write-wins sync.
 - Persist `merge` already handles new/missing fields, so existing localStorage users upgrade transparently.
-- `ImportPayload` should include `updatedAt` so Phase A backups remain forward-compatible with Phase B.
 
 ### 3.4 Sync architecture
 
@@ -166,8 +177,8 @@ Keep components store-only. Add a sync engine under `src/features/sync/` (e.g. `
 ## 4. Rollout order & open questions
 
 **Order:**
-1. **Phase A** on the current `feat/export` branch — export/import util + validator + tests, store `importData`, Settings/Data modal.
-2. **Phase B** (later branch) — `updatedAt` schema fields → Firebase client + auth → sync engine → account UI in Settings modal → env config + rules.
+1. **Phase A** on the current `feat/export` branch — add `updatedAt` to `Quest`/`CompletionRecord` → export/import util + validator + tests → store `importData` → Settings/Data modal.
+2. **Phase B** (later branch) — Firebase client + auth → sync engine → account UI in Settings modal → env config + rules.
 
 **Open questions (deferred):**
 - Exact UI placement of Export/Import (candidate: top-right of right column) and whether it should be a separate `SettingsModal` or a section inside `EditPanelsModal`.
