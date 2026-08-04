@@ -81,6 +81,7 @@ Flow in the Settings/Data modal:
    - `app === 'daily-quest'`
    - `schemaVersion` is a supported number — anything above the current version is a **hard reject** with a clear message (never guess a future format)
    - per-collection shape checks (arrays, required fields, type guards for `Quest`, `CompletionRecord`, `Note`, `QuickPreset`, etc.)
+   - security guards: `externalUrl` must match `^https?://`; `tagColors`/`noteTagColors` values must match `^#[0-9a-fA-F]{6}$` (or `rgb(...)`) — malformed values are a hard reject (see §2.3 security note)
    - reject with a clear, user-facing error message on failure (never partially apply).
 3. Confirmation dialog: *"This replaces all current local data. Download a backup of your current data first."* Offers a **Download backup** button (saves current data as `<same-name>.bak.json`).
 4. **Replace & import** stays disabled until the backup download has been initiated — the gate guarantees a backup exists before data is replaced, even if the browser later blocks the download.
@@ -88,6 +89,12 @@ Flow in the Settings/Data modal:
 6. UI updates immediately (store write re-renders); no page reload needed.
 
 **Validation is lenient:** missing optional fields (incl. `updatedAt`) are defaulted by `importData`, never rejected — older backups stay loadable. Imported `updatedAt` values are preserved **verbatim** (backup-restore semantics — no re-stamping at import time). `coords` is not part of the export; `importData` resets it to `null`.
+
+**Security guards (import-time, hard reject, not lenient):** two values that flow unsanitized into runtime sinks must be validated, since their shape can't be made safe by defaulting:
+- `externalUrl` on quests/presets is rendered via `window.open(externalUrl)` (`QuestCard.tsx`, `QuestHistoryPanel.tsx`) with no sanitizer. Reject any `externalUrl` that doesn't match `^https?://`. This is a real XSS/URL-injection vector — unlike `NoteViewModal`, which sanitizes via `react-markdown`'s default `urlTransform`.
+- `tagColors` / `noteTagColors` are applied directly to React `style` objects (React does not sanitize style values). Reject any color that doesn't match `^#[0-9a-fA-F]{6}$` (or a bare `rgb(...)`). Low risk in practice (modern browsers won't execute JS from these CSS props) but cheap to enforce.
+
+Both are treated as malformed input → hard reject with a clear message, matching the `schemaVersion`-above-current behavior.
 
 ### 2.4 Store changes
 
@@ -116,6 +123,7 @@ Flow in the Settings/Data modal:
 ### 2.6 Tests (vitest)
 
 - Validator: accepts a valid export; rejects wrong app name, unsupported/above-current `schemaVersion`, truncated/malformed JSON, wrong field types, missing required fields. Accepts a missing `updatedAt` (defaulted, not rejected).
+- Validator security guards: rejects `externalUrl` that isn't `^https?://` (e.g. `javascript:` / `data:` schemes) and rejects `tagColors`/`noteTagColors` values that aren't `#hex` or `rgb(...)` — each with a hard reject, never a partial apply.
 - Roundtrip: `exportData(state)` → `parseImport(json)` → produces equivalent state, including `updatedAt`. The fixture seeds non-empty `coords`/`filterTags`/`filterNoteTags` and asserts they are omitted from the payload and reset by `importData` (otherwise equivalence passes trivially on empty state).
 - Store-level `importData` test: user-data + preference slices replaced, view/device state reset (`filterTags`, `coords`), missing optional fields defaulted.
 - `merge` migration test: rehydrating pre-upgrade localStorage entities fills `updatedAt` normalized to ISO (quests → `new Date(createdAt).toISOString()`, completions → `new Date(completedOn).toISOString()`).
@@ -166,6 +174,7 @@ Keep components store-only. Add a sync engine under `src/features/sync/` (e.g. `
 2. *First sign-in (empty cloud):* upload local data as initial state.
 3. *Steady state:* Firestore realtime subscription pushes cloud changes into the store; a debounced store-change subscriber pushes local edits to Firestore.
 4. *Conflict resolution:* v1 = last-write-wins per entity by `updatedAt`. Documented as a simplification. **Deletes are an open gap:** toggling a completion off removes the record (no tombstone), so create-vs-delete races can't be resolved by LWW. v1 ships deletion as best-effort doc deletes; a tombstone scheme is a possible v2.
+   - **Ties are a real case, not a corner case:** because imported `updatedAt` is preserved verbatim (backup-restore) and pre-upgrade entities get `updatedAt = createdAt`, two devices importing the same backup can hold *identical* `updatedAt` values on the same entity. LWW must therefore define a **deterministic tiebreak**, not a coin-flip. v1 rule: when `updatedAt` is equal, the higher `id` (string compare, UUIDs sort stably) wins. Document this next to the LWW simplification so conflict behavior is never ambiguous.
 5. *Sign out:* keep local copy; cloud remains. Local changes made while signed out are **not** auto-merged on next sign-in (documented limitation; future: offer a manual merge prompt).
 
 ### 3.5 Config & dependencies
@@ -202,6 +211,8 @@ Keep components store-only. Add a sync engine under `src/features/sync/` (e.g. `
 - Roundtrip fixture seeds `coords`/`filterTags` so the test asserts they are excluded and reset, not just present-by-default.
 - Shared `normalizeQuest`/`normalizeCompletion`/`normalizeNote` used by both `merge` and `importData` (identical defaults), each with an invalid-date guard falling back to `new Date(0).toISOString()` (epoch).
 - `addQuestFromPreset` writes ISO `createdAt` so new exports are uniform.
+- Import-time **security guards** hard-reject unsafe `externalUrl` (`^https?://`) and `tagColors`/`noteTagColors` values (`^#[0-9a-fA-F]{6}$`), since both flow unsanitized into runtime sinks (`window.open` and React `style`).
+- Phase B LWW defines a **deterministic tiebreak** for equal `updatedAt`: higher `id` wins (imported backup-restore and pre-upgrade migration both produce identical timestamps across devices).
 
 **Open questions (deferred):**
 - Exact UI placement of Export/Import (candidate: top-right of right column) and whether it should be a separate `SettingsModal` or a section inside `EditPanelsModal`.
