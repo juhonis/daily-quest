@@ -69,7 +69,7 @@ Versioned JSON so future schema changes stay loadable:
 - New pure util `src/utils/exportImport.ts`:
   - `exportData(state: AppState): string` — builds the versioned JSON from store state.
   - Reads via `useStore.getState()` at call time.
-- Download as `daily-quest-<YYYY-MM-DD>.json` using a `Blob` + anchor click (works on desktop and mobile browsers).
+- Download as `daily-quest-<YYYY-MM-DD>.json` using a `Blob` + anchor click (works on desktop and mobile browsers). The date in the filename is rendered from `getTodayLocal()` (local date), not UTC — avoids "yesterday" filenames around midnight.
 - Exports roundtrip `updatedAt`. Pre-upgrade localStorage data (no `updatedAt`) is migrated by an **entity-level normalization step in the persist `merge`** (§2.4) at rehydration — not by export. Keeping the *live store* normalized matters for Phase B, which reads the live store (not exports).
 
 ### 2.3 Import (Replace, with backup)
@@ -83,18 +83,23 @@ Flow in the Settings/Data modal:
    - per-collection shape checks (arrays, required fields, type guards for `Quest`, `CompletionRecord`, `Note`, `QuickPreset`, etc.)
    - security guards: `externalUrl` must match `^https?://`; `tagColors`/`noteTagColors` values must match `^#[0-9a-fA-F]{6}$` (or `rgb(...)`) — malformed values are a hard reject (see §2.3 security note)
    - reject with a clear, user-facing error message on failure (never partially apply).
-3. Confirmation dialog: *"This replaces all current local data. Download a backup of your current data first."* Offers a **Download backup** button (saves current data as `<same-name>.bak.json`).
+3. Confirmation dialog: *"This replaces all current local data. Download a backup of your current data first."* Offers a **Download backup** button (saves current data as a date-stamped `daily-quest-backup-<YYYY-MM-DD>.json`, local date via `getTodayLocal()` — clearer than deriving a name from the picked import file).
 4. **Replace & import** stays disabled until the backup download has been initiated — the gate guarantees a backup exists before data is replaced, even if the browser later blocks the download.
 5. On confirm: call a new store action `importData(data)` which overwrites the relevant slices via `set()` — bypassing the persist `merge` (that merge is only for missing-field migration, not import).
 6. UI updates immediately (store write re-renders); no page reload needed.
 
 **Validation is lenient:** missing optional fields (incl. `updatedAt`) are defaulted by `importData`, never rejected — older backups stay loadable. Imported `updatedAt` values are preserved **verbatim** (backup-restore semantics — no re-stamping at import time). `coords` is not part of the export; `importData` resets it to `null`.
 
-**Security guards (import-time, hard reject, not lenient):** two values that flow unsanitized into runtime sinks must be validated, since their shape can't be made safe by defaulting:
+**Security guards (import-time, hard reject, not lenient):** values that flow unsanitized into runtime sinks must be validated, since their shape can't be made safe by defaulting:
 - `externalUrl` on quests/presets is rendered via `window.open(externalUrl)` (`QuestCard.tsx`, `QuestHistoryPanel.tsx`) with no sanitizer. Reject any `externalUrl` that doesn't match `^https?://`. This is a real XSS/URL-injection vector — unlike `NoteViewModal`, which sanitizes via `react-markdown`'s default `urlTransform`.
 - `tagColors` / `noteTagColors` are applied directly to React `style` objects (React does not sanitize style values). Reject any color that doesn't match `^#[0-9a-fA-F]{6}$` (or a bare `rgb(...)`). Low risk in practice (modern browsers won't execute JS from these CSS props) but cheap to enforce.
+- `note.color` is a **third** unsanitized style sink — applied directly to `style={{ backgroundColor }}` in `NoteCard.tsx` and `NoteViewModal.tsx`, same class as `tagColors`. Validate it against the same color regex (the app only writes the fixed `NOTE_COLORS` palette of 6-digit hex).
 
-Both are treated as malformed input → hard reject with a clear message, matching the `schemaVersion`-above-current behavior.
+**Guard must match what the app itself produces (test this):** stored `tagColors`/`noteTagColors` are *always* 6-digit palette hex (`tagColors.ts` `TAG_PALETTE` / `assignTagColor`), so `^#[0-9a-fA-F]{6}$` is correct — but the render path derives **8-digit** hex (`getTagStyle` appends alpha: `${color}33`/`4D`/`1A`). The validator must run on *stored* values, not the derived 8-digit forms, or it will reject the app's own exports.
+
+**Duplicate-entity validation:** a hand-edited or corrupt-but-parseable file could contain two `Quest`s with the same `id`, or two `CompletionRecord`s with the same `questId`+`completedOn`. Replace-import would then produce React duplicate-key breakage and `toggleCompletion` toggling the wrong record. The validator **dedupes-or-hard-rejects** duplicate entity IDs (one pass, near-free).
+
+Both of the above are treated as malformed input → hard reject with a clear message, matching the `schemaVersion`-above-current behavior.
 
 ### 2.4 Store changes
 
@@ -107,6 +112,10 @@ Both are treated as malformed input → hard reject with a clear message, matchi
   - tag operations mutate entities in bulk and must stamp **each affected entity**: `deleteTag`/`renameTag` (all `quests` with that tag), `deleteNoteTag` (all `notes` with that tag)
   - the `QuestCreateForm` save path stamps through `addQuest`/`updateQuest` (store-side), so no form change is needed
   - `addQuestFromPreset` also switches `createdAt` from `getTodayLocal()` (`YYYY-MM-DD`) to `new Date().toISOString()` — one line, zero risk (`createdAt` is display-sort only), removes mixed-format `createdAt` from new exports.
+- `updateQuest` must **force-stamp** `updatedAt`, not inherit it from `updates`: `QuestsColumn.tsx`'s `onSave` passes the *whole rebuilt quest object* (which `QuestCreateForm` builds **without** an `updatedAt` field) into `updateQuest`. Always overwrite `updatedAt` on merge; never trust `updates.updatedAt`.
+- **Harden the persist `merge` against non-object persisted state:** today's `merge` does `p.panelOrder ?? current.panelOrder` with no guard (`useStore.ts`). If `localStorage['daily-quest-store']` ever holds a valid-JSON non-object (e.g. `"null"`, `5`, or a sync-tool write), it throws → white-screen on load. Phase A is restructuring this `merge` for normalization anyway, so add a `typeof p === 'object' && p !== null` guard at the top before any field access. This is exactly the corrupt-data case the import/backup flow is meant to recover from.
+- **Normalizers must be strictly fill-only, never re-stamp** a valid existing `updatedAt`. If they re-wrote every rehydration, LWW would silently bump every entity and Phase B conflict resolution breaks. Only fill when `updatedAt` is absent or invalid.
+- **QuickPreset `updatedAt` — add in Phase A.** Presets are user-editable/deleteable, and Phase B's `quickPresets` collection has no timestamp (§3.2), so LWW can't resolve preset conflicts. Add `updatedAt` to `QuickPreset` alongside Quest/CompletionRecord (same normalize + mutator-stamp pattern — small surface: `addQuickPreset`, `updateQuickPreset`). Doing it now is strictly easier than retrofitting in Phase B; at minimum, decide now and document "whole-presets-doc wins" if deferred.
 - **Shared entity normalization + entity-level migration:** extract `normalizeQuest`/`normalizeCompletion`/`normalizeNote` into a single module (export from `exportImport.ts` or a small `normalize.ts`), used by **both** the persist `merge` and `importData`, so they stamp identical defaults. Each normalizer fills missing `updatedAt` as full ISO (`new Date(createdAt).toISOString()` for quests, `new Date(completedOn).toISOString()` for completions) with an **invalid-date guard**: if `Number.isNaN(date.getTime())` (covers empty/undefined/`null`/garbage), fall back to `new Date(0).toISOString()` (epoch — a valid ISO that sorts oldest, so a corrupt value loses LWW cleanly) rather than throwing a `RangeError` during hydration. Normalizing to one format matters because `createdAt` is already mixed-format today (`QuestCreateForm.tsx` writes ISO, `addQuestFromPreset` writes `YYYY-MM-DD`); a single format keeps Phase B LWW string compares unambiguous. This is how pre-upgrade localStorage data migrates; it keeps the live store consistent for Phase B and guarantees exports always carry `updatedAt`. `importData` intentionally does **not** rely on the merge running — it calls the same normalizers itself (§2.3).
 - No changes to how `persist` stores state — import just writes the same shape back through `set()`.
 
@@ -123,8 +132,9 @@ Both are treated as malformed input → hard reject with a clear message, matchi
 ### 2.6 Tests (vitest)
 
 - Validator: accepts a valid export; rejects wrong app name, unsupported/above-current `schemaVersion`, truncated/malformed JSON, wrong field types, missing required fields. Accepts a missing `updatedAt` (defaulted, not rejected).
-- Validator security guards: rejects `externalUrl` that isn't `^https?://` (e.g. `javascript:` / `data:` schemes) and rejects `tagColors`/`noteTagColors` values that aren't `#hex` or `rgb(...)` — each with a hard reject, never a partial apply.
-- Roundtrip: `exportData(state)` → `parseImport(json)` → produces equivalent state, including `updatedAt`. The fixture seeds non-empty `coords`/`filterTags`/`filterNoteTags` and asserts they are omitted from the payload and reset by `importData` (otherwise equivalence passes trivially on empty state).
+- Validator security guards: rejects `externalUrl` that isn't `^https?://` (e.g. `javascript:` / `data:` schemes) and rejects `tagColors`/`noteTagColors` values that aren't `#hex` or `rgb(...)` — each with a hard reject, never a partial apply. Also rejects a non-palette `note.color`. Guard-format test: a *valid* export whose `tagColors`/`noteTagColors` are 6-digit palette hex is accepted, while the derived 8-digit form (`#RRGGBBAA` from `getTagStyle`) is rejected — asserts the validator runs on stored, not render-derived, values.
+- Validator duplicate check: rejects or dedupes files with duplicate `Quest` ids or duplicate `questId`+`completedOn` completions.
+- Roundtrip: `exportData(state)` → `parseImport(json)` → produces equivalent state, including `updatedAt`. The fixture seeds non-empty `coords`/`filterTags`/`filterNoteTags` **and all optional fields** (`sortOrder`, `xp`, `tags`, `description`, `repeatConfig`, `maxRolloverDays`, `icon`, `externalUrl`) and asserts `coords`/`filterTags`/`filterNoteTags` are omitted from the payload and reset by `importData`. Seeding all optionals forces the test to assert pass-through rather than vacuously comparing to defaults (otherwise equivalence passes trivially on empty state).
 - Store-level `importData` test: user-data + preference slices replaced, view/device state reset (`filterTags`, `coords`), missing optional fields defaulted.
 - `merge` migration test: rehydrating pre-upgrade localStorage entities fills `updatedAt` normalized to ISO (quests → `new Date(createdAt).toISOString()`, completions → `new Date(completedOn).toISOString()`).
 - `merge` test for the invalid-date guard: corrupt/empty/`null` `createdAt` or `completedOn` in persisted state does not throw and falls back to `new Date(0).toISOString()` (epoch).
@@ -150,7 +160,7 @@ Top-level collections, every document carrying an `ownerId` gated by security ru
 | `quests` | `{questId}` | `Quest` + `ownerId`, `updatedAt` |
 | `completions` | `{completionId}` | `CompletionRecord` + `ownerId`, `updatedAt` |
 | `notes` | `{noteId}` | `Note` + `ownerId`, `updatedAt` (already present) |
-| `quickPresets` | `{presetId}` | `QuickPreset` + `ownerId` |
+| `quickPresets` | `{presetId}` | `QuickPreset` + `ownerId`, `updatedAt` |
 | `prefs` | `{uid}` | `panelOrder`, `hiddenPanels`, `mergedPanels`, `tagPanels`, `tagColors`, `noteTagColors`, `filterTags`, `filterNoteTags`, `locationMode`, `locationName`, `coords` |
 | `users` | `{uid}` | profile metadata (createdAt, displayName) |
 
@@ -213,6 +223,15 @@ Keep components store-only. Add a sync engine under `src/features/sync/` (e.g. `
 - `addQuestFromPreset` writes ISO `createdAt` so new exports are uniform.
 - Import-time **security guards** hard-reject unsafe `externalUrl` (`^https?://`) and `tagColors`/`noteTagColors` values (`^#[0-9a-fA-F]{6}$`), since both flow unsanitized into runtime sinks (`window.open` and React `style`).
 - Phase B LWW defines a **deterministic tiebreak** for equal `updatedAt`: higher `id` wins (imported backup-restore and pre-upgrade migration both produce identical timestamps across devices).
+
+**Resolved during build review (2026-08-04):**
+- `merge` hardened against non-object persisted state (plain-object guard) — pre-existing crash vector fixed as part of the normalization work (§2.4).
+- `updateQuest` force-stamps `updatedAt` (never inherits from the form-rebuilt object) (§2.4).
+- Normalizers are **fill-only** — never re-stamp a valid `updatedAt`, or LWW breaks on rehydration (§2.4).
+- `QuickPreset` gets `updatedAt` in Phase A so Phase B can LWW preset conflicts (§2.4).
+- Import security guards extended: `note.color` (third style sink) plus a guard-format test (6-digit stored vs 8-digit render-derived) and duplicate-entity-ID validation (§2.3, §2.6).
+- Export/backup filenames use the **local** date via `getTodayLocal()`; backup name is date-stamped, not derived from the import file (§2.2, §2.3).
+- Roundtrip fixture seeds all optional fields so the test asserts pass-through, not defaulting (§2.6).
 
 **Open questions (deferred):**
 - Exact UI placement of Export/Import (candidate: top-right of right column) and whether it should be a separate `SettingsModal` or a section inside `EditPanelsModal`.
