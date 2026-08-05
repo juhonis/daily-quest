@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { AppState, PanelId } from '../types'
 import { getTodayLocal } from '../utils/dateUtils'
+import { normalizeQuest, normalizeCompletion, normalizeNote, normalizeQuickPreset } from '../utils/normalize'
 
 const now = () => new Date().toISOString()
 
@@ -283,10 +284,15 @@ export const useStore = create<AppState>()(
     {
       name: 'daily-quest-store',
       merge: (persisted, current) => {
-        const p = persisted as Partial<AppState>
+        const p = persisted as Partial<AppState> | null
+        if (typeof p !== 'object' || p === null) return current
         return {
           ...current,
           ...p,
+          quests: (p.quests ?? []).map(normalizeQuest),
+          completions: (p.completions ?? []).map(normalizeCompletion),
+          notes: (p.notes ?? []).map(normalizeNote),
+          quickPresets: (p.quickPresets ?? []).map(normalizeQuickPreset),
           panelOrder: p.panelOrder ?? current.panelOrder,
           hiddenPanels: p.hiddenPanels ?? current.hiddenPanels,
           mergedPanels: p.mergedPanels ?? current.mergedPanels,
