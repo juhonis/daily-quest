@@ -119,6 +119,20 @@ Both of the above are treated as malformed input → hard reject with a clear me
 - **Shared entity normalization + entity-level migration:** extract `normalizeQuest`/`normalizeCompletion`/`normalizeNote` into a single module (export from `exportImport.ts` or a small `normalize.ts`), used by **both** the persist `merge` and `importData`, so they stamp identical defaults. Each normalizer fills missing `updatedAt` as full ISO (`new Date(createdAt).toISOString()` for quests, `new Date(completedOn).toISOString()` for completions) with an **invalid-date guard**: if `Number.isNaN(date.getTime())` (covers empty/undefined/`null`/garbage), fall back to `new Date(0).toISOString()` (epoch — a valid ISO that sorts oldest, so a corrupt value loses LWW cleanly) rather than throwing a `RangeError` during hydration. Normalizing to one format matters because `createdAt` is already mixed-format today (`QuestCreateForm.tsx` writes ISO, `addQuestFromPreset` writes `YYYY-MM-DD`); a single format keeps Phase B LWW string compares unambiguous. This is how pre-upgrade localStorage data migrates; it keeps the live store consistent for Phase B and guarantees exports always carry `updatedAt`. `importData` intentionally does **not** rely on the merge running — it calls the same normalizers itself (§2.3).
 - No changes to how `persist` stores state — import just writes the same shape back through `set()`.
 
+### 2.4.1 Upgrade / Migration — existing users
+
+Existing `localStorage` data (key `daily-quest-store`) upgrades transparently on first load — **no data is lost or rewritten**, and no re-import is needed.
+
+- On rehydration, the hardened `merge` (§2.4) runs the fill-only normalizers over `quests`/`completions`/`notes`/`quickPresets`. All existing fields are spread through untouched; normalizers only **add** `updatedAt`:
+  - quests → `new Date(createdAt).toISOString()`
+  - completions → `new Date(completedOn).toISOString()`
+  - notes → backfilled from `createdAt` (very old notes missing it)
+  - quickPresets → epoch (`1970-01-01T00:00:00.000Z`); presets have no natural date — invisible in the UI, only relevant to Phase B LWW
+- A valid existing `updatedAt` is preserved **verbatim** (never re-stamped). Corrupt/empty/garbage timestamps fall back to epoch rather than throwing.
+- The normalized shape is written back to localStorage by persist, so the next load is already clean.
+- **Before merging to production:** verify once against real persisted data (dev build) — confirm quests render normally and the stored quests/completions now carry `updatedAt`.
+- **Known, accepted quirks:** `createdAt` stays mixed-format until it rotates out (only new preset-created quests write ISO; `createdAt` is display-sort only); the third-party seed presets carry a static `2023-03-20` timestamp.
+
 ### 2.5 UI
 
 - Extend the existing Settings gear (`QuestsColumn.tsx`) to open a new `SettingsModal` (or add a "Data" section to `EditPanelsModal` — prefer a separate modal to keep panel editing focused).
