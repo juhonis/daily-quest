@@ -29,6 +29,7 @@ function q(overrides: Partial<Quest> = {}): Quest {
     title: 'Test Quest',
     description: undefined,
     createdAt: '2026-07-01',
+    updatedAt: '2026-07-01',
     targetDate: '2026-07-20',
     repeat: 'none',
     repeatConfig: undefined,
@@ -50,6 +51,7 @@ function cr(overrides: Partial<CompletionRecord> = {}): CompletionRecord {
     id: 'cr1',
     questId: 'q1',
     completedOn: '2026-07-20',
+    updatedAt: '2026-07-01',
     ...overrides,
   }
 }

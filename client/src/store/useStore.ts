@@ -2,6 +2,9 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { AppState, PanelId } from '../types'
 import { getTodayLocal } from '../utils/dateUtils'
+import { normalizeQuest, normalizeCompletion, normalizeNote, normalizeQuickPreset } from '../utils/normalize'
+
+const now = () => new Date().toISOString()
 
 const seededPresets: AppState['quickPresets'] = [
   {
@@ -9,18 +12,21 @@ const seededPresets: AppState['quickPresets'] = [
     title: 'Wordle',
     externalUrl: 'https://nytimes.com/games/wordle',
     isUserDefined: false,
+    updatedAt: '2023-03-20',
   },
   {
     id: 'preset-nyt-mini',
     title: 'NYT Mini',
     externalUrl: 'https://nytimes.com/crosswords/Mini',
     isUserDefined: false,
+    updatedAt: '2023-03-20',
   },
   {
     id: 'preset-connections',
     title: 'Connections',
     externalUrl: 'https://nytimes.com/games/connections',
     isUserDefined: false,
+    updatedAt: '2023-03-20',
   },
 ]
 
@@ -48,10 +54,11 @@ export const useStore = create<AppState>()(
       locationMode: 'auto',
       locationName: '',
 
-      addQuest: (quest) => set((s) => ({ quests: [...s.quests, quest] })),
+      addQuest: (quest) =>
+        set((s) => ({ quests: [...s.quests, { ...quest, updatedAt: quest.updatedAt ?? now() }] })),
       updateQuest: (questId, updates) =>
         set((s) => ({
-          quests: s.quests.map((q) => (q.id === questId ? { ...q, ...updates } : q)),
+          quests: s.quests.map((q) => (q.id === questId ? { ...q, ...updates, updatedAt: now() } : q)),
         })),
       deleteQuest: (questId) =>
         set((s) => ({ quests: s.quests.filter((q) => q.id !== questId) })),
@@ -59,20 +66,20 @@ export const useStore = create<AppState>()(
       addNote: (note) => set((s) => ({ notes: [...s.notes, note] })),
       updateNote: (noteId, updates) =>
         set((s) => ({
-          notes: s.notes.map((n) => (n.id === noteId ? { ...n, ...updates } : n)),
+          notes: s.notes.map((n) => (n.id === noteId ? { ...n, ...updates, updatedAt: now() } : n)),
         })),
       deleteNote: (noteId) =>
         set((s) => ({ notes: s.notes.filter((n) => n.id !== noteId) })),
       archiveNote: (noteId) =>
         set((s) => ({
           notes: s.notes.map((n) =>
-            n.id === noteId ? { ...n, archivedAt: new Date().toISOString() } : n,
+            n.id === noteId ? { ...n, archivedAt: new Date().toISOString(), updatedAt: now() } : n,
           ),
         })),
       unarchiveNote: (noteId) =>
         set((s) => ({
           notes: s.notes.map((n) =>
-            n.id === noteId ? { ...n, archivedAt: null } : n,
+            n.id === noteId ? { ...n, archivedAt: null, updatedAt: now() } : n,
           ),
         })),
 
@@ -87,6 +94,7 @@ export const useStore = create<AppState>()(
             notes: s.notes.map((n) => ({
               ...n,
               tags: n.tags?.filter((t) => t !== tag),
+              updatedAt: now(),
             })),
             noteTagColors: rest,
             filterNoteTags: s.filterNoteTags.filter((t) => t !== tag),
@@ -97,7 +105,7 @@ export const useStore = create<AppState>()(
       activateQuest: (questId, targetDate) =>
         set((s) => ({
           quests: s.quests.map((q) =>
-            q.id === questId ? { ...q, status: 'active' as const, targetDate } : q,
+            q.id === questId ? { ...q, status: 'active' as const, targetDate, updatedAt: now() } : q,
           ),
         })),
 
@@ -105,7 +113,7 @@ export const useStore = create<AppState>()(
         set((s) => ({
           quests: s.quests.map((q) =>
             q.id === questId
-              ? { ...q, archivedAt: getTodayLocal(), status: 'inactive' as const }
+              ? { ...q, archivedAt: getTodayLocal(), status: 'inactive' as const, updatedAt: now() }
               : q,
           ),
         })),
@@ -121,7 +129,7 @@ export const useStore = create<AppState>()(
           return {
             completions: [
               ...s.completions,
-              { id: crypto.randomUUID(), questId, completedOn: date },
+              { id: crypto.randomUUID(), questId, completedOn: date, updatedAt: now() },
             ],
           }
         }),
@@ -145,6 +153,7 @@ export const useStore = create<AppState>()(
               id: crypto.randomUUID(),
               questId,
               completedOn: date,
+              updatedAt: now(),
             })
           } else if (!allDone && hasCompletion) {
             newCompletions = newCompletions.filter(
@@ -154,7 +163,7 @@ export const useStore = create<AppState>()(
 
           return {
             quests: s.quests.map((q) =>
-              q.id === questId ? { ...q, subQuests: newSubQuests } : q,
+              q.id === questId ? { ...q, subQuests: newSubQuests, updatedAt: now() } : q,
             ),
             completions: newCompletions,
           }
@@ -163,12 +172,14 @@ export const useStore = create<AppState>()(
       setSelectedDate: (date) => set({ selectedDate: date }),
 
       addQuickPreset: (preset) =>
-        set((s) => ({ quickPresets: [...s.quickPresets, preset] })),
+        set((s) => ({
+          quickPresets: [...s.quickPresets, { ...preset, updatedAt: preset.updatedAt ?? now() }],
+        })),
 
       updateQuickPreset: (presetId, updates) =>
         set((s) => ({
           quickPresets: s.quickPresets.map((p) =>
-            p.id === presetId ? { ...p, ...updates } : p,
+            p.id === presetId ? { ...p, ...updates, updatedAt: now() } : p,
           ),
         })),
 
@@ -183,7 +194,8 @@ export const useStore = create<AppState>()(
             id: crypto.randomUUID(),
             title: preset.title,
             description: undefined,
-            createdAt: getTodayLocal(),
+            createdAt: now(),
+            updatedAt: now(),
             targetDate: date,
             repeat: overrides?.repeat ?? 'daily',
             repeatConfig: overrides?.repeatConfig,
@@ -227,6 +239,7 @@ export const useStore = create<AppState>()(
             quests: s.quests.map((q) => ({
               ...q,
               tags: q.tags?.filter((t) => t !== tag),
+              updatedAt: now(),
             })),
             tagColors: rest,
           }
@@ -238,6 +251,7 @@ export const useStore = create<AppState>()(
             quests: s.quests.map((q) => ({
               ...q,
               tags: q.tags?.map((t) => (t === oldTag ? newTag : t)),
+              updatedAt: now(),
             })),
             tagColors: color ? { ...rest, [newTag]: color } : rest,
           }
@@ -264,16 +278,40 @@ export const useStore = create<AppState>()(
       setLocationMode: (mode) => set({ locationMode: mode }),
       setLocationName: (name) => set({ locationName: name }),
 
+      importData: (payload) =>
+        set((s) => ({
+          quests: payload.quests,
+          completions: payload.completions,
+          notes: payload.notes,
+          quickPresets: payload.quickPresets,
+          panelOrder: payload.panelOrder.length > 0 ? payload.panelOrder : s.panelOrder,
+          hiddenPanels: payload.hiddenPanels,
+          mergedPanels: payload.mergedPanels,
+          tagPanels: payload.tagPanels,
+          tagColors: payload.tagColors,
+          noteTagColors: payload.noteTagColors,
+          filterTags: [],
+          filterNoteTags: [],
+          coords: null,
+          locationMode: payload.locationMode,
+          locationName: payload.locationName,
+        })),
+
       setLeftColumnOverride: (visible) => set({ leftColumnOverride: visible }),
       setRightColumnOverride: (visible) => set({ rightColumnOverride: visible }),
     }),
     {
       name: 'daily-quest-store',
       merge: (persisted, current) => {
-        const p = persisted as Partial<AppState>
+        const p = persisted as Partial<AppState> | null
+        if (typeof p !== 'object' || p === null) return current
         return {
           ...current,
           ...p,
+          quests: (p.quests ?? []).map(normalizeQuest),
+          completions: (p.completions ?? []).map(normalizeCompletion),
+          notes: (p.notes ?? []).map(normalizeNote),
+          quickPresets: (p.quickPresets ?? []).map(normalizeQuickPreset),
           panelOrder: p.panelOrder ?? current.panelOrder,
           hiddenPanels: p.hiddenPanels ?? current.hiddenPanels,
           mergedPanels: p.mergedPanels ?? current.mergedPanels,

@@ -68,6 +68,7 @@ export function QuickAddBar({
       title: newTitle.trim(),
       externalUrl: newUrl.trim() || undefined,
       isUserDefined: true,
+      updatedAt: new Date().toISOString(),
     })
     setNewTitle('')
     setNewUrl('')

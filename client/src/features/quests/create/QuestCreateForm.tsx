@@ -94,6 +94,7 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
       title: form.title.trim(),
       description: form.description.trim() || undefined,
       createdAt: initialData?.createdAt ?? now,
+      updatedAt: now,
       targetDate: form.targetDate,
       repeat: form.repeat,
       repeatConfig: form.repeat === 'custom' ? { interval: form.repeatInterval, unit: form.repeatUnit } : undefined,
@@ -121,6 +122,7 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
         title: form.title.trim(),
         externalUrl: quest.externalUrl,
         isUserDefined: true,
+        updatedAt: now,
       })
     }
 
