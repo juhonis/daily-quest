@@ -152,4 +152,4 @@ interface AppState {
   importData: (payload: ImportPayload) => void
 }
 
-export type { RepeatType, QuestStatus, PanelId, SubQuest, Quest, CompletionRecord, QuickPreset, Note, WeatherCoords, WeatherData, LocationMode, AppState }
+export type { RepeatType, QuestStatus, PanelId, SubQuest, Quest, CompletionRecord, QuickPreset, Note, WeatherCoords, WeatherData, LocationMode, AppState, ImportPayload }
