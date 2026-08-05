@@ -278,6 +278,25 @@ export const useStore = create<AppState>()(
       setLocationMode: (mode) => set({ locationMode: mode }),
       setLocationName: (name) => set({ locationName: name }),
 
+      importData: (payload) =>
+        set((s) => ({
+          quests: payload.quests,
+          completions: payload.completions,
+          notes: payload.notes,
+          quickPresets: payload.quickPresets,
+          panelOrder: payload.panelOrder.length > 0 ? payload.panelOrder : s.panelOrder,
+          hiddenPanels: payload.hiddenPanels,
+          mergedPanels: payload.mergedPanels,
+          tagPanels: payload.tagPanels,
+          tagColors: payload.tagColors,
+          noteTagColors: payload.noteTagColors,
+          filterTags: [],
+          filterNoteTags: [],
+          coords: null,
+          locationMode: payload.locationMode,
+          locationName: payload.locationName,
+        })),
+
       setLeftColumnOverride: (visible) => set({ leftColumnOverride: visible }),
       setRightColumnOverride: (visible) => set({ rightColumnOverride: visible }),
     }),
