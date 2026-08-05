@@ -14,6 +14,7 @@ interface Quest {
   title: string
   description?: string
   createdAt: string
+  updatedAt: string
   targetDate: string
   repeat: RepeatType
   repeatConfig?: {
@@ -36,6 +37,7 @@ interface CompletionRecord {
   id: string
   questId: string
   completedOn: string
+  updatedAt: string
 }
 
 interface QuickPreset {
@@ -44,6 +46,22 @@ interface QuickPreset {
   externalUrl?: string
   icon?: string
   isUserDefined: boolean
+  updatedAt: string
+}
+
+interface ImportPayload {
+  quests: Quest[]
+  completions: CompletionRecord[]
+  notes: Note[]
+  quickPresets: QuickPreset[]
+  panelOrder: PanelId[]
+  hiddenPanels: PanelId[]
+  mergedPanels: Partial<Record<PanelId, PanelId>>
+  tagPanels: string[]
+  tagColors: Record<string, string>
+  noteTagColors: Record<string, string>
+  locationMode: LocationMode
+  locationName: string
 }
 
 interface WeatherCoords {
@@ -131,6 +149,7 @@ interface AppState {
   setCoords: (coords: WeatherCoords) => void
   setLocationMode: (mode: LocationMode) => void
   setLocationName: (name: string) => void
+  importData: (payload: ImportPayload) => void
 }
 
 export type { RepeatType, QuestStatus, PanelId, SubQuest, Quest, CompletionRecord, QuickPreset, Note, WeatherCoords, WeatherData, LocationMode, AppState }
