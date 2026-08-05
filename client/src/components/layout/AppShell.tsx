@@ -1,9 +1,11 @@
 import { CalendarColumn } from '../../features/calendar/CalendarColumn'
 import { QuestsColumn } from '../../features/quests/list/QuestsColumn'
 import { RightColumn } from '../../features/right/RightColumn'
+import { SettingsModal } from '../../features/settings/SettingsModal'
 import { useStore } from '../../store/useStore'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
-import { PanelLeft, PanelRight } from 'lucide-react'
+import { useState } from 'react'
+import { PanelLeft, PanelRight, Settings } from 'lucide-react'
 
 const DESKTOP_QUERY = '(min-width: 1280px)'
 
@@ -33,6 +35,7 @@ function Drawer({
 }
 
 export function AppShell() {
+  const [showSettings, setShowSettings] = useState(false)
   const leftOverride = useStore((s) => s.leftColumnOverride)
   const rightOverride = useStore((s) => s.rightColumnOverride)
   const setLeftOverride = useStore((s) => s.setLeftColumnOverride)
@@ -116,6 +119,16 @@ export function AppShell() {
       >
         <PanelRight className="w-4 h-4" />
       </button>
+      <button
+        onClick={() => setShowSettings(true)}
+        className={`fixed top-2 right-12 z-50 ${toggleButtonClass(showSettings)}`}
+        title="Settings"
+        aria-label="Settings"
+      >
+        <Settings className="w-4 h-4" />
+      </button>
+
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>
   )
 }

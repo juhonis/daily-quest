@@ -8,7 +8,7 @@ import { QuestsTabs } from '../QuestsTabs'
 import { QuickAddBar } from './QuickAddBar'
 import { QuestsPanelsRow } from './QuestsPanelsRow'
 import { QuestCreateForm } from '../create/QuestCreateForm'
-import { SettingsModal } from '../../settings/SettingsModal'
+import { EditPanelsModal } from './EditPanelsModal'
 import { NotesGrid } from '../../notes/NotesGrid'
 import { CurrentWeather } from '../../weather/CurrentWeather'
 import { WeatherCarousel } from '../../weather/WeatherCarousel'
@@ -17,7 +17,7 @@ export function QuestsColumn() {
   const [tab, setTab] = useState<'quests' | 'create' | 'notes'>('quests')
   const [editingQuest, setEditingQuest] = useState<string | null>(null)
   const [formKey, setFormKey] = useState(0)
-  const [showSettings, setShowSettings] = useState(false)
+  const [showEditPanels, setShowEditPanels] = useState(false)
 
   const quests = useStore((s) => s.quests)
   const completions = useStore((s) => s.completions)
@@ -245,14 +245,14 @@ export function QuestsColumn() {
                     })}
                   </div>
                 )}
-                <Button variant="icon" aria-label="Settings" onClick={() => setShowSettings(true)}>
+                <Button variant="icon" aria-label="Edit panels" onClick={() => setShowEditPanels(true)}>
                   <Settings className="w-5 h-5" />
                 </Button>
               </div>
             </div>
             {allVisibleHidden && (
               <p className="text-sm text-slate-500 text-center py-8">
-                No panels visible. Open Settings to show some, or add a tag panel with the + button.
+                No panels visible. Tap Edit panels to show some, or add a tag panel with the + button.
               </p>
             )}
           </div>
@@ -306,8 +306,8 @@ export function QuestsColumn() {
         </div>
       )}
 
-      {showSettings && (
-        <SettingsModal onClose={() => setShowSettings(false)} />
+      {showEditPanels && (
+        <EditPanelsModal onClose={() => setShowEditPanels(false)} />
       )}
     </div>
   )
