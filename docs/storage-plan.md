@@ -1,5 +1,6 @@
 # Daily Quest — Storage Plan
 
+DEBUG:`copy(localStorage.getItem('daily-quest-store'))`
 Two-phase update to the current `localStorage`-only persistence:
 
 - **Phase A:** Export / Import — let users move their data between browsers and devices with a file.
