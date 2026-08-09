@@ -15,13 +15,13 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon.png'],
       manifest: {
         name: 'Daily Quest',
         short_name: 'Daily Quest',
         theme_color: '#0f172a',
         icons: [
-          { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml' },
+          { src: '/favicon.png', sizes: '80x80', type: 'image/png' },
         ],
       },
       workbox: {
