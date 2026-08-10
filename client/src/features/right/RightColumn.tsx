@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useStore } from '../../store/useStore'
 import { BasePanel } from '../quests/list/panels/BasePanel'
-import { hasCompletionOnDate } from '../../utils/dateUtils'
+import { getTodayLocal, hasCompletionOnDate, hasCompletionBetween, getStartOfWeek, addDays } from '../../utils/dateUtils'
 
 const UNTAGGED = '__untagged__'
 const HIDE_ALL = '__hide__'
@@ -16,7 +16,8 @@ export function RightColumn() {
   const tagColors = useStore((s) => s.tagColors)
 
   const [filterTags, setFilterTags] = useState<string[]>([])
-  const [doneFilter, setDoneFilter] = useState<'not-done' | 'done'>('not-done')
+  const [doneMode, setDoneMode] = useState<'not-done' | 'done'>('done')
+  const [doneRange, setDoneRange] = useState<'today' | 'this-week' | 'last-30-days'>('today')
 
   const allTags = useMemo(() => {
     const set = new Set<string>()
@@ -40,11 +41,27 @@ export function RightColumn() {
   }, [quests, filterTags])
 
   const toggledQuests = useMemo(() => {
+    const today = getTodayLocal()
     return filteredQuests.filter((q) => {
-      const isCompleted = hasCompletionOnDate(completions, q.id, selectedDate)
-      return doneFilter === 'done' ? isCompleted : !isCompleted
+      if (doneMode === 'not-done') {
+        return !hasCompletionOnDate(completions, q.id, selectedDate)
+      }
+      switch (doneRange) {
+        case 'today':
+          return hasCompletionOnDate(completions, q.id, today)
+        case 'this-week':
+          return hasCompletionBetween(completions, q.id, getStartOfWeek(today), today)
+        case 'last-30-days':
+          return hasCompletionBetween(completions, q.id, addDays(today, -29), today)
+      }
     })
-  }, [filteredQuests, completions, selectedDate, doneFilter])
+  }, [filteredQuests, completions, selectedDate, doneMode, doneRange])
+
+  const doneRanges: { key: 'today' | 'this-week' | 'last-30-days'; label: string }[] = [
+    { key: 'today', label: 'Today' },
+    { key: 'this-week', label: 'This week' },
+    { key: 'last-30-days', label: 'Last 30 days' },
+  ]
 
   return (
     <div className="p-4 h-full flex flex-col min-w-0">
@@ -131,25 +148,42 @@ export function RightColumn() {
           titleExtra={
             <div className="flex items-center gap-1">
               <button
-                onClick={() => setDoneFilter('not-done')}
+                onClick={() => setDoneMode('done')}
                 className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
-                  doneFilter === 'not-done'
-                    ? 'bg-blue-700/40 text-blue-400'
-                    : 'text-slate-500 hover:text-slate-300'
-                }`}
-              >
-                Not done
-              </button>
-              <button
-                onClick={() => setDoneFilter('done')}
-                className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
-                  doneFilter === 'done'
+                  doneMode === 'done'
                     ? 'bg-green-700/40 text-green-400'
                     : 'text-slate-500 hover:text-slate-300'
                 }`}
               >
                 Done
               </button>
+              <button
+                onClick={() => setDoneMode('not-done')}
+                className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
+                  doneMode === 'not-done'
+                    ? 'bg-blue-700/40 text-blue-400'
+                    : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                Not done
+              </button>
+              {doneMode === 'done' && (
+                <div className="flex items-center gap-1 ml-1 pl-1 border-l border-slate-700">
+                  {doneRanges.map((r) => (
+                    <button
+                      key={r.key}
+                      onClick={() => setDoneRange(r.key)}
+                      className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
+                        doneRange === r.key
+                          ? 'bg-green-700/40 text-green-400'
+                          : 'text-slate-500 hover:text-slate-300'
+                      }`}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           }
         />
