@@ -1,9 +1,85 @@
-import { useState, useMemo } from 'react'
-import { X } from 'lucide-react'
+import { useState, useMemo, useRef } from 'react'
+import type { ReactNode } from 'react'
+import { X, Bold, Italic, List, ListOrdered, Code, Quote, Heading2 } from 'lucide-react'
 import { Modal } from '../../components/ui/Modal'
 import { useStore } from '../../store/useStore'
 import { assignNoteTagColor, getNoteTagStyle } from './noteTagColors'
 import type { Note } from '../../types'
+
+interface FormatResult {
+  text: string
+  newStart: number
+  newEnd: number
+}
+
+interface FormatButtonProps {
+  label: string
+  onClick: () => void
+  children: ReactNode
+}
+
+function applyInlineFormat(
+  content: string,
+  start: number,
+  end: number,
+  prefix: string,
+  suffix: string,
+  placeholder: string,
+): FormatResult {
+  const selected = content.slice(start, end)
+  const inner = selected.trim() === '' ? placeholder : selected
+  const text = content.slice(0, start) + prefix + inner + suffix + content.slice(end)
+  return { text, newStart: start + prefix.length, newEnd: start + prefix.length + inner.length }
+}
+
+function applyBlockFormat(
+  content: string,
+  start: number,
+  end: number,
+  prefix: string,
+  placeholder: string,
+): FormatResult {
+  const lineStart = content.lastIndexOf('\n', start - 1) + 1
+  let lineEnd = content.indexOf('\n', end)
+  if (lineEnd === -1) lineEnd = content.length
+  const raw = content.slice(lineStart, lineEnd)
+
+  if (!raw.trim()) {
+    const text = content.slice(0, lineStart) + prefix + placeholder + content.slice(lineEnd)
+    return { text, newStart: lineStart + prefix.length, newEnd: lineStart + prefix.length + placeholder.length }
+  }
+
+  const ordered = /^\d/.test(prefix)
+  const lines = raw.split('\n')
+  const nonEmpty = lines.filter((l) => l.trim() !== '')
+  const allPrefixed = nonEmpty.every((l) =>
+    ordered ? /^(\d+\.\s|-\s)/.test(l) : l.startsWith(prefix),
+  )
+
+  const newLines = allPrefixed
+    ? lines.map((l) =>
+        ordered ? l.replace(/^(\d+\.\s|-\s)/, '') : l.startsWith(prefix) ? l.slice(prefix.length) : l,
+      )
+    : lines.map((l) => (l.trim() === '' ? l : prefix + l))
+
+  const newBlock = newLines.join('\n')
+  const text = content.slice(0, lineStart) + newBlock + content.slice(lineEnd)
+  return { text, newStart: lineStart, newEnd: lineStart + newBlock.length }
+}
+
+function FormatButton({ label, onClick, children }: FormatButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-600 bg-slate-700 text-slate-300 transition-colors hover:bg-slate-600 hover:text-white"
+    >
+      {children}
+    </button>
+  )
+}
 
 const NOTE_COLORS = [
   { label: 'Slate', value: '#64748B' },
@@ -28,6 +104,7 @@ export function NoteCreateModal({ isOpen, onClose, onSave, initialData }: NoteCr
   const [color, setColor] = useState(initialData?.color ?? NOTE_COLORS[0].value)
   const [tags, setTags] = useState<string[]>(initialData?.tags ?? [])
   const [tagInput, setTagInput] = useState('')
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const noteTagColors = useStore((s) => s.noteTagColors)
   const setNoteTagColor = useStore((s) => s.setNoteTagColor)
@@ -59,6 +136,29 @@ export function NoteCreateModal({ isOpen, onClose, onSave, initialData }: NoteCr
 
   function removeTag(tag: string) {
     setTags(tags.filter((t) => t !== tag))
+  }
+
+  function applyFormat(result: FormatResult) {
+    const ta = textareaRef.current
+    setContent(result.text)
+    requestAnimationFrame(() => {
+      if (ta) {
+        ta.focus()
+        ta.setSelectionRange(result.newStart, result.newEnd)
+      }
+    })
+  }
+
+  function handleInline(prefix: string, suffix: string, placeholder: string) {
+    const ta = textareaRef.current
+    if (!ta) return
+    applyFormat(applyInlineFormat(content, ta.selectionStart, ta.selectionEnd, prefix, suffix, placeholder))
+  }
+
+  function handleBlock(prefix: string, placeholder: string) {
+    const ta = textareaRef.current
+    if (!ta) return
+    applyFormat(applyBlockFormat(content, ta.selectionStart, ta.selectionEnd, prefix, placeholder))
   }
 
   function handleSave() {
@@ -103,7 +203,31 @@ export function NoteCreateModal({ isOpen, onClose, onSave, initialData }: NoteCr
 
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-1">Content</label>
+          <div className="flex flex-wrap gap-1 mb-1.5">
+            <FormatButton label="Bold" onClick={() => handleInline('**', '**', 'bold text')}>
+              <Bold className="w-3.5 h-3.5" />
+            </FormatButton>
+            <FormatButton label="Italic" onClick={() => handleInline('*', '*', 'italic text')}>
+              <Italic className="w-3.5 h-3.5" />
+            </FormatButton>
+            <FormatButton label="Bullet list" onClick={() => handleBlock('- ', 'List item')}>
+              <List className="w-3.5 h-3.5" />
+            </FormatButton>
+            <FormatButton label="Numbered list" onClick={() => handleBlock('1. ', 'List item')}>
+              <ListOrdered className="w-3.5 h-3.5" />
+            </FormatButton>
+            <FormatButton label="Quote" onClick={() => handleBlock('> ', 'Quote')}>
+              <Quote className="w-3.5 h-3.5" />
+            </FormatButton>
+            <FormatButton label="Heading" onClick={() => handleBlock('## ', 'Heading')}>
+              <Heading2 className="w-3.5 h-3.5" />
+            </FormatButton>
+            <FormatButton label="Code" onClick={() => handleInline('`', '`', 'code')}>
+              <Code className="w-3.5 h-3.5" />
+            </FormatButton>
+          </div>
           <textarea
+            ref={textareaRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Write something..."
