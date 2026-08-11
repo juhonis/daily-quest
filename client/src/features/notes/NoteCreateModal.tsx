@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react'
-import type { ReactNode } from 'react'
+import type { ReactNode, KeyboardEvent } from 'react'
 import { X, Bold, Italic, List, ListOrdered, Code, Quote, Heading2 } from 'lucide-react'
 import { Modal } from '../../components/ui/Modal'
 import { useStore } from '../../store/useStore'
@@ -16,6 +16,7 @@ interface FormatButtonProps {
   label: string
   onClick: () => void
   children: ReactNode
+  active?: boolean
 }
 
 function applyInlineFormat(
@@ -67,14 +68,24 @@ function applyBlockFormat(
   return { text, newStart: lineStart, newEnd: lineStart + newBlock.length }
 }
 
-function FormatButton({ label, onClick, children }: FormatButtonProps) {
+function getLinePrefix(line: string): { text: string; ordered: boolean } | null {
+  const match = line.match(/^(- |\d+\. |> |#{1,6} )/)
+  if (!match) return null
+  return { text: match[1], ordered: /^\d/.test(match[1]) }
+}
+
+function FormatButton({ label, onClick, children, active }: FormatButtonProps) {
   return (
     <button
       type="button"
       onClick={onClick}
       title={label}
       aria-label={label}
-      className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-600 bg-slate-700 text-slate-300 transition-colors hover:bg-slate-600 hover:text-white"
+      className={`flex h-7 w-7 items-center justify-center rounded-md border transition-colors ${
+        active
+          ? 'border-blue-500 bg-blue-600 text-white'
+          : 'border-slate-600 bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white'
+      }`}
     >
       {children}
     </button>
@@ -104,6 +115,7 @@ export function NoteCreateModal({ isOpen, onClose, onSave, initialData }: NoteCr
   const [color, setColor] = useState(initialData?.color ?? NOTE_COLORS[0].value)
   const [tags, setTags] = useState<string[]>(initialData?.tags ?? [])
   const [tagInput, setTagInput] = useState('')
+  const [cursor, setCursor] = useState(0)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const noteTagColors = useStore((s) => s.noteTagColors)
@@ -118,6 +130,13 @@ export function NoteCreateModal({ isOpen, onClose, onSave, initialData }: NoteCr
   const suggestions = tagInput.trim()
     ? allNoteTags.filter((t) => t.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(t))
     : []
+
+  const activeLinePrefix = useMemo(() => {
+    const lineStart = content.lastIndexOf('\n', Math.max(cursor - 1, 0)) + 1
+    const lineEnd = content.indexOf('\n', cursor)
+    const line = content.slice(lineStart, lineEnd === -1 ? content.length : lineEnd)
+    return getLinePrefix(line)
+  }, [content, cursor])
 
   function ensureColor(tag: string) {
     if (!noteTagColors[tag]) {
@@ -141,6 +160,7 @@ export function NoteCreateModal({ isOpen, onClose, onSave, initialData }: NoteCr
   function applyFormat(result: FormatResult) {
     const ta = textareaRef.current
     setContent(result.text)
+    setCursor(result.newStart)
     requestAnimationFrame(() => {
       if (ta) {
         ta.focus()
@@ -159,6 +179,48 @@ export function NoteCreateModal({ isOpen, onClose, onSave, initialData }: NoteCr
     const ta = textareaRef.current
     if (!ta) return
     applyFormat(applyBlockFormat(content, ta.selectionStart, ta.selectionEnd, prefix, placeholder))
+  }
+
+  function handleContentKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return
+    const ta = textareaRef.current
+    if (!ta) return
+    const caret = ta.selectionStart
+    const lineStart = content.lastIndexOf('\n', Math.max(caret - 1, 0)) + 1
+    const lineEnd = content.indexOf('\n', caret)
+    const line = content.slice(lineStart, lineEnd === -1 ? content.length : lineEnd)
+    const prefix = getLinePrefix(line)
+    if (!prefix) return
+    e.preventDefault()
+
+    const contentStart = lineStart + prefix.text.length
+    const rest = content.slice(contentStart, lineEnd === -1 ? content.length : lineEnd)
+
+    if (rest.trim() === '' && caret >= contentStart) {
+      const text = content.slice(0, lineStart) + content.slice(contentStart)
+      setContent(text)
+      setCursor(lineStart)
+      requestAnimationFrame(() => {
+        ta.focus()
+        ta.setSelectionRange(lineStart, lineStart)
+      })
+      return
+    }
+
+    let newPrefix = prefix.text
+    if (prefix.ordered) {
+      newPrefix = `${parseInt(prefix.text, 10) + 1}. `
+    }
+    const start = ta.selectionStart
+    const end = ta.selectionEnd
+    const text = content.slice(0, start) + '\n' + newPrefix + content.slice(end)
+    const newCaret = start + 1 + newPrefix.length
+    setContent(text)
+    setCursor(newCaret)
+    requestAnimationFrame(() => {
+      ta.focus()
+      ta.setSelectionRange(newCaret, newCaret)
+    })
   }
 
   function handleSave() {
@@ -210,16 +272,16 @@ export function NoteCreateModal({ isOpen, onClose, onSave, initialData }: NoteCr
             <FormatButton label="Italic" onClick={() => handleInline('*', '*', 'italic text')}>
               <Italic className="w-3.5 h-3.5" />
             </FormatButton>
-            <FormatButton label="Bullet list" onClick={() => handleBlock('- ', 'List item')}>
+            <FormatButton label="Bullet list" onClick={() => handleBlock('- ', 'List item')} active={activeLinePrefix?.text === '- '}>
               <List className="w-3.5 h-3.5" />
             </FormatButton>
-            <FormatButton label="Numbered list" onClick={() => handleBlock('1. ', 'List item')}>
+            <FormatButton label="Numbered list" onClick={() => handleBlock('1. ', 'List item')} active={activeLinePrefix?.ordered === true}>
               <ListOrdered className="w-3.5 h-3.5" />
             </FormatButton>
-            <FormatButton label="Quote" onClick={() => handleBlock('> ', 'Quote')}>
+            <FormatButton label="Quote" onClick={() => handleBlock('> ', 'Quote')} active={activeLinePrefix?.text === '> '}>
               <Quote className="w-3.5 h-3.5" />
             </FormatButton>
-            <FormatButton label="Heading" onClick={() => handleBlock('## ', 'Heading')}>
+            <FormatButton label="Heading" onClick={() => handleBlock('## ', 'Heading')} active={activeLinePrefix?.text.startsWith('#') ?? false}>
               <Heading2 className="w-3.5 h-3.5" />
             </FormatButton>
             <FormatButton label="Code" onClick={() => handleInline('`', '`', 'code')}>
@@ -229,7 +291,13 @@ export function NoteCreateModal({ isOpen, onClose, onSave, initialData }: NoteCr
           <textarea
             ref={textareaRef}
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(e) => {
+              setContent(e.target.value)
+              setCursor(e.target.selectionStart)
+            }}
+            onSelect={(e) => setCursor(e.currentTarget.selectionStart)}
+            onClick={(e) => setCursor(e.currentTarget.selectionStart)}
+            onKeyDown={handleContentKeyDown}
             placeholder="Write something..."
             rows={8}
             className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white placeholder-slate-400 outline-none focus:border-blue-500 resize-none"
