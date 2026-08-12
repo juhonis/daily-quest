@@ -308,6 +308,7 @@ export const useStore = create<AppState>()(
         return {
           ...current,
           ...p,
+          selectedDate: current.selectedDate,
           quests: (p.quests ?? []).map(normalizeQuest),
           completions: (p.completions ?? []).map(normalizeCompletion),
           notes: (p.notes ?? []).map(normalizeNote),
