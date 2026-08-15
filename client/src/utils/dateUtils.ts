@@ -1,4 +1,4 @@
-import { format, addDays as dfAddDays, startOfWeek as dfStartOfWeek, differenceInDays as dfDiffDays } from 'date-fns'
+import { format, addDays as dfAddDays, addMonths as dfAddMonths, startOfWeek as dfStartOfWeek, differenceInDays as dfDiffDays } from 'date-fns'
 import type { Quest, CompletionRecord } from '../types'
 
 export const WEEK_STARTS_ON = 1
@@ -29,6 +29,10 @@ export function formatMonthYear(s: string): string {
 
 export function addDays(s: string, n: number): string {
   return toDateString(dfAddDays(parseDate(s), n))
+}
+
+export function addMonths(s: string, n: number): string {
+  return toDateString(dfAddMonths(parseDate(s), n))
 }
 
 export function isSameDay(a: string, b: string): boolean {

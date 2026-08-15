@@ -11,6 +11,7 @@ import {
   getStartOfWeek,
   getWeekdayLabels,
   getMonthMatrix,
+  addMonths,
   hasCompletionOnDate,
   hasCompletionBetween,
   getLastCompletionDate,
@@ -116,6 +117,28 @@ describe('addDays', () => {
 
   it('zero returns same day', () => {
     expect(addDays('2026-07-20', 0)).toBe('2026-07-20')
+  })
+})
+
+describe('addMonths', () => {
+  it('adds positive months', () => {
+    expect(addMonths('2026-07-20', 2)).toBe('2026-09-20')
+  })
+
+  it('subtracts months with negative n', () => {
+    expect(addMonths('2026-07-20', -2)).toBe('2026-05-20')
+  })
+
+  it('crosses year boundary', () => {
+    expect(addMonths('2026-11-10', 3)).toBe('2027-02-10')
+  })
+
+  it('clamps day to end of target month', () => {
+    expect(addMonths('2026-01-31', 1)).toBe('2026-02-28')
+  })
+
+  it('zero returns same day', () => {
+    expect(addMonths('2026-03-15', 0)).toBe('2026-03-15')
   })
 })
 
