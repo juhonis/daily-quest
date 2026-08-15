@@ -12,6 +12,7 @@ interface MonthGridProps {
   completions: CompletionRecord[]
   focusedDate: string | null
   onCellFocus: (date: string) => void
+  highlight?: boolean
 }
 
 export function MonthGrid({
@@ -24,13 +25,14 @@ export function MonthGrid({
   completions,
   focusedDate,
   onCellFocus,
+  highlight = false,
 }: MonthGridProps) {
   const matrix = getMonthMatrix(year, month, WEEK_STARTS_ON)
   const labels = getWeekdayLabels(WEEK_STARTS_ON)
 
   return (
-    <div className="mb-4">
-      <div className="text-xs font-semibold text-slate-400 mb-2 px-1">
+    <div className={`mb-4 ${highlight ? 'rounded-lg bg-slate-800/60 p-2' : ''}`}>
+      <div className={`text-xs font-semibold mb-2 px-1 ${highlight ? 'text-slate-200' : 'text-slate-400'}`}>
         {formatMonthYear(`${year}-${String(month + 1).padStart(2, '0')}-01`)}
       </div>
       <div className="grid grid-cols-7 text-center text-xs text-slate-500 mb-1">
