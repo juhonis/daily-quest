@@ -82,12 +82,15 @@ export function CalendarColumn() {
       >
         Today
       </button>
-      {months.map((m) => {
+      {months.map((m, index) => {
         const isCentered = m.month === viewedMonthDate.getMonth() && m.year === viewedMonthDate.getFullYear()
+        const distance = Math.abs(index - MONTH_OFFSETS)
+        const opacityClass = { 1: 'opacity-60', 2: 'opacity-30' }[distance]
         return (
           <div
             key={`${m.year}-${m.month}`}
             ref={isCentered ? centerRef : undefined}
+            className={`transition-opacity ${opacityClass ?? ''}`}
           >
             <MonthGrid
               year={m.year}
