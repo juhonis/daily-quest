@@ -21,7 +21,6 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [payload, setPayload] = useState<ImportPayload | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [backupDownloaded, setBackupDownloaded] = useState(false)
   const [success, setSuccess] = useState<string | null>(null)
   const [showPanels, setShowPanels] = useState(false)
 
@@ -31,7 +30,6 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
 
   function handleBackup() {
     downloadJson(`daily-quest-backup-${getTodayLocal()}.json`, exportData(useStore.getState()))
-    setBackupDownloaded(true)
   }
 
   function handleFile(file: File | undefined) {
@@ -43,10 +41,8 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
       try {
         const parsed = parseImport(String(reader.result))
         setPayload(parsed)
-        setBackupDownloaded(false)
       } catch (e) {
         setPayload(null)
-        setBackupDownloaded(false)
         setError(e instanceof Error ? e.message : 'Import failed.')
       }
     }
@@ -62,7 +58,6 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
         : 'Data imported successfully.',
     )
     setPayload(null)
-    setBackupDownloaded(false)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -122,11 +117,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 <Button variant="secondary" onClick={handleBackup}>
                   Download backup
                 </Button>
-                <Button
-                  variant="danger"
-                  disabled={!backupDownloaded}
-                  onClick={handleConfirmImport}
-                >
+                <Button variant="danger" onClick={handleConfirmImport}>
                   Replace &amp; import
                 </Button>
               </div>
