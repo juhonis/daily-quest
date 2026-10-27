@@ -13,7 +13,7 @@
   "env": {
     "preview": {
       "name": "daily-quest-sync-preview",
-      "vars": { "ALLOWED_ORIGINS": "http://localhost:5173,http://localhost:8788" },
+      "vars": { "ALLOWED_ORIGINS": "http://localhost:5173,http://localhost:8788,https://571fdf92.daily-quest-dmt.pages.dev" },
       "durable_objects": { "bindings": [{ "name": "ROOMS", "class_name": "PairingRoom" }] }
     }
   }
