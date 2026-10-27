@@ -114,11 +114,13 @@ export class PairingRoom extends DurableObject<Env> {
     })
   }
 
-  async webSocketClose(socket: WebSocket, code: number) {
-    socket.close(code === 1006 ? 1000 : code)
+  async webSocketClose(socket: WebSocket) {
+    socket.close(1000)
     for (const other of this.ctx.getWebSockets()) if (other !== socket) other.close(1000, 'Peer disconnected; retry if sync was incomplete')
     await this.ctx.storage.deleteAll()
   }
+
+  async webSocketError(socket: WebSocket) { await this.webSocketClose(socket) }
 
   async alarm() {
     for (const socket of this.ctx.getWebSockets()) socket.close(1000, 'Session expired')
