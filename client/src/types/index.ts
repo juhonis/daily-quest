@@ -1,3 +1,5 @@
+import type { SyncData } from '../utils/sync/records'
+
 type RepeatType = 'none' | 'daily' | 'weekly' | 'monthly' | 'custom'
 type QuestStatus = 'active' | 'inactive'
 type PanelId = 'daily' | 'repeating' | 'important' | 'rollover' | 'done'
@@ -95,6 +97,9 @@ interface Note {
 }
 
 interface AppState {
+  sync: SyncData
+  applySync: (data: SyncData) => void
+  resolveRecovery: (id: string, restore: boolean) => void
   quests: Quest[]
   completions: CompletionRecord[]
   quickPresets: QuickPreset[]

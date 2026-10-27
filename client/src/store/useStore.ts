@@ -3,6 +3,18 @@ import { persist } from 'zustand/middleware'
 import type { AppState, PanelId } from '../types'
 import { getTodayLocal } from '../utils/dateUtils'
 import { normalizeQuest, normalizeCompletion, normalizeNote, normalizeQuickPreset } from '../utils/normalize'
+import { ensureSync, projectSync, trackChanges } from '../utils/sync/state'
+import { canonical, mergeRecords, primary, writeRecord, type Recovery, type SyncData } from '../utils/sync/records'
+
+// A fresh identity per tab/process avoids copied identities and cross-tab counter reuse.
+const replica = crypto.randomUUID()
+
+function latestSync(): SyncData {
+  if (typeof localStorage === 'undefined') return { records: [] }
+  const raw = localStorage.getItem('daily-quest-store')
+  if (!raw) return { records: [] }
+  try { return JSON.parse(raw).state?.sync ?? { records: [] } } catch { return { records: [] } }
+}
 
 const now = () => new Date().toISOString()
 
@@ -34,7 +46,35 @@ const defaultPanelOrder: PanelId[] = ['daily', 'repeating', 'important', 'rollov
 
 export const useStore = create<AppState>()(
   persist(
-    (set) => ({
+    (persistSet, get) => {
+      const set = (update: Partial<AppState> | ((state: AppState) => Partial<AppState> | AppState)) => {
+        persistSet((current) => {
+          const sync = mergeRecords(ensureSync(current), latestSync())
+          const base = { ...current, ...projectSync(sync), sync }
+          const changes = typeof update === 'function' ? update(base) : update
+          const next = { ...base, ...changes }
+          return { ...next, sync: trackChanges(base, next, replica) }
+        })
+      }
+      return ({
+      sync: { records: [] },
+      applySync: (incoming) => persistSet((current) => {
+        const sync = mergeRecords(ensureSync(current), latestSync(), incoming)
+        return { ...projectSync(sync), sync }
+      }),
+      resolveRecovery: (id, restore) => {
+        const current = get()
+        const sync = mergeRecords(ensureSync(current), latestSync())
+        const record = sync.records.find((r) => r.kind === 'recovery' && r.id === id)
+        if (!record || primary(record).value === null) return
+        if (restore) {
+          const recovery = primary(record).value as Recovery
+          const source = sync.records.find((r) => r.kind === recovery.kind && r.id === recovery.id)
+          if (source) sync.records.push(writeRecord(source, recovery.value, replica))
+        }
+        sync.records.push(writeRecord(record, null, replica))
+        current.applySync(sync)
+      },
       quests: [],
       notes: [],
       noteTagColors: {},
@@ -299,7 +339,7 @@ export const useStore = create<AppState>()(
 
       setLeftColumnOverride: (visible) => set({ leftColumnOverride: visible }),
       setRightColumnOverride: (visible) => set({ rightColumnOverride: visible }),
-    }),
+    })},
     {
       name: 'daily-quest-store',
       merge: (persisted, current) => {
@@ -324,3 +364,12 @@ export const useStore = create<AppState>()(
     },
   ),
 )
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key !== 'daily-quest-store' || !event.newValue) return
+    const current = ensureSync(useStore.getState())
+    const merged = mergeRecords(current, latestSync())
+    if (canonical(current) !== canonical(merged)) useStore.getState().applySync(merged)
+  })
+}
