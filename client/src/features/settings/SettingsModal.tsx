@@ -6,6 +6,8 @@ import { getTodayLocal } from '../../utils/dateUtils'
 import { downloadJson, exportData, parseImport } from '../../utils/exportImport'
 import type { ImportPayload } from '../../types'
 import { EditPanelsModal } from '../quests/list/EditPanelsModal'
+import { SyncModal } from '../sync/SyncModal'
+import { RecoveryPanel } from '../sync/RecoveryPanel'
 
 interface SettingsModalProps {
   onClose: () => void
@@ -23,6 +25,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [showPanels, setShowPanels] = useState(false)
+  const [showSync, setShowSync] = useState(false)
 
   function handleExport() {
     downloadJson(exportFileName(), exportData(useStore.getState()))
@@ -62,8 +65,13 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   }
 
   return (
-    <Modal isOpen onClose={onClose} title="Settings">
+    <><Modal isOpen={!showSync} onClose={onClose} title="Settings" className="max-h-[90dvh] overflow-y-auto">
       <div className="space-y-6">
+        <section>
+          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Device sync</h3>
+          <Button variant="secondary" onClick={() => setShowSync(true)}>Sync devices</Button>
+        </section>
+        <RecoveryPanel />
         <section>
           <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
             Panels
@@ -134,5 +142,6 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
 
       {showPanels && <EditPanelsModal onClose={() => setShowPanels(false)} />}
     </Modal>
+    {showSync && <SyncModal onClose={() => setShowSync(false)} />}</>
   )
 }

@@ -1,0 +1,18 @@
+{
+  "name": "daily-quest-sync",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --port 8787",
+    "deploy": "wrangler deploy",
+    "check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "^1.4.8",
+    "@cloudflare/workers-types": "^5.20261026.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5",
+    "wrangler": "^4.153.0"
+  }
+}

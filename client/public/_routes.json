@@ -1,6 +1,5 @@
 {
   "version": 1,
-  "description": "SPA fallback — serve index.html for all routes",
-  "include": ["/*"],
+  "include": ["/api/sync/*"],
   "exclude": []
 }

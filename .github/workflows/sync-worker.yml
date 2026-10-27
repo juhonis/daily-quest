@@ -1,0 +1,45 @@
+name: Sync Worker
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Worker environment
+        type: choice
+        options: [preview, production]
+        default: preview
+  push:
+    branches: [prod]
+    paths: ['sync-worker/**', '.github/workflows/sync-worker.yml']
+permissions:
+  contents: read
+concurrency:
+  group: sync-worker-${{ github.event.inputs.environment || 'production' }}
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: sync-worker/package-lock.json
+      - run: npm ci
+        working-directory: sync-worker
+      - run: npm run check && npm test
+        working-directory: sync-worker
+      - name: Deploy preview Worker
+        if: github.event.inputs.environment == 'preview'
+        run: npm run deploy -- --env preview
+        working-directory: sync-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Deploy production Worker
+        if: github.event.inputs.environment != 'preview'
+        run: npm run deploy
+        working-directory: sync-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

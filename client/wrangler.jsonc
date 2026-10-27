@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "daily-quest-dmt",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-10-27",
+  "services": [{ "binding": "SYNC_SERVICE", "service": "daily-quest-sync" }],
+  "env": {
+    "preview": {
+      "services": [{ "binding": "SYNC_SERVICE", "service": "daily-quest-sync-preview" }]
+    }
+  }
+}

@@ -1,6 +1,6 @@
 # Daily Quest
 
-A calendar, todo, and note-taking app that runs entirely in your browser — no account, no backend, works offline.
+A calendar, todo, and note-taking app that stores data in your browser — no account, works offline, with optional direct device sync.
 
 **Live demo:** <https://daily-quest-dmt.pages.dev/>
 
@@ -23,14 +23,15 @@ That gamification layer is **not implemented yet** and may never be. The current
 - **Per-day completions** — checking off a quest records it for that specific date only; repeating quests are completed independently each day.
 - **Notes** — markdown notes with colors and tags, fully searchable/archivable.
 - **Weather** — current conditions, hourly forecast, and a rain radar for the selected date (Open-Meteo + Open-Meteo radar, no API key needed). Uses auto-geolocation or a manual location.
-- **Data backup** — export all data as a versioned JSON file and restore it (with a forced backup gate) from Settings.
+- **Data backup** — export all data as a versioned JSON file and restore it from Settings, with a backup download available before replacement.
+- **Device sync** — manually pair two open browsers using a code or QR link and combine changes over encrypted WebRTC. Cloudflare handles temporary pairing; app content stays on your devices. [Setup guide](docs/device-sync.md).
 - **PWA / offline** — installable to the home screen, cached service worker, works without a connection.
 
 ## How it works
 
-- **Local-first.** All data is stored in your browser's `localStorage` under the key `daily-quest-store`, managed by Zustand with the `persist` middleware. There is no server, no database, and no user account.
+- **Local-first.** App data is stored in your browser's `localStorage` under the key `daily-quest-store`, managed by Zustand with the `persist` middleware. Optional device sync uses a small Cloudflare pairing service and a direct WebRTC connection; no app-content database or user account is needed.
 - **Timezone-safe dates.** Everything is stored as plain `YYYY-MM-DD` strings. "Today" is always your local calendar day, so nothing shifts when you travel or cross midnight. All date math lives in `src/utils/dateUtils.ts` using `date-fns`.
-- **Data ownership.** Because everything is local, your data never leaves your device unless you export it. Use the **Settings → Export** feature to back up or move your data between browsers/devices.
+- **Data ownership.** Your app data leaves your device only when you export it or explicitly sync with another device. Use Settings to export backups, import data, pair devices, or recover conflicting edits.
 
 ## Tech stack
 
@@ -75,9 +76,9 @@ The app is a static SPA and is currently deployed to Cloudflare Pages at <https:
 
 To deploy:
 
-1. Build the client: `cd client && npm run build` — the output lands in `client/dist`.
-2. Push `client/dist` (e.g. via a GitHub repo connected to Cloudflare Pages, build command `npm run build`, output directory `dist`).
-3. SPA fallback is handled by the existing `client/public/_redirects` file (`/* /index.html 200`), which Cloudflare Pages picks up automatically.
+1. Configure the GitHub-connected Pages project with root `client`, build command `npm run build`, and output directory `dist`.
+2. Deploy the pairing Worker and configure its service binding using the [device sync setup guide](docs/device-sync.md).
+3. Push source changes to GitHub. Pages builds the frontend and Functions together and provides the SPA fallback automatically.
 
 ### Self-hosting with Docker
 
@@ -113,8 +114,10 @@ Open <http://localhost:5173>.
 │   │   ├── store/        # Zustand store (useStore.ts)
 │   │   ├── types/        # Global TypeScript types
 │   │   └── utils/        # Pure helpers (dateUtils, exportImport, cn)
-│   ├── public/           # Static assets, PWA manifest, _redirects
+│   ├── public/           # Static assets, PWA manifest, Functions routing
+│   ├── functions/        # Same-origin device pairing API proxy
 │   └── Dockerfile        # Production build (nginx) + dev deps target
+├── sync-worker/          # Cloudflare pairing Worker + SQLite-backed Durable Object
 ├── docs/                 # Design and planning documents
 └── docker-compose.yml    # Dev compose setup (hot reload)
 ```
@@ -126,14 +129,14 @@ cd client
 npm run test:run
 ```
 
-Tests cover the two highest-risk areas: recurring-quest date logic (`src/utils/dateUtils.test.ts`) and the export/import validator, including roundtrips and security guards (`src/utils/exportImport.test.ts`).
+Tests cover recurring-quest dates, backup validation, causal sync merging, and chunked transfer. Worker runtime tests and real Chromium peer-to-peer tests are documented in [device sync setup](docs/device-sync.md#verification).
 
 ## Roadmap
 
-Planned and designed but **not yet built**:
+Current plans and rollout status:
 
 - **Gamification** — the original concept: XP accumulation, levels, streak tracking, and a rewards system. The `xp` field is already reserved on quests and surfaced in the UI as metadata, but no game mechanics exist yet.
-- **Cloud sync** — optional Google sign-in with Firebase/Firestore, keeping the app local-first and anonymous by default, with last-write-wins sync. Fully specced in `docs/storage-plan.md`, not implemented.
+- **Device sync rollout** — pairing, direct transfer, conflict recovery, and deployment configuration are implemented and locally tested. Cloudflare provisioning and physical two-device acceptance remain deployment steps; see `docs/device-sync.md`. The earlier Firebase proposal has been retired.
 
 See the `docs/` folder for the design history: `plan.md`, `structure-rules.md`, `storage-plan.md`, `weather-plan.md`.
 

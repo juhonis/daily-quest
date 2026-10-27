@@ -14,9 +14,11 @@ import {
   normalizeNote,
   normalizeQuickPreset,
 } from './normalize'
+import { ensureSync } from './sync/state'
+import { parseSyncData } from './sync/validation'
 
 const APP = 'daily-quest'
-export const CURRENT_SCHEMA_VERSION = 1
+export const CURRENT_SCHEMA_VERSION = 2
 
 const REPEAT_TYPES = new Set(['none', 'daily', 'weekly', 'monthly', 'custom'])
 const STATUSES = new Set(['active', 'inactive'])
@@ -113,7 +115,7 @@ function guardSubQuest(v: unknown): SubQuest {
   }
 }
 
-function guardQuest(v: unknown): Quest {
+export function guardQuest(v: unknown): Quest {
   const r = expectRecord(v, 'quest')
   const id = expectString(r.id, 'quest.id')
   const title = expectString(r.title, 'quest.title')
@@ -156,7 +158,7 @@ function guardRepeatConfig(v: unknown): Quest['repeatConfig'] {
   }
 }
 
-function guardCompletion(v: unknown): CompletionRecord {
+export function guardCompletion(v: unknown): CompletionRecord {
   const r = expectRecord(v, 'completion')
   const completion = {
     id: expectString(r.id, 'completion.id'),
@@ -167,7 +169,7 @@ function guardCompletion(v: unknown): CompletionRecord {
   return normalizeCompletion(completion)
 }
 
-function guardNote(v: unknown): Note {
+export function guardNote(v: unknown): Note {
   const r = expectRecord(v, 'note')
   const note = {
     id: expectString(r.id, 'note.id'),
@@ -182,7 +184,7 @@ function guardNote(v: unknown): Note {
   return normalizeNote(note)
 }
 
-function guardQuickPreset(v: unknown): QuickPreset {
+export function guardQuickPreset(v: unknown): QuickPreset {
   const r = expectRecord(v, 'quickPreset')
   if (r.externalUrl != null) expectHttpsUrl(r.externalUrl, 'quickPreset.externalUrl')
   const preset = {
@@ -261,6 +263,7 @@ export function parseImport(json: string): ImportPayload {
   if (version > CURRENT_SCHEMA_VERSION) {
     fail(`This backup was made by a newer version of Daily Quest (schema v${version}). Update the app to import it.`)
   }
+  if (version < 1) fail('Unsupported backup schema version.')
 
   const d = expectRecord(root.data, 'data')
 
@@ -293,6 +296,7 @@ export function parseImport(json: string): ImportPayload {
   assertUniqueIds(quickPresets, 'quick preset')
 
   return {
+    ...(root.sync === undefined ? {} : { sync: parseSyncData(root.sync) }),
     quests,
     completions,
     notes,
@@ -327,6 +331,7 @@ export function exportData(state: AppState): string {
     {
       app: APP,
       schemaVersion: CURRENT_SCHEMA_VERSION,
+      sync: ensureSync(state),
       exportedAt: new Date().toISOString(),
       data,
     },
