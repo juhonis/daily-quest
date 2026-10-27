@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import type { AppState, PanelId } from '../types'
 import { getTodayLocal } from '../utils/dateUtils'
 import { normalizeQuest, normalizeCompletion, normalizeNote, normalizeQuickPreset } from '../utils/normalize'
-import { ensureSync, projectSync, trackChanges } from '../utils/sync/state'
+import { ensureSync, projectSync, restoreSync, trackChanges } from '../utils/sync/state'
 import { canonical, mergeRecords, primary, writeRecord, type Recovery, type SyncData } from '../utils/sync/records'
 
 // A fresh identity per tab/process avoids copied identities and cross-tab counter reuse.
@@ -319,7 +319,8 @@ export const useStore = create<AppState>()(
       setLocationName: (name) => set({ locationName: name }),
 
       importData: (payload) =>
-        set((s) => ({
+        persistSet((s) => ({
+          sync: restoreSync(s, payload, payload.sync, replica),
           quests: payload.quests,
           completions: payload.completions,
           notes: payload.notes,

@@ -58,3 +58,15 @@ export function projectSync(data: SyncData): SyncFields {
   fields.completions = fields.completions.filter((c) => liveQuests.has(c.questId))
   return fields
 }
+
+export function restoreSync(current: SyncFields & { sync?: SyncData }, desired: SyncFields, backup: SyncData | undefined, replica: string): SyncData {
+  const context = mergeRecords(ensureSync(current), backup ?? { records: [] })
+  const desiredRecords = new Map(snapshot(desired).map((r) => [recordKey(r), r]))
+  const records = new Map(context.records.map((r) => [recordKey(r), r]))
+  for (const key of new Set([...records.keys(), ...desiredRecords.keys()])) {
+    const record = records.get(key) ?? desiredRecords.get(key)!
+    if (record.kind === 'recovery') continue
+    records.set(key, writeRecord(record, desiredRecords.get(key)?.heads[0].value ?? null, replica))
+  }
+  return mergeRecords({ records: [...records.values()] })
+}

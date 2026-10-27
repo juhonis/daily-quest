@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Note } from '../../types'
-import { ensureSync, projectSync, trackChanges, type SyncFields } from './state'
+import { ensureSync, projectSync, restoreSync, trackChanges, type SyncFields } from './state'
 import { mergeRecords, primary } from './records'
 
 const empty = (): SyncFields => ({ quests: [], notes: [], completions: [], quickPresets: [], tagColors: {}, noteTagColors: {} })
@@ -32,5 +32,14 @@ describe('tracked state', () => {
   it('tracks each color key including deletion', () => {
     const base = { ...empty(), tagColors: { tag: '#ffffff' } }
     expect(projectSync(trackChanges(base, empty(), 'a')).tagColors).toEqual({})
+  })
+
+  it('restores old content as a new causal change', () => {
+    const original = { ...empty(), notes: [note] }
+    const edited = { ...original, notes: [{ ...note, content: 'new' }] }
+    const sync = trackChanges(original, edited, 'a')
+    const restored = restoreSync({ ...edited, sync }, original, undefined, 'restore')
+    expect(projectSync(mergeRecords(sync, restored)).notes[0].content).toBe('original')
+    expect(projectSync(restored).notes[0].updatedAt).toBe(note.updatedAt)
   })
 })

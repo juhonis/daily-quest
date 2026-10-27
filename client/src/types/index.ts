@@ -52,6 +52,7 @@ interface QuickPreset {
 }
 
 interface ImportPayload {
+  sync?: SyncData
   quests: Quest[]
   completions: CompletionRecord[]
   notes: Note[]
