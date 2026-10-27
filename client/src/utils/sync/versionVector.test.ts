@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   compareVersions,
+  advanceVersion,
+  mergeVersions,
   type VersionRelation,
   type VersionVector,
 } from './versionVector'
@@ -87,6 +89,33 @@ const reversedRelation: Record<VersionRelation, VersionRelation> = {
   after: 'before',
   concurrent: 'concurrent',
 }
+
+describe('version operations', () => {
+  it('combines known history without modifying inputs', () => {
+    const a = Object.freeze({ a: 2, b: 1 })
+    const b = Object.freeze({ a: 1, c: 3 })
+    const merged = mergeVersions(a, b)
+    expect(merged).toEqual({ a: 2, b: 1, c: 3 })
+    expect(mergeVersions(b, a)).toEqual(merged)
+    expect(mergeVersions(merged, a)).toEqual(merged)
+  })
+
+  it('advances only the local replica', () => {
+    const version = Object.freeze({ a: 2 })
+    expect(advanceVersion(version, 'b')).toEqual({ a: 2, b: 1 })
+    expect(compareVersions(advanceVersion(version, 'a'), version)).toBe('after')
+  })
+
+  it('handles inherited names as ordinary replica IDs', () => {
+    expect(advanceVersion({}, 'constructor')).toEqual({ constructor: 1 })
+    expect(mergeVersions({ ['__proto__']: 2 })).toEqual({ ['__proto__']: 2 })
+  })
+
+  it('rejects exhausted counters and empty IDs', () => {
+    expect(() => advanceVersion({ a: Number.MAX_SAFE_INTEGER }, 'a')).toThrow()
+    expect(() => advanceVersion({}, '')).toThrow()
+  })
+})
 
 describe('compareVersions', () => {
   it.each(cases)('$name', ({ left, right, expected }) => {
