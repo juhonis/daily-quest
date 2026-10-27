@@ -1,7 +1,7 @@
 import { DurableObject } from 'cloudflare:workers'
 
 interface Env { ROOMS: DurableObjectNamespace<PairingRoom>; ALLOWED_ORIGINS: string }
-interface Room { host: string; guest?: string; expires: number; approved: boolean; finished: string[] }
+interface Room { host: string; guest?: string; expires: number; approved: boolean; verified: string[]; finished: string[] }
 const TTL = 5 * 60 * 1000
 const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 const json = (data: unknown, status = 200) => Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } })
@@ -52,7 +52,7 @@ export class PairingRoom extends DurableObject<Env> {
       const room = await this.ctx.storage.get<Room>('room')
       if (url.pathname === '/create') {
         if (room && room.expires > Date.now()) return error('Session already exists.', 409)
-        const created: Room = { host: crypto.randomUUID(), expires: Date.now() + TTL, approved: false, finished: [] }
+        const created: Room = { host: crypto.randomUUID(), expires: Date.now() + TTL, approved: false, verified: [], finished: [] }
         await this.ctx.storage.put('room', created)
         await this.ctx.storage.setAlarm(created.expires)
         return json({ token: created.host, expires: created.expires })
@@ -91,7 +91,11 @@ export class PairingRoom extends DurableObject<Env> {
       socket.serializeAttachment(peer)
       try {
         const message = JSON.parse(raw)
-        if (message.type === 'approve' && peer.role === 'host' && this.ctx.getWebSockets().length === 2 && !room.approved) {
+        if (message.type === 'verified' && !room.approved) {
+          room.verified = [...new Set([...room.verified, peer.role])]
+          await this.ctx.storage.put('room', room)
+          if (room.verified.length === 2) this.broadcast({ type: 'verification-ready' })
+        } else if (message.type === 'approve' && peer.role === 'host' && room.verified.length === 2 && this.ctx.getWebSockets().length === 2 && !room.approved) {
           room.approved = true
           await this.ctx.storage.put('room', room)
           this.broadcast({ type: 'approved' })

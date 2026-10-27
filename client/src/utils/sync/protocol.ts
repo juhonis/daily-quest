@@ -76,10 +76,11 @@ export async function exchange(
   apply: (data: SyncData) => void,
   signal: AbortSignal,
   progress: (message: string) => void,
+  initialMessages: string[] = [],
 ): Promise<{ pending: boolean }> {
   let finalSnapshot = ''
   // Install one listener before any asynchronous hashing/sending begins.
-  const inbox: string[] = []
+  const inbox: string[] = [...initialMessages]
   let wake: (() => void) | undefined
   let closed = false
   const onMessage = (event: MessageEvent) => {
