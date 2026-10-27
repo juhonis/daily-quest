@@ -1,8 +1,17 @@
 import type { AppState, CompletionRecord, Note, Quest, QuickPreset } from '../../types'
+import { sha256 } from '@noble/hashes/sha2.js'
+import { bytesToHex } from '@noble/hashes/utils.js'
 import { canonical, mergeRecords, primary, recordKey, writeRecord, type SyncData, type SyncRecord } from './records'
 
 export type SyncFields = Pick<AppState, 'quests' | 'notes' | 'completions' | 'quickPresets' | 'tagColors' | 'noteTagColors'>
 export const completionKey = (c: CompletionRecord) => JSON.stringify([c.questId, c.completedOn])
+
+function legacyRecord(kind: SyncRecord['kind'], id: string, value: unknown): SyncRecord {
+  // Distinct pre-sync content has no shared ancestry. Give it a deterministic
+  // root so a first-sync offline edit cannot silently dominate another root.
+  const root = `legacy:${bytesToHex(sha256(new TextEncoder().encode(canonical(value))))}`
+  return { kind, id, heads: [{ version: { [root]: 1 }, value }] }
+}
 
 function snapshot(state: SyncFields): SyncRecord[] {
   const records: SyncRecord[] = []
@@ -22,7 +31,9 @@ function snapshot(state: SyncFields): SyncRecord[] {
 export function ensureSync(state: SyncFields & { sync?: SyncData }): SyncData {
   const existing = state.sync ?? { records: [] }
   const keys = new Set(existing.records.map(recordKey))
-  return mergeRecords(existing, { records: snapshot(state).filter((r) => !keys.has(recordKey(r))) })
+  return mergeRecords(existing, { records: snapshot(state)
+    .filter((r) => !keys.has(recordKey(r)))
+    .map((r) => legacyRecord(r.kind, r.id, r.heads[0].value)) })
 }
 
 export function trackChanges(before: SyncFields & { sync?: SyncData }, after: SyncFields, replica: string): SyncData {

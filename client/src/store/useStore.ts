@@ -5,6 +5,7 @@ import { getTodayLocal } from '../utils/dateUtils'
 import { normalizeQuest, normalizeCompletion, normalizeNote, normalizeQuickPreset } from '../utils/normalize'
 import { ensureSync, projectSync, restoreSync, trackChanges } from '../utils/sync/state'
 import { canonical, mergeRecords, primary, writeRecord, type Recovery, type SyncData } from '../utils/sync/records'
+import { parseSyncData } from '../utils/sync/validation'
 
 // A fresh identity per tab/process avoids copied identities and cross-tab counter reuse.
 const replica = crypto.randomUUID()
@@ -13,7 +14,7 @@ function latestSync(): SyncData {
   if (typeof localStorage === 'undefined') return { records: [] }
   const raw = localStorage.getItem('daily-quest-store')
   if (!raw) return { records: [] }
-  try { return JSON.parse(raw).state?.sync ?? { records: [] } } catch { return { records: [] } }
+  try { return parseSyncData(JSON.parse(raw).state?.sync ?? { records: [] }) } catch { return { records: [] } }
 }
 
 const now = () => new Date().toISOString()
@@ -320,7 +321,7 @@ export const useStore = create<AppState>()(
 
       importData: (payload) =>
         persistSet((s) => ({
-          sync: restoreSync(s, payload, payload.sync, replica),
+          sync: restoreSync({ ...s, sync: mergeRecords(ensureSync(s), latestSync()) }, payload, payload.sync, replica),
           quests: payload.quests,
           completions: payload.completions,
           notes: payload.notes,
@@ -346,9 +347,12 @@ export const useStore = create<AppState>()(
       merge: (persisted, current) => {
         const p = persisted as Partial<AppState> | null
         if (typeof p !== 'object' || p === null) return current
+        let sync = current.sync
+        try { if (p.sync) sync = parseSyncData(p.sync) } catch { /* Rebuild metadata from live data if persisted metadata is malformed. */ }
         return {
           ...current,
           ...p,
+          sync,
           selectedDate: current.selectedDate,
           quests: (p.quests ?? []).map(normalizeQuest),
           completions: (p.completions ?? []).map(normalizeCompletion),

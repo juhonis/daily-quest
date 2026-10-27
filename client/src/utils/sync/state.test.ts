@@ -29,6 +29,14 @@ describe('tracked state', () => {
     expect(projectSync(merged).notes).toHaveLength(1)
   })
 
+  it('preserves different legacy content even when one device edited before first sync', () => {
+    const a = { ...empty(), notes: [note] }
+    const b = { ...empty(), notes: [{ ...note, content: 'unseen legacy text' }] }
+    const edited = trackChanges(a, { ...a, notes: [{ ...note, content: 'new local edit' }] }, 'a')
+    const merged = mergeRecords(edited, ensureSync(b))
+    expect(merged.records.some((r) => r.kind === 'recovery')).toBe(true)
+  })
+
   it('tracks each color key including deletion', () => {
     const base = { ...empty(), tagColors: { tag: '#ffffff' } }
     expect(projectSync(trackChanges(base, empty(), 'a')).tagColors).toEqual({})
