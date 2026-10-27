@@ -1,5 +1,22 @@
 import { AppShell } from './components/layout/AppShell'
+import { useEffect, useState } from 'react'
+import { SyncModal } from './features/sync/SyncModal'
+
+const joinCode = () => /^#sync=([A-Z2-9]{8})$/.exec(location.hash)?.[1] ?? null
 
 export default function App() {
-  return <AppShell />
+  const [code, setCode] = useState(joinCode)
+  useEffect(() => {
+    const consumeLink = () => {
+      const next = joinCode()
+      if (next) {
+        setCode(next)
+        history.replaceState(null, '', location.pathname + location.search)
+      }
+    }
+    if (joinCode()) history.replaceState(null, '', location.pathname + location.search)
+    window.addEventListener('hashchange', consumeLink)
+    return () => window.removeEventListener('hashchange', consumeLink)
+  }, [])
+  return <><AppShell />{code && <SyncModal initialCode={code} onClose={() => setCode(null)} />}</>
 }
