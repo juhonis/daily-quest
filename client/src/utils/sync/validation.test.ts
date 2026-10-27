@@ -15,4 +15,9 @@ describe('sync validation', () => {
     const valid = data()
     expect(() => parseSyncData({ records: [...valid.records, ...valid.records] })).toThrow()
   })
+  it('does not add optional fields to revision content', () => {
+    const value = { id: 'note', title: 'Title', content: 'Body', color: '#ffffff', createdAt: '2026-01-01', updatedAt: '2026-01-01' }
+    const raw = { records: [{ kind: 'notes', id: 'note', heads: [{ version: {}, value }] }] }
+    expect(parseSyncData(raw)).toEqual(raw)
+  })
 })

@@ -15,7 +15,7 @@ function validateValue(kind: RecordKind, id: string, value: unknown): unknown {
   if (value === null) return null
   if (kind === 'recovery') {
     const recovery = object(value)
-    if (!kinds.has(recovery.kind as RecordKind) || recovery.kind === 'recovery' || typeof recovery.id !== 'string') throw new Error('Invalid recovery record.')
+    if (!kinds.has(recovery.kind as RecordKind) || recovery.kind === 'recovery' || recovery.value == null || typeof recovery.id !== 'string') throw new Error('Invalid recovery record.')
     return { kind: recovery.kind, id: recovery.id, value: validateValue(recovery.kind as RecordKind, recovery.id, recovery.value) }
   }
   if (kind === 'tagColors' || kind === 'noteTagColors') {
@@ -24,9 +24,13 @@ function validateValue(kind: RecordKind, id: string, value: unknown): unknown {
   }
   const guards = { quests: guardQuest, notes: guardNote, completions: guardCompletion, quickPresets: guardQuickPreset }
   const entity = guards[kind](value)
+  const raw = object(value)
+  if (typeof raw.updatedAt !== 'string' || !Number.isFinite(Date.parse(raw.updatedAt))) throw new Error('Invalid sync timestamp.')
   const expectedId = kind === 'completions' ? completionKey(guardCompletion(value)) : entity.id
   if (expectedId !== id) throw new Error('Sync identity mismatch.')
-  return kind === 'completions' ? { ...entity, id } : entity
+  // Validation must not fill optional fields inside a revision: doing so changes
+  // its identity and creates phantom conflicts when it returns to its author.
+  return kind === 'completions' ? { ...object(value), id } : value
 }
 
 export function parseSyncData(raw: unknown): SyncData {
