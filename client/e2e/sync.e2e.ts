@@ -9,7 +9,7 @@ async function seed(page: Page, content: string) {
   await page.goto('/')
 }
 
-async function sync(host: Page, guest: Page) {
+async function pair(host: Page, guest: Page) {
   const beforeHost = (await stored(host)).notes
   const beforeGuest = (await stored(guest)).notes
   if (!await host.getByRole('dialog', { name: 'Settings', exact: true }).isVisible()) await host.getByRole('button', { name: 'Settings', exact: true }).click()
@@ -28,6 +28,11 @@ async function sync(host: Page, guest: Page) {
   expect((await stored(host)).notes).toEqual(beforeHost)
   expect((await stored(guest)).notes).toEqual(beforeGuest)
   expect(new URL(guest.url()).hash).toBe('')
+  return { hostDialog, guestDialog, confirm }
+}
+
+async function sync(host: Page, guest: Page) {
+  const { hostDialog, guestDialog, confirm } = await pair(host, guest)
   await confirm.click()
   await expect(hostDialog.getByRole('status')).toHaveText('Sync complete', { timeout: 20000 })
   await expect(guestDialog.getByRole('status')).toHaveText('Sync complete', { timeout: 20000 })
@@ -85,4 +90,22 @@ test('only one tab can sync and cancellation releases the lock', async ({ browse
     await b.getByRole('button', { name: 'Cancel sync', exact: true }).click()
     expect((await stored(a)).notes[0].content).toBe('Local note')
   } finally { await context.close() }
+})
+
+test('a storage failure never reports sync complete', async ({ browser }) => {
+  const left = await browser.newContext(), right = await browser.newContext()
+  const a = await left.newPage(), b = await right.newPage()
+  try {
+    await seed(a, 'Laptop text')
+    await seed(b, 'Desktop text')
+    const { hostDialog, guestDialog, confirm } = await pair(a, b)
+    await a.evaluate(() => {
+      Storage.prototype.setItem = () => { throw new DOMException('Storage full', 'QuotaExceededError') }
+    })
+    await confirm.click()
+    await expect(hostDialog.getByRole('alert')).toContainText('could not be saved locally')
+    await expect(hostDialog.getByRole('status')).toHaveText('Sync incomplete')
+    await expect(guestDialog.getByRole('status')).toHaveText('Sync incomplete', { timeout: 10000 })
+    expect((await stored(a)).notes[0].content).toBe('Laptop text')
+  } finally { await left.close(); await right.close() }
 })

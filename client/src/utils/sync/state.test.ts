@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { Note } from '../../types'
+import type { Note, Quest } from '../../types'
 import { ensureSync, projectSync, restoreSync, trackChanges, type SyncFields } from './state'
 import { mergeRecords, primary } from './records'
 
@@ -49,5 +49,26 @@ describe('tracked state', () => {
     const restored = restoreSync({ ...edited, sync }, original, undefined, 'restore')
     expect(projectSync(mergeRecords(sync, restored)).notes[0].content).toBe('original')
     expect(projectSync(restored).notes[0].updatedAt).toBe(note.updatedAt)
+  })
+
+  it('lets concurrent unchecking win, then allows an intentional re-check', () => {
+    const quest: Quest = { id: 'q', title: 'Task', createdAt: note.createdAt, updatedAt: note.updatedAt, targetDate: '2026-01-01', repeat: 'none', rollover: false, subQuests: [], status: 'active', archivedAt: null }
+    const completion = { id: 'c', questId: 'q', completedOn: '2026-01-01', updatedAt: note.updatedAt }
+    const base = { ...empty(), quests: [quest], completions: [completion] }
+    const cleared = { ...base, completions: [] }
+    const a = trackChanges(base, cleared, 'a')
+    const bOff = trackChanges(base, cleared, 'b')
+    const bOn = trackChanges({ ...cleared, sync: bOff }, base, 'b')
+    const merged = mergeRecords(a, bOn)
+    const current = projectSync(merged)
+    expect(current.completions).toEqual([])
+    const rechecked = trackChanges({ ...current, sync: merged }, { ...current, completions: [completion] }, 'c')
+    expect(projectSync(mergeRecords(merged, rechecked)).completions).toHaveLength(1)
+  })
+
+  it('does not re-seed a deleted built-in preset', () => {
+    const base = { ...empty(), quickPresets: [{ id: 'preset-wordle', title: 'Wordle', isUserDefined: false, updatedAt: note.updatedAt }] }
+    const deleted = trackChanges(base, empty(), 'a')
+    expect(projectSync(mergeRecords(ensureSync(base), deleted)).quickPresets).toEqual([])
   })
 })

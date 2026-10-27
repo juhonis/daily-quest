@@ -117,10 +117,12 @@ export async function startSession(
       earlyMessages.push(event.data)
     }
     const apply = (data: SyncData) => {
-      useStore.getState().applySync(data)
-      // Zustand updates memory before persistence; explicitly verify the stored result.
-      const persisted = JSON.parse(localStorage.getItem('daily-quest-store') ?? 'null')
-      if (canonical(persisted?.state?.sync) !== canonical(useStore.getState().sync)) throw new Error('Changes could not be saved locally. Free browser storage and retry.')
+      try {
+        useStore.getState().applySync(data)
+        // Zustand updates memory before persistence; explicitly verify the stored result.
+        const persisted = JSON.parse(localStorage.getItem('daily-quest-store') ?? 'null')
+        if (canonical(persisted?.state?.sync) !== canonical(useStore.getState().sync)) throw new Error('Persistence mismatch')
+      } catch { throw new Error('Changes could not be saved locally. Free browser storage and retry.') }
     }
     const connectChannel = (dataChannel: RTCDataChannel) => {
       channel = dataChannel

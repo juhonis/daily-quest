@@ -8,7 +8,7 @@ import { canonical, mergeRecords, primary, writeRecord, type Recovery, type Sync
 import { parseSyncData } from '../utils/sync/validation'
 
 // A fresh identity per tab/process avoids copied identities and cross-tab counter reuse.
-const replica = crypto.randomUUID()
+const replica = [...crypto.getRandomValues(new Uint8Array(16))].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 
 function latestSync(): SyncData {
   if (typeof localStorage === 'undefined') return { records: [] }
