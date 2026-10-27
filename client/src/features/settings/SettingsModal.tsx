@@ -7,6 +7,7 @@ import { downloadJson, exportData, parseImport } from '../../utils/exportImport'
 import type { ImportPayload } from '../../types'
 import { EditPanelsModal } from '../quests/list/EditPanelsModal'
 import { SyncModal } from '../sync/SyncModal'
+import { RecoveryPanel } from '../sync/RecoveryPanel'
 
 interface SettingsModalProps {
   onClose: () => void
@@ -70,6 +71,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
           <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Device sync</h3>
           <Button variant="secondary" onClick={() => setShowSync(true)}>Sync devices</Button>
         </section>
+        <RecoveryPanel />
         <section>
           <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
             Panels

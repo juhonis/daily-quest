@@ -35,7 +35,7 @@ export function mergeHeads(heads: Revision[]): Revision[] {
   const unique = [...new Map(heads.map((head) => [canonical(head), head])).values()]
   return unique.filter((head) => !unique.some((other) =>
     compareVersions(head.version, other.version) === 'before',
-  )).sort((a, b) => canonical(a).localeCompare(canonical(b), 'en'))
+  )).sort((a, b) => canonical(a) < canonical(b) ? -1 : canonical(a) > canonical(b) ? 1 : 0)
 }
 
 // Deletion wins concurrent races; retained recovery records preserve edited content.

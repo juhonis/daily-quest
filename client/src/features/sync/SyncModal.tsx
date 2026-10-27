@@ -82,6 +82,7 @@ export function SyncModal({ onClose, initialCode = '' }: { onClose: () => void; 
               </div>
             )}
             {status.summary && <p className="text-xs text-slate-400">{status.summary}</p>}
+            {status.complete && <p className="text-xs text-slate-400">Preserved alternate versions are available under Settings → Sync recovery.</p>}
             {status.error && <p role="alert" className="text-sm text-red-300">{status.error}</p>}
           </div>
         )}
