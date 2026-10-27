@@ -42,7 +42,7 @@ export function SyncModal({ onClose, initialCode = '' }: { onClose: () => void; 
   }
 
   return (
-    <Modal isOpen onClose={onClose} title="Sync devices">
+    <Modal isOpen onClose={onClose} title="Sync devices" className="max-h-[90dvh] overflow-y-auto">
       <div className="space-y-4">
         <p className="text-sm text-slate-400">
           Open Daily Quest on both devices. Pair over the internet, then combine notes and quests directly between browsers. Keep both apps open until sync finishes.
