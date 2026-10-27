@@ -8,7 +8,7 @@ on:
         options: [preview, production]
         default: preview
   push:
-    branches: [main, master]
+    branches: [prod]
     paths: ['sync-worker/**', '.github/workflows/sync-worker.yml']
 permissions:
   contents: read
