@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "daily-quest-sync",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-27",
+  "workers_dev": false,
+  "vars": { "ALLOWED_ORIGINS": "https://daily-quest-dmt.pages.dev" },
+  "durable_objects": {
+    "bindings": [{ "name": "ROOMS", "class_name": "PairingRoom" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["PairingRoom"] }],
+  "observability": { "enabled": false },
+  "env": {
+    "preview": {
+      "name": "daily-quest-sync-preview",
+      "vars": { "ALLOWED_ORIGINS": "http://localhost:5173,http://localhost:8788" },
+      "durable_objects": { "bindings": [{ "name": "ROOMS", "class_name": "PairingRoom" }] }
+    }
+  }
+}
