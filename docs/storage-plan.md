@@ -4,11 +4,11 @@ DEBUG:`copy(localStorage.getItem('daily-quest-store'))`
 Two-phase update to the current `localStorage`-only persistence:
 
 - **Phase A (implemented):** Export / Import — let users move their data between browsers and devices with a file. Section 2 retains the implementation specification and historical review notes.
-- **Phase B (proposed; awaiting review):** Manual peer-to-peer sync — pair two open apps using a temporary code or QR link, with Cloudflare handling connection setup and WebRTC transferring data directly between devices.
+- **Phase B (implemented; deployment acceptance pending):** Manual peer-to-peer sync — pair two open apps using a temporary code or QR link, with Cloudflare handling connection setup and WebRTC transferring data directly between devices. See [device-sync.md](device-sync.md) for setup and implementation details.
 
 **Decisions locked in:**
 - Sync architecture: **Cloudflare pairing service + direct WebRTC data transfer**, without accounts or cloud storage of app data. The Firebase/Google OAuth proposal has been retired.
-- Import behavior: **Replace, with backup** (two-step confirm — a *Download backup* button must be used before *Replace & import* is enabled).
+- Import behavior: **Replace, with optional backup download**. The original Phase A backup click-gate described below was subsequently removed; the replacement confirmation still offers a backup download.
 - Export format: **Plain JSON** (no encryption). No secrets exist in the data today; encryption can be added later if cloud accounts introduce sensitive data.
 - UI: **Reuse the Settings gear** (currently opens `EditPanelsModal`) to open a Settings/Data modal with Export & Import. Exact placement (candidate: top-right of the right column) decided later.
 - Validation: **Hand-rolled validator** (typed guard functions + vitest). No new dependency.
@@ -33,6 +33,8 @@ Two-phase update to the current `localStorage`-only persistence:
 ---
 
 ## 2. Phase A — Export / Import
+
+Historical implementation specification: the current UI permits replacement without a required backup click, and Phase B extends the export schema to v2 with sync metadata (§3.8).
 
 ### 2.1 Export format
 
@@ -159,7 +161,16 @@ Existing `localStorage` data (key `daily-quest-store`) upgrades transparently on
 
 ## 3. Phase B — Manual Peer-to-Peer Sync (Cloudflare + WebRTC)
 
-**Status: proposed, awaiting user review before implementation.**
+**Status: implemented and verified locally. Cloudflare production provisioning and physical-device acceptance remain deployment steps.**
+
+Implementation notes:
+- Fresh replica identity per tab/load with per-record causal counters; SHA-256-derived roots identify pre-sync content without assuming shared ancestry.
+- Stable recovery records preserve alternate edits. Network validation preserves revision content exactly rather than filling optional fields and changing its identity.
+- Host-only ICE candidates in v1; no external STUN/TURN service or data relay.
+- Two snapshot rounds plus persistence acknowledgements; the UI flags final-round edits that need another sync.
+- Schema-v2 backups preserve sync metadata and support intentional restores; schema-v1 backups remain importable.
+- Local checks: client unit tests/lint/build, Worker type checks/runtime tests, and actual two-profile Chromium WebRTC tests for pairing, conflicts, repeat sync, restore deletions, and cross-tab locking/cancellation.
+- Deployment instructions and operational limits: [device-sync.md](device-sync.md).
 
 ### 3.1 Goals and agreed decisions
 
@@ -229,7 +240,7 @@ Built-in presets remain deterministic seeds. Track user edits/deletions of a bui
 
 ### 3.5 Revision metadata and migration
 
-- Introduce a persisted local replica ID and monotonic counter. Track causal revisions per syncable record using version vectors (replica ID → counter) or an equivalent explicitly specified causal scheme.
+- Use a fresh local replica ID per tab/load and monotonic counters per record. Persist causal revisions using version vectors (replica ID → counter); fresh identities avoid copied device IDs and cross-tab counter reuse.
 - Keep `updatedAt` for display and deterministic ordering; do not use wall-clock timestamps alone to decide whether edits are concurrent.
 - Retain deletion records (tombstones), including unchecked completion state. Completion identity is the tuple `(questId, completedOn)`, not the random completion record ID.
 - Track mutations atomically with their revisions through store actions, including archive/unarchive, subquest toggles, sorting, tag rename/delete, preset changes, and bulk imports. Audit direct `setState` writes and other mutation paths.
