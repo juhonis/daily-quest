@@ -2,6 +2,8 @@
 
 Daily Quest can manually combine data between two open browsers. Cloudflare coordinates temporary pairing; notes, quests, completions, presets, and tag colors travel directly over an encrypted WebRTC data channel.
 
+Known production findings and deferred investigation steps are tracked in [sync-known-issues.md](sync-known-issues.md).
+
 ## Using sync
 
 1. Open the app on both devices, preferably on the same non-guest Wi-Fi.
