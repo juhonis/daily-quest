@@ -12,6 +12,41 @@
   backdrop-filter: blur(4px);
 }
 
+.workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  align-content: start;
+}
+
+.radar-dock {
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+}
+
+@media (min-width: 1440px) {
+  .workspace-grid.has-radar {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-rows: auto 1fr;
+  }
+
+  .workspace-grid.has-radar > .workspace-context {
+    grid-area: 1 / 1;
+  }
+
+  .workspace-grid.has-radar > .workspace-content {
+    grid-area: 2 / 1;
+  }
+
+  .workspace-grid.has-radar > .radar-dock {
+    grid-area: 1 / 2 / span 2 / 3;
+    position: sticky;
+    top: 101px;
+    max-height: calc(100dvh - 125px);
+  }
+}
+
 .day-overview {
   container-type: inline-size;
 }
@@ -101,10 +136,10 @@ button:not(:disabled), summary, a {
   box-shadow: none;
 }
 .radar-map .leaflet-control-zoom a {
-  width: 18px;
-  height: 18px;
-  line-height: 18px;
-  font-size: 14px;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  font-size: 18px;
   color: #cbd5e1;
   border: 1px solid var(--color-glass-border);
   border-radius: 4px;
@@ -127,6 +162,45 @@ button:not(:disabled), summary, a {
 }
 .radar-map .leaflet-control-attribution a {
   color: #94a3b8;
+}
+
+.radar-frame-slider {
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+.radar-frame-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: #334155;
+}
+.radar-frame-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background: #3b82f6;
+}
+.radar-frame-slider::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: #334155;
+}
+.radar-frame-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 0;
+  border-radius: 50%;
+  background: #3b82f6;
+}
+
+@media (max-width: 639px) {
+  .radar-map .leaflet-control-zoom a {
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -65,8 +65,19 @@ The first prototype uses real application data and actions. Sample quests and no
 - The old right-column dashboard and create-tab navigation are not rendered in the new shell. Library and shared editing cover their main workflows; the legacy components remain available for reference during the experiment.
 - Following the first review, multi-month scrolling replaces the single-month picker. Seven months are initially rendered; the buffer extends near either end and stays bounded at thirteen months. Visible-month anchoring prevents jumps when prepending or trimming.
 - The inline header uses available container width rather than just viewport breakpoints. Date and current conditions share one block, without a divider between them; only the hourly forecast is separated. Temperature and time share a line, with a compact city name below and the full location available in its tooltip and location settings. **Now** appears when viewing a date other than today; the hourly strip labels the selected date.
-- Weather requests are deduplicated/cached for ten minutes, with explicit loading/error/retry states and no stale forecast carried into a different date or location. Radar is a viewport-bounded dialog.
+- Weather requests are deduplicated/cached for ten minutes, with explicit loading/error/retry states and no stale forecast carried into a different date or location.
 - No storage schema or sync merge-rule changes are included. The shared sync dialog still opens from Settings or QR join links.
+
+### Non-modal radar dock
+
+- The weather header's radar button toggles a workspace panel; it does not lock scrolling or make the rest of the page inert.
+- At 1440px and wider, the panel occupies a 320px right-hand column and sticks below the app header. Closing it releases the column.
+- Below that breakpoint, the panel is an inline card between the current page header and its content, with a shorter map.
+- The panel stays open across Day, Notes, and Library. Tasks can be completed or edited and notes browsed while it remains open.
+- The same Leaflet instance stays mounted across responsive layout changes. Resize observation updates its dimensions while preserving the zoom, center, selected frame, and playback state.
+- Playback and frame selection use touch-sized controls. Scroll-wheel zoom stays disabled.
+- Radar loading failures have an explicit Retry action. Location settings are still a dialog, scoped independently from the dock.
+- Close returns focus to the radar trigger when Day is visible, or to the workspace when another screen is active. Escape closes the panel only when focus is inside it, so it does not intercept unrelated editor/location dialogs.
 
 ## Verification
 
@@ -87,7 +98,8 @@ New browser coverage includes:
 - Completion-history filtering without accidental task completion controls.
 - Calendar arrow/month navigation moving DOM focus.
 - Multi-month wheel scrolling without changing the selected date or moving the page, including anchor preservation when earlier months are added.
-- Always-visible weather, shared current-day requests, selected-date forecasts, out-of-range dates, retry, and location/radar dialogs.
+- Always-visible weather, shared current-day requests, selected-date forecasts, out-of-range dates, retry, and location dialogs.
+- Non-modal radar task completion/editing/navigation, inline/docked bounds, resize preservation of map pan/zoom/frame/playback, retry, and close/focus behavior. Radar metadata and tiles are mocked so these checks do not depend on external weather services.
 - Nested dialog Escape behavior and focus restoration.
 - Unsaved quest draft cancellation.
 - Viewport/editor bounds at 320px, 768px, and 1280px.
@@ -101,6 +113,7 @@ The existing peer-sync browser tests remain part of the same suite. Review scree
 3. Check the inline date/weather container with your location and typical laptop/phone widths.
 4. Test the actual target phone/browser, especially editing with the onscreen keyboard, portrait/landscape, safe areas, and installed-PWA behavior.
 5. Confirm search/history and panel customization cover the workflows previously used in the sidebars.
+6. Try leaving radar open while planning and browsing notes; compare its right-hand dock with the inline placement on smaller windows.
 
 Preview origins have separate browser storage. Use sample data or an imported copy of an export for review. To test peer sync on the stable v2 preview, its exact origin must be included in the preview Worker's allowed origins and that Worker redeployed.
 

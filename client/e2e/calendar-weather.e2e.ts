@@ -157,7 +157,7 @@ test('weather is inline, shares today data, and fits desktop and phone widths', 
   expect(requested).not.toContain(future)
 })
 
-test('weather error can be retried and location and radar dialogs stay usable', async ({ page }) => {
+test('weather error can be retried and location and radar controls stay usable', async ({ page }) => {
   let fail = true
   await mockWeather(page, async (route) => {
     if (fail) await route.fulfill({ status: 503, body: 'Unavailable' })
@@ -179,11 +179,13 @@ test('weather error can be retried and location and radar dialogs stay usable', 
   await expect(location.getByText('Current location: Kuopio, North Savo, Finland', { exact: true })).toBeVisible()
   await location.getByRole('button', { name: 'Close', exact: true }).click()
   await page.getByRole('button', { name: 'Show radar', exact: true }).click()
-  const radar = page.getByRole('dialog', { name: 'Rain radar', exact: true })
+  const radar = page.getByRole('complementary', { name: 'Rain radar', exact: true })
   await expect(radar).toBeVisible()
+  await expect(radar.getByRole('button', { name: 'Retry radar', exact: true })).toBeVisible()
   const bounds = await radar.boundingBox()
   expect(bounds!.x).toBeGreaterThanOrEqual(0)
   expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(390)
-  await page.keyboard.press('Escape')
+  await radar.getByRole('button', { name: 'Close radar', exact: true }).click()
   await expect(radar).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Show radar', exact: true })).toBeFocused()
 })

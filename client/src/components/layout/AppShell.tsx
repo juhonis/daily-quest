@@ -1,7 +1,9 @@
-import { useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { CheckCheck, Library, NotebookPen, PanelLeftClose, PanelLeftOpen, Plus, Settings } from 'lucide-react'
 import { CalendarColumn } from '../../features/calendar/CalendarColumn'
 import { QuestsColumn } from '../../features/quests/list/QuestsColumn'
+import { DayOverview } from '../../features/quests/list/DayOverview'
+import { RadarPanel } from '../../features/weather/RadarPanel'
 import { QuestCreateForm } from '../../features/quests/create/QuestCreateForm'
 import { QuestLibrary } from '../../features/quests/QuestLibrary'
 import { NotesGrid, type NotesGridHandle } from '../../features/notes/NotesGrid'
@@ -22,6 +24,10 @@ export function AppShell() {
   const [screen, setScreen] = useState<Screen>('day')
   const [showSettings, setShowSettings] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
+  const [radarOpen, setRadarOpen] = useState(false)
+  const radarPanelId = useId()
+  const radarTriggerRef = useRef<HTMLButtonElement>(null)
+  const workspaceRef = useRef<HTMLElement>(null)
   const [editor, setEditor] = useState<{ id?: string; key: number } | null>(null)
   const [editorDirty, setEditorDirty] = useState(false)
   const notesRef = useRef<NotesGridHandle>(null)
@@ -43,6 +49,13 @@ export function AppShell() {
   function closeEditor() {
     if (editorDirty && !window.confirm('Discard unsaved quest changes?')) return
     setEditor(null)
+  }
+
+  function closeRadar() {
+    setRadarOpen(false)
+    // The Day trigger can be hidden while browsing Notes or Library.
+    if (radarTriggerRef.current?.getClientRects().length) radarTriggerRef.current.focus({ preventScroll: true })
+    else workspaceRef.current?.focus({ preventScroll: true })
   }
 
   function navigation(mobile: boolean) {
@@ -81,13 +94,18 @@ export function AppShell() {
 
       <div className="mx-auto grid max-w-[1680px] items-start" style={{ gridTemplateColumns: calendarVisible ? '248px minmax(0, 1fr)' : 'minmax(0, 1fr)' }}>
         {calendarVisible && <aside aria-label="Calendar sidebar" className="sticky top-[73px] h-[calc(100dvh-73px)] overflow-hidden border-r border-slate-800 p-3"><CalendarColumn /></aside>}
-        <main id="workspace" tabIndex={-1} className="min-w-0 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 outline-none sm:px-6 lg:pb-10 lg:pt-7">
-          <div hidden={screen !== 'day'}><QuestsColumn onEdit={openEditor} onChooseDate={() => setShowCalendar(true)} /></div>
-          <div hidden={screen !== 'notes'} className="min-w-0">
-            <div className="mb-5"><h1 className="text-2xl font-semibold tracking-tight text-white">Notes</h1><p className="mt-1 text-sm text-slate-400">A place for ideas worth keeping.</p></div>
-            <NotesGrid ref={notesRef} showCreateButton={false} />
+        <main ref={workspaceRef} id="workspace" tabIndex={-1} className={`workspace-grid min-w-0 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 outline-none sm:px-6 lg:pb-10 lg:pt-7 ${radarOpen ? 'has-radar' : ''}`}>
+          <div className="workspace-context min-w-0">
+            <div hidden={screen !== 'day'}><DayOverview onChooseDate={() => setShowCalendar(true)} radarOpen={radarOpen} onToggleRadar={() => radarOpen ? closeRadar() : setRadarOpen(true)} radarPanelId={radarPanelId} radarTriggerRef={radarTriggerRef} /></div>
+            <header hidden={screen !== 'notes'}><h1 className="text-2xl font-semibold tracking-tight text-white">Notes</h1><p className="mt-1 text-sm text-slate-400">A place for ideas worth keeping.</p></header>
+            <header hidden={screen !== 'library'}><h1 className="text-2xl font-semibold tracking-tight text-white">Quest library</h1><p className="mt-1 text-sm text-slate-400">Find and edit quests across all dates.</p></header>
           </div>
-          <div hidden={screen !== 'library'}><QuestLibrary onEdit={openEditor} /></div>
+          {radarOpen && <RadarPanel id={radarPanelId} onClose={closeRadar} />}
+          <div className="workspace-content min-w-0">
+            <div hidden={screen !== 'day'}><QuestsColumn onEdit={openEditor} /></div>
+            <div hidden={screen !== 'notes'} className="min-w-0"><NotesGrid ref={notesRef} showCreateButton={false} /></div>
+            <div hidden={screen !== 'library'}><QuestLibrary onEdit={openEditor} showHeading={false} /></div>
+          </div>
         </main>
       </div>
 

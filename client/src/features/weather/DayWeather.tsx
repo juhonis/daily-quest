@@ -1,14 +1,18 @@
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type Ref } from 'react'
 import { CloudSun, MapPin, Radar, RotateCw, Settings } from 'lucide-react'
 import { useStore } from '../../store/useStore'
 import { addDays, getTodayLocal } from '../../utils/dateUtils'
 import { Button } from '../../components/ui/Button'
-import { Modal } from '../../components/ui/Modal'
 import { LocationPicker } from './LocationPicker'
 import { WeatherIcon } from './weatherIcons'
 import { useWeatherResource, type WeatherResource } from './useWeather'
 
-const RainRadar = lazy(() => import('./RainRadar').then((module) => ({ default: module.RainRadar })))
+export interface RadarToggleProps {
+  radarOpen: boolean
+  onToggleRadar: () => void
+  radarPanelId: string
+  radarTriggerRef: Ref<HTMLButtonElement>
+}
 
 function HourlyForecast({ resource, selectedDate, currentHour, available, hasLocation }: {
   resource: WeatherResource
@@ -68,13 +72,12 @@ function HourlyForecast({ resource, selectedDate, currentHour, available, hasLoc
   )
 }
 
-export function DayWeather({ children }: { children: ReactNode }) {
+export function DayWeather({ children, radarOpen, onToggleRadar, radarPanelId, radarTriggerRef }: RadarToggleProps & { children: ReactNode }) {
   const coords = useStore((state) => state.coords)
   const locationName = useStore((state) => state.locationName)
   const selectedDate = useStore((state) => state.selectedDate)
   const [now, setNow] = useState(() => new Date())
   const [locationOpen, setLocationOpen] = useState(false)
-  const [radarOpen, setRadarOpen] = useState(false)
   const today = getTodayLocal()
   const available = selectedDate >= addDays(today, -92) && selectedDate <= addDays(today, 16)
   const current = useWeatherResource(coords?.lat ?? 0, coords?.lon ?? 0, coords ? today : '')
@@ -110,14 +113,13 @@ export function DayWeather({ children }: { children: ReactNode }) {
           {!coords ? <Button variant="ghost" onClick={() => setLocationOpen(true)} className="text-blue-400"><MapPin className="h-4 w-4" />Set location</Button>
             : <div className="flex flex-wrap items-center gap-1">
               <Button variant="icon" onClick={() => setLocationOpen(true)} aria-label="Change weather location"><Settings className="h-4 w-4" /></Button>
-              <Button variant="icon" onClick={() => setRadarOpen(true)} aria-label="Show radar"><Radar className="h-4 w-4" /></Button>
+              <Button ref={radarTriggerRef} variant="icon" onClick={onToggleRadar} aria-label={radarOpen ? 'Hide radar' : 'Show radar'} aria-expanded={radarOpen} aria-controls={radarPanelId} className={radarOpen ? 'bg-blue-500/10 text-blue-300' : ''}><Radar className="h-4 w-4" /></Button>
               {current.status === 'error' && <Button variant="icon" onClick={current.retry} aria-label="Retry current weather"><RotateCw className="h-4 w-4" /></Button>}
             </div>}
         </div>
       </div>
       <HourlyForecast resource={forecast} selectedDate={selectedDate} currentHour={selectedDate === today ? conditions?.time.slice(0, 13) : undefined} available={available} hasLocation={!!coords} />
       {locationOpen && <LocationPicker onClose={() => setLocationOpen(false)} />}
-      {radarOpen && <Suspense fallback={<Modal isOpen onClose={() => setRadarOpen(false)} title="Rain radar"><p className="text-sm text-slate-400">Loading radar…</p></Modal>}><RainRadar onClose={() => setRadarOpen(false)} /></Suspense>}
     </section>
   )
 }

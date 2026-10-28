@@ -1,15 +1,13 @@
 import { useMemo, useState } from 'react'
-import { CalendarDays, ChevronLeft, ChevronRight, Columns3, List, SlidersHorizontal } from 'lucide-react'
-import { format } from 'date-fns'
+import { Columns3, List, SlidersHorizontal } from 'lucide-react'
 import { useStore } from '../../../store/useStore'
 import { Button } from '../../../components/ui/Button'
-import { addDays, getActiveQuestsForDate, getFinishedQuestsForDate, getTodayLocal, parseDate } from '../../../utils/dateUtils'
+import { getActiveQuestsForDate, getFinishedQuestsForDate } from '../../../utils/dateUtils'
 import { QuickAddBar } from './QuickAddBar'
 import { QuestsPanelsRow } from './QuestsPanelsRow'
 import { EditPanelsModal } from './EditPanelsModal'
-import { DayWeather } from '../../weather/DayWeather'
 
-export function QuestsColumn({ onEdit, onChooseDate }: { onEdit: (id: string) => void; onChooseDate: () => void }) {
+export function QuestsColumn({ onEdit }: { onEdit: (id: string) => void }) {
   const [layout, setLayout] = useState<'list' | 'board'>('list')
   const [showFilters, setShowFilters] = useState(false)
   const [showPanels, setShowPanels] = useState(false)
@@ -17,7 +15,6 @@ export function QuestsColumn({ onEdit, onChooseDate }: { onEdit: (id: string) =>
   const completions = useStore((s) => s.completions)
   const presets = useStore((s) => s.quickPresets)
   const selectedDate = useStore((s) => s.selectedDate)
-  const setSelectedDate = useStore((s) => s.setSelectedDate)
   const filterTags = useStore((s) => s.filterTags)
   const setFilterTags = useStore((s) => s.setFilterTags)
   const tagColors = useStore((s) => s.tagColors)
@@ -36,26 +33,9 @@ export function QuestsColumn({ onEdit, onChooseDate }: { onEdit: (id: string) =>
   const active = getActiveQuestsForDate(quests, selectedDate, completions).length
   const done = getFinishedQuestsForDate(quests, selectedDate, completions).length
   const total = active + done
-  const isToday = selectedDate === getTodayLocal()
 
   return (
     <div className="min-w-0 space-y-5">
-      <header aria-label="Day overview" className="day-overview rounded-2xl border border-slate-800 bg-slate-900/40 p-4 sm:p-5">
-       <DayWeather>
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h1 className="min-w-0 break-words text-2xl font-semibold tracking-tight text-white sm:text-3xl">{isToday ? 'Today' : format(parseDate(selectedDate), 'EEEE')}</h1>
-          <div className="flex items-center gap-1">
-            {!isToday && <Button variant="ghost" onClick={() => setSelectedDate(getTodayLocal())}>Today</Button>}
-            <Button variant="icon" aria-label="Previous day" onClick={() => setSelectedDate(addDays(selectedDate, -1))}><ChevronLeft className="h-5 w-5" /></Button>
-            <Button variant="icon" aria-label="Next day" onClick={() => setSelectedDate(addDays(selectedDate, 1))}><ChevronRight className="h-5 w-5" /></Button>
-          </div>
-        </div>
-        <button type="button" aria-label="Choose date" onClick={onChooseDate} className="mt-1 inline-flex min-h-11 max-w-full items-center gap-2 text-left text-sm text-slate-400 hover:text-slate-200"><CalendarDays className="h-4 w-4 shrink-0" /><span className="sm:hidden">{format(parseDate(selectedDate), 'EEE, d MMM')}</span><span className="hidden sm:inline">{format(parseDate(selectedDate), 'EEEE, d MMMM yyyy')}</span></button>
-      </div>
-       </DayWeather>
-      </header>
-
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
         <div className="flex items-center gap-3">
           <div className="h-1.5 w-20 overflow-hidden rounded-full bg-slate-800" role="progressbar" aria-label="Daily quest progress" aria-valuemin={0} aria-valuemax={total || 1} aria-valuenow={done}><div className="h-full rounded-full bg-blue-500 transition-[width]" style={{ width: `${total ? done / total * 100 : 0}%` }} /></div>
