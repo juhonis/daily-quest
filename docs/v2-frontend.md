@@ -21,7 +21,7 @@ The first prototype uses real application data and actions. Sample quests and no
 - Separate **Day**, **Notes**, and **Library** destinations.
 - Desktop navigation sits in the header; phone/tablet navigation sits at the bottom, with **More** opening Settings.
 - A contextual **New quest / New note** action is always available in the header.
-- Current weather and the selected day's hourly forecast are always visible inside Day's date/header container. Radar and location settings open on demand.
+- Date, time, location, and current conditions form one Day summary. The selected day's hourly forecast is always visible alongside it on wide screens and below it on phones. Radar and location settings open on demand.
 - Calendar is an optional desktop sidebar. Hiding it releases its grid column.
 - On smaller screens, tapping the date opens a calendar dialog.
 
@@ -64,7 +64,7 @@ The first prototype uses real application data and actions. Sample quests and no
 - Navigation screens are local UI state, not browser routes yet.
 - The old right-column dashboard and create-tab navigation are not rendered in the new shell. Library and shared editing cover their main workflows; the legacy components remain available for reference during the experiment.
 - Following the first review, multi-month scrolling replaces the single-month picker. Seven months are initially rendered; the buffer extends near either end and stays bounded at thirteen months. Visible-month anchoring prevents jumps when prepending or trimming.
-- The inline header uses available container width rather than just viewport breakpoints: date, current conditions, and forecast sit alongside each other on wide layouts and reflow on phones. Current conditions are labeled **Now**; the hourly strip labels the selected date.
+- The inline header uses available container width rather than just viewport breakpoints. Date and current conditions share one block, without a divider between them; only the hourly forecast is separated. Temperature and time share a line, with a compact city name below and the full location available in its tooltip and location settings. **Now** appears when viewing a date other than today; the hourly strip labels the selected date.
 - Weather requests are deduplicated/cached for ten minutes, with explicit loading/error/retry states and no stale forecast carried into a different date or location. Radar is a viewport-bounded dialog.
 - No storage schema or sync merge-rule changes are included. The shared sync dialog still opens from Settings or QR join links.
 

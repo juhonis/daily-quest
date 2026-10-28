@@ -5,7 +5,7 @@ async function seed(page: Page, withWeather = false) {
   await page.addInitScript((weather) => {
     localStorage.setItem('daily-quest-store', JSON.stringify({ version: 0, state: {
       quests: [], notes: [], completions: [],
-      ...(weather ? { coords: { lat: 60.17, lon: 24.94 }, locationMode: 'manual', locationName: 'Helsinki' } : {}),
+      ...(weather ? { coords: { lat: 62.89, lon: 27.68 }, locationMode: 'manual', locationName: 'Kuopio, North Savo, Finland' } : {}),
     } }))
   }, withWeather)
   await page.goto('/')
@@ -109,9 +109,17 @@ test('weather is inline, shares today data, and fits desktop and phone widths', 
   })
   await seed(page, true)
   const weather = page.getByRole('region', { name: 'Weather', exact: true })
+  const summary = weather.getByRole('group', { name: 'Day summary', exact: true })
   const current = weather.getByRole('group', { name: 'Current weather', exact: true })
   const forecast = weather.getByRole('group', { name: 'Hourly forecast', exact: true })
+  await expect(summary.getByRole('heading', { name: 'Today', exact: true })).toBeVisible()
+  await expect(summary.getByRole('group', { name: 'Current weather', exact: true })).toBeVisible()
   await expect(current.getByText('9°C', { exact: true })).toBeVisible()
+  await expect(current.getByText('Now', { exact: true })).toHaveCount(0)
+  await expect(current.locator('[title="Kuopio, North Savo, Finland"]')).toHaveText('Kuopio')
+  const summaryBounds = await summary.boundingBox()
+  const forecastBounds = await forecast.boundingBox()
+  expect(forecastBounds!.x).toBeGreaterThanOrEqual(summaryBounds!.x + summaryBounds!.width)
   await expect(forecast.locator('[aria-current=time]')).toHaveCount(1)
   expect(requested).toEqual([getTodayLocal()])
   expect(await page.evaluate(() => window.scrollY)).toBe(0)
@@ -132,6 +140,11 @@ test('weather is inline, shares today data, and fits desktop and phone widths', 
   await expect(forecast.getByText(`Hourly · ${tomorrow}`, { exact: true })).toBeVisible()
   await expect(forecast.getByRole('status')).toHaveCount(0)
   await expect(current.getByText('9°C', { exact: true })).toBeVisible()
+  await expect(current.getByText('Now', { exact: true })).toBeVisible()
+  expect(requested).toEqual([getTodayLocal(), tomorrow])
+  await page.getByRole('button', { name: 'Today', exact: true }).click()
+  await expect(current.getByText('Now', { exact: true })).toHaveCount(0)
+  await expect(forecast.getByText(`Hourly · ${getTodayLocal()}`, { exact: true })).toBeVisible()
   expect(requested).toEqual([getTodayLocal(), tomorrow])
 
   // Choosing an out-of-range day must not show stale hourly data or fetch it.
@@ -163,6 +176,7 @@ test('weather error can be retried and location and radar dialogs stay usable', 
   await page.getByRole('button', { name: 'Change weather location', exact: true }).click()
   const location = page.getByRole('dialog', { name: 'Set location', exact: true })
   await expect(location).toBeVisible()
+  await expect(location.getByText('Current location: Kuopio, North Savo, Finland', { exact: true })).toBeVisible()
   await location.getByRole('button', { name: 'Close', exact: true }).click()
   await page.getByRole('button', { name: 'Show radar', exact: true }).click()
   const radar = page.getByRole('dialog', { name: 'Rain radar', exact: true })

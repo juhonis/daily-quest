@@ -21,27 +21,18 @@
   gap: 1rem;
 }
 
-.day-weather {
-  display: grid;
-  gap: 1rem;
+.day-forecast {
   border-top: 1px solid #1e293b;
   padding-top: 1rem;
 }
 
-@container (min-width: 280px) {
-  .day-weather {
-    grid-template-columns: minmax(110px, 0.6fr) minmax(0, 1.4fr);
-  }
-}
-
-@container (min-width: 760px) {
+@container (min-width: 640px) {
   .day-overview-layout {
-    grid-template-columns: minmax(210px, 0.8fr) minmax(0, 2fr);
+    grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1.6fr);
     align-items: start;
   }
 
-  .day-weather {
-    grid-template-columns: minmax(120px, 0.65fr) minmax(0, 1.35fr);
+  .day-forecast {
     border-top: 0;
     border-left: 1px solid #1e293b;
     padding-top: 0;

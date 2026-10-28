@@ -22,6 +22,7 @@ export function LocationPicker({ onClose }: LocationPickerProps) {
   const storeMode = useStore(s => s.locationMode)
   const setLocationMode = useStore(s => s.setLocationMode)
   const setLocationName = useStore(s => s.setLocationName)
+  const locationName = useStore(s => s.locationName)
 
   const [mode, setMode] = useState<'auto' | 'manual'>(storeMode)
   const [query, setQuery] = useState('')
@@ -80,6 +81,7 @@ export function LocationPicker({ onClose }: LocationPickerProps) {
 
   return (
     <Modal isOpen onClose={onClose} title="Set location">
+        {locationName && <p className="mb-4 text-sm text-slate-400">Current location: {locationName}</p>}
 
         <div className="flex gap-2 mb-4">
           <button

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { CloudSun, MapPin, Radar, RotateCw, Settings } from 'lucide-react'
 import { useStore } from '../../store/useStore'
 import { addDays, getTodayLocal } from '../../utils/dateUtils'
@@ -45,7 +45,7 @@ function HourlyForecast({ resource, selectedDate, currentHour, available, hasLoc
   else if (!hourly) message = 'Loading forecast…'
 
   return (
-    <div className="min-w-0" role="group" aria-label="Hourly forecast">
+    <div className="day-forecast min-w-0" role="group" aria-label="Hourly forecast">
       <p className="mb-2 text-xs font-medium text-slate-500">Hourly · {selectedDate}</p>
       {message ? <div className="flex min-h-20 items-center gap-2 text-xs leading-relaxed text-slate-400">
         <p role="status">{message}</p>
@@ -68,7 +68,7 @@ function HourlyForecast({ resource, selectedDate, currentHour, available, hasLoc
   )
 }
 
-export function DayWeather() {
+export function DayWeather({ children }: { children: ReactNode }) {
   const coords = useStore((state) => state.coords)
   const locationName = useStore((state) => state.locationName)
   const selectedDate = useStore((state) => state.selectedDate)
@@ -83,6 +83,8 @@ export function DayWeather() {
     coords && available && selectedDate !== today ? selectedDate : '')
   const forecast = selectedDate === today ? current : otherDay
   const conditions = current.data?.current_weather
+  const fullLocation = locationName || 'Your location'
+  const shortLocation = locationName.split(',')[0].trim() || fullLocation
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000)
@@ -90,25 +92,28 @@ export function DayWeather() {
   }, [])
 
   return (
-    <section aria-label="Weather" className="day-weather min-w-0">
-      <div className="min-w-0" role="group" aria-label="Current weather">
-        <div className="mb-2 flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
-          <span className="font-medium">Now</span>
-          <time dateTime={now.toISOString()}>{now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>
-        </div>
-        {!coords ? <div className="flex flex-col items-start gap-1">
-          <CloudSun className="h-6 w-6 text-slate-500" />
-          <Button variant="ghost" onClick={() => setLocationOpen(true)} className="-ml-3 text-blue-400"><MapPin className="h-4 w-4" />Set location</Button>
-        </div> : <>
-          {conditions ? <div className="flex items-center gap-2"><WeatherIcon code={conditions.weathercode} /><span className="text-2xl font-semibold tracking-tight text-white">{Math.round(conditions.temperature)}°C</span></div>
-            : <p role="status" className="text-xs text-slate-400">{current.status === 'error' || current.status === 'ready' ? 'Current conditions unavailable.' : 'Loading weather…'}</p>}
-          <p className="mt-1 truncate text-xs text-slate-400" title={locationName || 'Your location'}>{locationName || 'Your location'}</p>
-          <div className="-ml-2 mt-1 flex items-center gap-1">
-            <Button variant="icon" onClick={() => setLocationOpen(true)} aria-label="Change weather location"><Settings className="h-4 w-4" /></Button>
-            <Button variant="icon" onClick={() => setRadarOpen(true)} aria-label="Show radar"><Radar className="h-4 w-4" /></Button>
-            {current.status === 'error' && <Button variant="icon" onClick={current.retry} aria-label="Retry current weather"><RotateCw className="h-4 w-4" /></Button>}
+    <section aria-label="Weather" className="day-overview-layout min-w-0">
+      <div className="min-w-0" role="group" aria-label="Day summary">
+        {children}
+        <div className="mt-2 flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1" role="group" aria-label="Current weather">
+          <div className="min-w-0 flex-1 basis-36">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              {selectedDate !== today && <span className="text-xs font-medium text-slate-400">Now</span>}
+              {!coords ? <CloudSun className="h-5 w-5 text-slate-500" />
+                : conditions ? <><WeatherIcon code={conditions.weathercode} /><span className="text-lg font-semibold tracking-tight text-slate-200">{Math.round(conditions.temperature)}°C</span></>
+                : <p role="status" className="text-xs text-slate-400">{current.status === 'error' || current.status === 'ready' ? 'Current conditions unavailable.' : 'Loading weather…'}</p>}
+              <span aria-hidden="true" className="text-slate-600">·</span>
+              <time className="text-sm text-slate-400" dateTime={now.toISOString()}>{now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>
+            </div>
+            {coords && <p className="mt-1 truncate text-xs text-slate-400" title={fullLocation} aria-label={fullLocation}>{shortLocation}</p>}
           </div>
-        </>}
+          {!coords ? <Button variant="ghost" onClick={() => setLocationOpen(true)} className="text-blue-400"><MapPin className="h-4 w-4" />Set location</Button>
+            : <div className="flex flex-wrap items-center gap-1">
+              <Button variant="icon" onClick={() => setLocationOpen(true)} aria-label="Change weather location"><Settings className="h-4 w-4" /></Button>
+              <Button variant="icon" onClick={() => setRadarOpen(true)} aria-label="Show radar"><Radar className="h-4 w-4" /></Button>
+              {current.status === 'error' && <Button variant="icon" onClick={current.retry} aria-label="Retry current weather"><RotateCw className="h-4 w-4" /></Button>}
+            </div>}
+        </div>
       </div>
       <HourlyForecast resource={forecast} selectedDate={selectedDate} currentHour={selectedDate === today ? conditions?.time.slice(0, 13) : undefined} available={available} hasLocation={!!coords} />
       {locationOpen && <LocationPicker onClose={() => setLocationOpen(false)} />}
