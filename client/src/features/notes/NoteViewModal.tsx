@@ -3,6 +3,7 @@ import remarkGfm from 'remark-gfm'
 import type { Components } from 'react-markdown'
 import type { Note } from '../../types'
 import { useStore } from '../../store/useStore'
+import { Modal } from '../../components/ui/Modal'
 
 interface NoteViewModalProps {
   note: Note
@@ -55,33 +56,11 @@ export function NoteViewModal({ note, onClose, onEdit, onArchive, onUnarchive, o
   const noteTagColors = useStore((s) => s.noteTagColors)
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={note.title}
-        className="w-full max-w-lg rounded-xl bg-slate-800 shadow-xl outline-none overflow-hidden mx-4"
-      >
-        <div className="flex items-center justify-between px-6 pt-5 pb-3" style={{ backgroundColor: note.color }}>
-          <h2 className="text-lg font-semibold text-white pr-4 break-words">
-            {note.title}
-            {note.archivedAt && <span className="ml-2 text-xs font-normal text-white/60">(archived)</span>}
-          </h2>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="shrink-0 rounded-full p-1 bg-black/20 hover:bg-black/40 transition-colors"
-          >
-            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+    <Modal isOpen onClose={onClose} title={note.title} className="max-w-2xl">
+        <div className="mb-4 h-1 rounded-full" style={{ backgroundColor: note.color }} />
+        {note.archivedAt && <p className="mb-3 text-xs text-slate-400">Archived note</p>}
 
-        <div className="px-6 pt-3 pb-1">
+        <div className="min-w-0 pb-4">
           {note.tags && note.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-3">
               {note.tags.map((tag) => {
@@ -99,7 +78,7 @@ export function NoteViewModal({ note, onClose, onEdit, onArchive, onUnarchive, o
             </div>
           )}
 
-          <div className="max-h-80 overflow-y-auto -mx-6 px-6">
+          <div className="min-w-0 break-words">
             {note.content ? (
               <div className="markdown-body">
                 <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
@@ -112,7 +91,7 @@ export function NoteViewModal({ note, onClose, onEdit, onArchive, onUnarchive, o
           </div>
         </div>
 
-        <div className="flex justify-between items-center px-6 py-4 border-t border-slate-700">
+        <div className="flex flex-wrap justify-between items-center gap-3 py-4 border-t border-slate-800 [&_button]:min-h-11">
           <div>
             {note.archivedAt ? (
               <button
@@ -160,7 +139,6 @@ export function NoteViewModal({ note, onClose, onEdit, onArchive, onUnarchive, o
             )}
           </div>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }

@@ -26,9 +26,8 @@ interface NoteCardProps {
 export function NoteCard({ note, onView, onArchive, onUnarchive }: NoteCardProps) {
   const preview = useMemo(() => stripMarkdown(note.content || ''), [note.content])
   return (
-    <div
-      onClick={() => onView(note)}
-      className={`group relative rounded-lg p-4 cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98] ${
+    <article
+      className={`group relative rounded-xl p-4 ${
         note.archivedAt ? 'opacity-60' : ''
       }`}
       style={{ backgroundColor: note.color }}
@@ -42,7 +41,7 @@ export function NoteCard({ note, onView, onArchive, onUnarchive }: NoteCardProps
             onArchive(note.id)
           }
         }}
-        className="absolute top-2 right-2 z-10 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 hover:bg-black/40"
+        className="absolute top-2 right-2 z-10 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-black/20 transition-colors hover:bg-black/40"
         aria-label={note.archivedAt ? 'Unarchive note' : 'Archive note'}
       >
         {note.archivedAt ? (
@@ -52,13 +51,15 @@ export function NoteCard({ note, onView, onArchive, onUnarchive }: NoteCardProps
         )}
       </button>
 
-      <h3 className="font-semibold text-sm text-white pr-6 mb-1.5 truncate">
+      <button type="button" onClick={() => onView(note)} aria-label={`Read note: ${note.title}`} className="block min-h-24 w-full rounded-lg text-left">
+      <h3 className="font-semibold text-base text-white pr-12 mb-2 break-words">
         {note.title}
       </h3>
 
       <p className="text-xs text-white/70 line-clamp-6 whitespace-pre-wrap leading-relaxed">
         {preview}
       </p>
-    </div>
+      </button>
+    </article>
   )
 }

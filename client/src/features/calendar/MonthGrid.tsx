@@ -53,10 +53,11 @@ export function MonthGrid({
                 onFocus={() => onCellFocus(cell.date)}
                 tabIndex={cell.date === focusedDate ? 0 : -1}
                 aria-current={isToday ? 'date' : undefined}
-                aria-selected={isSelected}
+                  aria-pressed={isSelected}
+                  data-date={cell.date}
                 aria-label={cell.date}
                 className={`
-                  relative flex items-center justify-center rounded-full w-8 h-8 text-xs
+                  relative flex aspect-square w-full items-center justify-center rounded-lg text-sm
                   transition-colors outline-none
                   ${!cell.isCurrentMonth ? 'text-slate-700' : ''}
                   ${isSelected ? 'bg-blue-600 text-white' : isToday ? 'text-blue-400' : 'text-slate-300'}

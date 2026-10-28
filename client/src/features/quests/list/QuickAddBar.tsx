@@ -83,10 +83,10 @@ export function QuickAddBar({
   const types: QuestType[] = ['today', 'daily', 'repeating', 'important']
 
   return (
-    <div className="relative mb-4" ref={wrapperRef}>
+    <div className="relative" ref={wrapperRef}>
       <button
         onClick={() => setMenuOpen((o) => !o)}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+        className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
         aria-expanded={menuOpen}
       >
         <Zap className="w-3.5 h-3.5" />
@@ -95,7 +95,7 @@ export function QuickAddBar({
 
       {menuOpen && (
         <div
-          className="absolute left-0 top-full mt-2 z-20 w-80 rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-xl"
+          className="absolute left-0 top-full mt-2 z-20 max-h-[60dvh] w-[min(320px,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 p-3 shadow-xl"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center gap-1 mb-3">
@@ -103,7 +103,7 @@ export function QuickAddBar({
               <button
                 key={t}
                 onClick={() => setQuestType(t)}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                className={`min-h-11 px-2 py-2 rounded-md text-xs font-medium transition-colors ${
                   questType === t
                     ? 'bg-blue-600 text-white'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700'
@@ -141,7 +141,7 @@ export function QuickAddBar({
                 <button
                   key={p.id}
                   onClick={() => handlePickPreset(p)}
-                  className="shrink-0 rounded-lg border border-slate-700 bg-slate-700/60 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-600 hover:text-white transition-colors"
+                  className="min-h-11 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-200 hover:bg-slate-700 hover:text-white transition-colors"
                 >
                   {p.title}
                 </button>

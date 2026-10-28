@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useStore } from '../../store/useStore'
-import { Crosshair, Search, X } from 'lucide-react'
+import { Crosshair, Search } from 'lucide-react'
+import { Modal } from '../../components/ui/Modal'
 
 interface GeocodingResult {
   id: number
@@ -78,19 +79,7 @@ export function LocationPicker({ onClose }: LocationPickerProps) {
   }
 
   return (
-    <>
-      <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="absolute left-0 top-full mt-2 z-50 w-[480px] max-h-[70vh] overflow-y-auto glass-panel rounded-xl p-5 shadow-xl">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-white">Set Location</h2>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+    <Modal isOpen onClose={onClose} title="Set location">
 
         <div className="flex gap-2 mb-4">
           <button
@@ -144,7 +133,8 @@ export function LocationPicker({ onClose }: LocationPickerProps) {
         {mode === 'manual' && (
           <div>
             <input
-              type="text"
+                type="text"
+                aria-label="Search for a city"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search for a city..."
@@ -169,7 +159,6 @@ export function LocationPicker({ onClose }: LocationPickerProps) {
             )}
           </div>
         )}
-      </div>
-    </>
+    </Modal>
   )
 }

@@ -1,10 +1,11 @@
-import { useState, useRef, useMemo } from 'react'
-import type { Quest, CompletionRecord, SubQuest } from '../../../types'
+import { useState } from 'react'
+import type { Quest, CompletionRecord } from '../../../types'
 import { useStore } from '../../../store/useStore'
 import { Checkbox } from '../../../components/ui/Checkbox'
 import { Button } from '../../../components/ui/Button'
+import { Modal } from '../../../components/ui/Modal'
 import { hasCompletionOnDate, repeatDescription } from '../../../utils/dateUtils'
-import { Trash2, ExternalLink, Pencil, Repeat, Calendar, Award } from 'lucide-react'
+import { ChevronDown, ChevronRight, ExternalLink, Pencil, Repeat, Trash2 } from 'lucide-react'
 
 interface QuestCardProps {
   quest: Quest
@@ -15,152 +16,51 @@ interface QuestCardProps {
   onDelete: (questId: string) => void
   onEdit: (questId: string) => void
   isDone?: boolean
+  showCompletion?: boolean
 }
 
-export function QuestCard({
-  quest,
-  selectedDate,
-  completions,
-  onToggleCompletion,
-  onToggleSubQuest,
-  onDelete,
-  onEdit,
-  isDone,
-}: QuestCardProps) {
-  const [hoverOpen, setHoverOpen] = useState(false)
-  const hideTimer = useRef<ReturnType<typeof setTimeout>>(null)
-  const isChecked = hasCompletionOnDate(completions, quest.id, selectedDate)
-  const repeatInfo = repeatDescription(quest)
+export function QuestCard({ quest, selectedDate, completions, onToggleCompletion, onToggleSubQuest, onDelete, onEdit, isDone, showCompletion = true }: QuestCardProps) {
+  const [detailsOpen, setDetailsOpen] = useState(false)
+  const [subquestsOpen, setSubquestsOpen] = useState(false)
   const tagColors = useStore((s) => s.tagColors)
-  const firstTag = quest.tags?.[0]
-  const tagBg = useMemo(() => {
-    const color = firstTag ? tagColors[firstTag] : undefined
-    if (!color) return undefined
-    return isDone ? `${color}12` : `${color}1A`
-  }, [firstTag, tagColors, isDone])
-
-  function handleMouseEnter() {
-    if (hideTimer.current) clearTimeout(hideTimer.current)
-    setHoverOpen(true)
-  }
-
-  function handleMouseLeave() {
-    hideTimer.current = setTimeout(() => setHoverOpen(false), 200)
-  }
-
-  function handleDelete() {
-    if (window.confirm(`Delete "${quest.title}"?`)) {
-      onDelete(quest.id)
-    }
-  }
+  const isChecked = showCompletion && hasCompletionOnDate(completions, quest.id, selectedDate)
+  const repeatInfo = repeatDescription(quest)
+  const completedSubquests = quest.subQuests.filter((sq) => sq.isCompleted).length
+  const firstColor = quest.tags?.[0] ? tagColors[quest.tags[0]] : undefined
 
   return (
-    <div className={`rounded-lg border p-3 transition-colors ${isDone ? 'border-slate-700 bg-slate-800/40' : 'border-slate-700 bg-slate-800'}`} style={tagBg ? { backgroundColor: tagBg } : undefined}>
-      <div className="flex items-start gap-3">
-        <Checkbox
-          checked={isChecked}
-          onChange={() => onToggleCompletion(quest.id, selectedDate)}
-          label=""
-          id={`done-${quest.id}`}
-        />
-        <div className="flex-1 min-w-0">
-          <span
-            className="relative inline-block max-w-full"
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-          >
-            <span
-              className={`text-sm font-medium cursor-pointer hover:text-blue-400 transition-colors break-words ${isChecked ? 'line-through text-slate-500' : 'text-slate-200'}`}
-            >
-              {quest.title}
-            </span>
-            <div
-              className={`absolute left-0 top-full mt-1 z-50 w-72 rounded-lg border border-slate-700 bg-slate-900 p-3 shadow-xl transition-opacity duration-150 ${
-                hoverOpen ? 'opacity-100 block' : 'opacity-0 hidden pointer-events-none'
-              }`}
-            >
-              {quest.description && (
-                <p className="text-xs text-slate-300 mb-2">{quest.description}</p>
-              )}
-
-              <div className="space-y-1.5 text-xs text-slate-400">
-                {repeatInfo && (
-                  <div className="flex items-center gap-1.5">
-                    <Repeat className="w-3.5 h-3.5" />
-                    <span>{repeatInfo}</span>
-                  </div>
-                )}
-
-                {quest.rollover && (
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>Rolls over until done</span>
-                  </div>
-                )}
-
-                {quest.xp != null && (
-                  <div className="flex items-center gap-1.5">
-                    <Award className="w-3.5 h-3.5" />
-                    <span>{quest.xp} XP</span>
-                  </div>
-                )}
-              </div>
-
-              {quest.tags && quest.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {quest.tags.map((tag) => {
-                    const color = tagColors[tag] ?? '#3B82F6'
-                    return (
-                      <span key={tag} className="rounded-md px-1.5 py-0.5 text-xs" style={{ backgroundColor: `${color}26`, borderColor: `${color}33`, color }}>
-                        {tag}
-                      </span>
-                    )
-                  })}
-                </div>
-              )}
-
-              <div className="flex items-center gap-2 mt-3 pt-2 border-t border-slate-700">
-                {quest.externalUrl && (
-                  <button
-                    onClick={() => window.open(quest.externalUrl, '_blank', 'noopener')}
-                    className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                    Open link
-                  </button>
-                )}
-                <button
-                  onClick={() => onEdit(quest.id)}
-                  className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
-                >
-                  <Pencil className="w-3 h-3" />
-                  Edit
-                </button>
-              </div>
-            </div>
-          </span>
+    <>
+      <article className={`min-w-0 rounded-lg border border-slate-800 px-2 py-1 ${isDone ? 'bg-slate-900/40' : 'bg-slate-900'}`} style={firstColor ? { borderLeftColor: firstColor, borderLeftWidth: 3 } : undefined}>
+        <div className="flex min-w-0 items-start gap-1">
+          {showCompletion && <Checkbox checked={isChecked} onChange={() => onToggleCompletion(quest.id, selectedDate)} label="" ariaLabel={`${isChecked ? 'Mark incomplete' : 'Complete'}: ${quest.title}`} />}
+          <button type="button" onClick={() => setDetailsOpen(true)} aria-label={`View quest: ${quest.title}`} className="flex min-h-11 min-w-0 flex-1 items-start justify-between gap-3 rounded-lg px-2 py-3 text-left hover:bg-slate-800/50">
+            <span className={`min-w-0 break-words text-sm font-medium ${isChecked ? 'text-slate-500 line-through' : 'text-slate-200'}`}>{quest.title}</span>
+            <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-slate-600" />
+          </button>
         </div>
-        <Button
-          variant="icon"
-          onClick={handleDelete}
-          aria-label={`Delete ${quest.title}`}
-        >
-          <Trash2 className="w-4 h-4 text-slate-500 hover:text-red-400" />
-        </Button>
-      </div>
-
-      {quest.subQuests.length > 0 && (
-        <div className="ml-7 mt-2 space-y-1 border-l border-slate-700 pl-3">
-          {quest.subQuests.map((sq: SubQuest) => (
-            <Checkbox
-              key={sq.id}
-              checked={sq.isCompleted}
-              onChange={() => onToggleSubQuest(quest.id, sq.id, selectedDate)}
-              label={sq.title}
-            />
-          ))}
+        {quest.subQuests.length > 0 && showCompletion && <div className="pl-12">
+          <button type="button" aria-expanded={subquestsOpen} onClick={() => setSubquestsOpen(!subquestsOpen)} className="inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-xs text-slate-400 hover:text-slate-200"><ChevronDown className={`h-3.5 w-3.5 transition-transform ${subquestsOpen ? '' : '-rotate-90'}`} />{completedSubquests} of {quest.subQuests.length} steps</button>
+          {subquestsOpen && <div className="mb-2 space-y-1 border-l border-slate-800 pl-2">{quest.subQuests.map((sq) => <Checkbox key={sq.id} checked={sq.isCompleted} onChange={() => onToggleSubQuest(quest.id, sq.id, selectedDate)} label={sq.title} />)}</div>}
+        </div>}
+      </article>
+      {detailsOpen && <Modal isOpen onClose={() => setDetailsOpen(false)} title={quest.title}>
+        <div className="space-y-5">
+          {quest.description && <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-300">{quest.description}</p>}
+          <dl className="space-y-3 text-sm">
+            <div className="flex justify-between gap-4"><dt className="text-slate-500">Scheduled</dt><dd className="text-right">{quest.targetDate || 'Not scheduled'}</dd></div>
+            {repeatInfo && <div className="flex justify-between gap-4"><dt className="inline-flex items-center gap-2 text-slate-500"><Repeat className="h-4 w-4" />Repeat</dt><dd className="text-right">{repeatInfo}</dd></div>}
+            {quest.rollover && <div><dt className="text-slate-500">Carry forward</dt><dd className="mt-1">Appears daily until completed.</dd></div>}
+            {quest.archivedAt && <div><dt className="text-slate-500">Archived</dt><dd>{quest.archivedAt}</dd></div>}
+          </dl>
+          {!!quest.tags?.length && <div className="flex flex-wrap gap-2">{quest.tags.map((tag) => <span key={tag} className="rounded-md border border-slate-700 px-2 py-1 text-xs text-slate-300"><span className="mr-2 inline-block h-2 w-2 rounded-full" style={{ backgroundColor: tagColors[tag] ?? '#3B82F6' }} />{tag}</span>)}</div>}
+          {!showCompletion && quest.subQuests.length > 0 && <ul className="space-y-2 text-sm text-slate-400">{quest.subQuests.map((sq) => <li key={sq.id}>{sq.title}</li>)}</ul>}
+          <div className="flex flex-wrap gap-2 border-t border-slate-800 pt-4">
+            <Button onClick={() => { setDetailsOpen(false); onEdit(quest.id) }}><Pencil className="h-4 w-4" />Edit quest</Button>
+            {quest.externalUrl && /^https?:\/\//.test(quest.externalUrl) && <a href={quest.externalUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm text-blue-400 hover:bg-slate-800"><ExternalLink className="h-4 w-4" />Open link</a>}
+            <Button variant="ghost" className="text-red-400" onClick={() => { if (window.confirm(`Delete "${quest.title}"?`)) { setDetailsOpen(false); onDelete(quest.id) } }}><Trash2 className="h-4 w-4" />Delete</Button>
+          </div>
         </div>
-      )}
-    </div>
+      </Modal>}
+    </>
   )
 }

@@ -1,4 +1,4 @@
-import { useState, useMemo, type FormEvent } from 'react'
+import { useState, useMemo, useId, type FormEvent } from 'react'
 import type { Quest, QuickPreset, QuestStatus, RepeatType } from '../../../types'
 import { useStore } from '../../../store/useStore'
 import { Button } from '../../../components/ui/Button'
@@ -13,6 +13,8 @@ interface QuestCreateFormProps {
   onSave: (quest: Quest) => void
   onClose: () => void
   onSavePreset?: (preset: QuickPreset) => void
+  onDirtyChange?: () => void
+  showHistory?: boolean
 }
 
 function emptyForm(defaultDate: string) {
@@ -49,12 +51,14 @@ function questToForm(q: Quest): ReturnType<typeof emptyForm> {
   }
 }
 
-export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onSavePreset }: QuestCreateFormProps) {
+export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onSavePreset, onDirtyChange, showHistory = false }: QuestCreateFormProps) {
+  const formId = useId()
   const [form, setForm] = useState(initialData ? questToForm(initialData) : emptyForm(defaultDate))
   const quests = useStore((s) => s.quests)
   const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null)
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
+    onDirtyChange?.()
     setForm((prev) => ({ ...prev, [key]: value }))
   }
 
@@ -130,15 +134,17 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
   }
 
   return (
-    <div className="relative flex flex-col lg:block">
+    <div className="flex min-w-0 flex-col gap-5">
       <form onSubmit={handleSubmit} className="max-w-3xl w-full lg:mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-4">
               <SectionCard title="Details">
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Title *</label>
+                  <label htmlFor={`${formId}-title`} className="block text-xs font-medium text-slate-400 mb-1">Title *</label>
                   <input
+                    id={`${formId}-title`}
                     type="text"
+                    autoFocus
                     value={form.title}
                     onChange={(e) => update('title', e.target.value)}
                     placeholder="What do you want to do?"
@@ -147,8 +153,9 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Description</label>
+                  <label htmlFor={`${formId}-description`} className="block text-xs font-medium text-slate-400 mb-1">Description</label>
                   <textarea
+                    id={`${formId}-description`}
                     value={form.description}
                     onChange={(e) => update('description', e.target.value)}
                     placeholder="Optional details..."
@@ -203,8 +210,9 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
               <SectionCard title="Schedule">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">Target Date</label>
+                    <label htmlFor={`${formId}-date`} className="block text-xs font-medium text-slate-400 mb-1">Target Date</label>
                     <input
+                      id={`${formId}-date`}
                       type="date"
                       value={form.targetDate}
                       onChange={(e) => update('targetDate', e.target.value)}
@@ -212,8 +220,9 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">Repeat</label>
+                    <label htmlFor={`${formId}-repeat`} className="block text-xs font-medium text-slate-400 mb-1">Repeat</label>
                     <select
+                      id={`${formId}-repeat`}
                       value={form.repeat}
                       onChange={(e) => update('repeat', e.target.value as RepeatType)}
                       className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -230,8 +239,9 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
                 {form.repeat === 'custom' && (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1">Interval</label>
+                      <label htmlFor={`${formId}-interval`} className="block text-xs font-medium text-slate-400 mb-1">Interval</label>
                       <input
+                        id={`${formId}-interval`}
                         type="number"
                         min={1}
                         value={form.repeatInterval}
@@ -240,8 +250,9 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1">Unit</label>
+                      <label htmlFor={`${formId}-unit`} className="block text-xs font-medium text-slate-400 mb-1">Unit</label>
                       <select
+                        id={`${formId}-unit`}
                         value={form.repeatUnit}
                         onChange={(e) => update('repeatUnit', e.target.value as 'day' | 'week' | 'month')}
                         className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -268,8 +279,9 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
               <SectionCard title="Tags & XP">
                 <TagInput tags={form.tags} onAddTag={(tag) => update('tags', [...form.tags, tag])} onRemoveTag={(tag) => update('tags', form.tags.filter((t) => t !== tag))} />
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">XP (optional)</label>
+                  <label htmlFor={`${formId}-xp`} className="block text-xs font-medium text-slate-400 mb-1">XP (optional)</label>
                   <input
+                    id={`${formId}-xp`}
                     type="number"
                     min={0}
                     value={form.xp ?? ''}
@@ -293,7 +305,7 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 mt-4">
+          <div className="sticky bottom-0 -mx-1 mt-4 flex justify-end gap-2 border-t border-slate-800 bg-slate-900 px-1 py-3">
             <Button type="button" variant="ghost" onClick={onClose}>
               Cancel
             </Button>
@@ -302,12 +314,12 @@ export function QuestCreateForm({ initialData, defaultDate, onSave, onClose, onS
             </Button>
           </div>
         </form>
-        <div className="lg:absolute lg:left-4 lg:top-0 w-full lg:w-[280px] mb-4 lg:mb-0">
+        {showHistory && <div className="w-full">
           <QuestHistoryPanel
             selectedQuestId={selectedQuestId}
             onSelectQuest={handleSelectQuest}
           />
-        </div>
+        </div>}
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useId } from 'react'
 import type { ReactNode, KeyboardEvent } from 'react'
 import { X, Bold, Italic, List, ListOrdered, Code, Quote, Heading2 } from 'lucide-react'
 import { Modal } from '../../components/ui/Modal'
@@ -81,7 +81,7 @@ function FormatButton({ label, onClick, children, active }: FormatButtonProps) {
       onClick={onClick}
       title={label}
       aria-label={label}
-      className={`flex h-7 w-7 items-center justify-center rounded-md border transition-colors ${
+      className={`flex h-11 w-11 items-center justify-center rounded-lg border transition-colors ${
         active
           ? 'border-blue-500 bg-blue-600 text-white'
           : 'border-slate-600 bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white'
@@ -110,6 +110,7 @@ interface NoteCreateModalProps {
 }
 
 export function NoteCreateModal({ isOpen, onClose, onSave, initialData }: NoteCreateModalProps) {
+  const formId = useId()
   const [title, setTitle] = useState(initialData?.title ?? '')
   const [content, setContent] = useState(initialData?.content ?? '')
   const [color, setColor] = useState(initialData?.color ?? NOTE_COLORS[0].value)
@@ -244,16 +245,24 @@ export function NoteCreateModal({ isOpen, onClose, onSave, initialData }: NoteCr
     onClose()
   }
 
+  function requestClose() {
+    const changed = title !== (initialData?.title ?? '') || content !== (initialData?.content ?? '') || color !== (initialData?.color ?? NOTE_COLORS[0].value) || JSON.stringify(tags) !== JSON.stringify(initialData?.tags ?? [])
+    if (changed && !window.confirm('Discard unsaved note changes?')) return
+    onClose()
+  }
+
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={requestClose}
       title={initialData ? 'Edit Note' : 'New Note'}
+      className="max-w-2xl"
     >
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">Title</label>
+          <label htmlFor={`${formId}-title`} className="block text-sm font-medium text-slate-300 mb-1">Title</label>
           <input
+            id={`${formId}-title`}
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -264,7 +273,7 @@ export function NoteCreateModal({ isOpen, onClose, onSave, initialData }: NoteCr
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">Content</label>
+          <label htmlFor={`${formId}-content`} className="block text-sm font-medium text-slate-300 mb-1">Content</label>
           <div className="flex flex-wrap gap-1 mb-1.5">
             <FormatButton label="Bold" onClick={() => handleInline('**', '**', 'bold text')}>
               <Bold className="w-3.5 h-3.5" />
@@ -289,6 +298,7 @@ export function NoteCreateModal({ isOpen, onClose, onSave, initialData }: NoteCr
             </FormatButton>
           </div>
           <textarea
+            id={`${formId}-content`}
             ref={textareaRef}
             value={content}
             onChange={(e) => {
@@ -305,7 +315,7 @@ export function NoteCreateModal({ isOpen, onClose, onSave, initialData }: NoteCr
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">Tags</label>
+          <label htmlFor={`${formId}-tags`} className="block text-sm font-medium text-slate-300 mb-1">Tags</label>
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-2">
               {tags.map((tag) => {
@@ -325,8 +335,9 @@ export function NoteCreateModal({ isOpen, onClose, onSave, initialData }: NoteCr
               })}
             </div>
           )}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <input
+              id={`${formId}-tags`}
               type="text"
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
@@ -375,23 +386,24 @@ export function NoteCreateModal({ isOpen, onClose, onSave, initialData }: NoteCr
                 }`}
                 style={{ backgroundColor: c.value }}
                 aria-label={c.label}
+                aria-pressed={color === c.value}
                 title={c.label}
               />
             ))}
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="sticky bottom-0 flex justify-end gap-2 border-t border-slate-800 bg-slate-900 py-3">
           <button
-            onClick={onClose}
-            className="rounded-lg px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+            onClick={requestClose}
+            className="min-h-11 rounded-lg px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={!title.trim()}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="min-h-11 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {initialData ? 'Save' : 'Create'}
           </button>

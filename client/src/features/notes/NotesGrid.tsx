@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useImperativeHandle, type Ref } from 'react'
 import { Plus, StickyNote, Archive } from 'lucide-react'
 import { useStore } from '../../store/useStore'
 import { NoteCard } from './NoteCard'
@@ -6,7 +6,9 @@ import { NoteViewModal } from './NoteViewModal'
 import { NoteCreateModal } from './NoteCreateModal'
 import type { Note } from '../../types'
 
-export function NotesGrid() {
+export interface NotesGridHandle { createNote: () => void }
+
+export function NotesGrid({ ref, showCreateButton = true }: { ref?: Ref<NotesGridHandle>; showCreateButton?: boolean }) {
   const notes = useStore((s) => s.notes)
   const noteTagColors = useStore((s) => s.noteTagColors)
   const filterNoteTags = useStore((s) => s.filterNoteTags)
@@ -72,6 +74,8 @@ export function NotesGrid() {
     setFormKey((k) => k + 1)
     setEditModalOpen(true)
   }
+
+  useImperativeHandle(ref, () => ({ createNote: handleCreate }))
 
   return (
     <div className="h-full flex flex-col">
@@ -193,7 +197,7 @@ export function NotesGrid() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 p-4 auto-rows-min">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-4 p-4 auto-rows-min">
             {filteredNotes.map((note) => (
               <NoteCard
                 key={note.id}
@@ -206,7 +210,7 @@ export function NotesGrid() {
           </div>
         )}
 
-        {!showArchived && activeNotes.length > 0 && (
+        {showCreateButton && !showArchived && activeNotes.length > 0 && (
           <button
             onClick={handleCreate}
             className="absolute bottom-6 right-6 z-10 flex items-center justify-center w-12 h-12 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-500 transition-colors"

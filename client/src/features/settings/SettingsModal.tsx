@@ -65,7 +65,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   }
 
   return (
-    <><Modal isOpen={!showSync} onClose={onClose} title="Settings" className="max-h-[90dvh] overflow-y-auto">
+    <><Modal isOpen={!showSync} onClose={onClose} title="Settings">
       <div className="space-y-6">
         <section>
           <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Device sync</h3>
