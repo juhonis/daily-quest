@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Zap } from 'lucide-react'
 import type { QuickPreset, RepeatType } from '../../../types'
+import { cleanExternalLink, externalLinkError } from '../create/questEditorModel'
 
 type QuestType = 'today' | 'daily' | 'repeating' | 'important'
 
@@ -30,10 +31,10 @@ const TYPE_CONFIG: Record<QuestType, (unit?: 'week' | 'month') => QuestTypeConfi
 }
 
 const TYPE_LABELS: Record<QuestType, string> = {
-  today: 'Today',
+  today: 'Once',
   daily: 'Daily',
   repeating: 'Repeat',
-  important: 'Important',
+  important: 'Carry forward',
 }
 
 export function QuickAddBar({
@@ -46,6 +47,7 @@ export function QuickAddBar({
   const [manageOpen, setManageOpen] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newUrl, setNewUrl] = useState('')
+  const [presetError, setPresetError] = useState('')
   const [questType, setQuestType] = useState<QuestType>('today')
   const [repeatUnit, setRepeatUnit] = useState<'week' | 'month'>('week')
   const wrapperRef = useRef<HTMLDivElement>(null)
@@ -63,13 +65,16 @@ export function QuickAddBar({
 
   function handleAddPreset() {
     if (!newTitle.trim()) return
-    onManageAdd({
+    const linkError = externalLinkError(newUrl)
+    if (linkError) { setPresetError(linkError); return }
+    try { onManageAdd({
       id: crypto.randomUUID(),
       title: newTitle.trim(),
-      externalUrl: newUrl.trim() || undefined,
+      externalUrl: cleanExternalLink(newUrl),
       isUserDefined: true,
       updatedAt: new Date().toISOString(),
-    })
+    }) } catch { setPresetError('Could not save the preset. Check browser storage and retry.'); return }
+    setPresetError('')
     setNewTitle('')
     setNewUrl('')
   }
@@ -98,11 +103,12 @@ export function QuickAddBar({
           className="absolute left-0 top-full mt-2 z-20 max-h-[60dvh] w-[min(320px,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 p-3 shadow-xl"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center gap-1 mb-3">
+          <div className="flex flex-wrap items-center gap-1 mb-3">
             {types.map((t) => (
               <button
                 key={t}
-                onClick={() => setQuestType(t)}
+                  onClick={() => setQuestType(t)}
+                  aria-pressed={questType === t}
                 className={`min-h-11 px-2 py-2 rounded-md text-xs font-medium transition-colors ${
                   questType === t
                     ? 'bg-blue-600 text-white'
@@ -116,7 +122,7 @@ export function QuickAddBar({
 
           {questType === 'repeating' && (
             <div className="flex items-center gap-2 mb-3 text-xs text-slate-400">
-              <span>Interval:</span>
+              <span>Repeat:</span>
               <div className="flex gap-1">
                 {(['week', 'month'] as const).map((u) => (
                   <button
@@ -164,15 +170,18 @@ export function QuickAddBar({
               <div className="flex gap-2">
                 <input
                   type="text"
+                  aria-label="Preset title"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="Preset title"
                   className="flex-1 min-w-0 rounded-lg border border-slate-600 bg-slate-700 px-2 py-1 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <input
-                  type="text"
+                  type="url"
+                  inputMode="url"
+                  aria-label="Preset URL"
                   value={newUrl}
-                  onChange={(e) => setNewUrl(e.target.value)}
+                  onChange={(e) => { setNewUrl(e.target.value); setPresetError('') }}
                   placeholder="URL"
                   className="flex-1 min-w-0 rounded-lg border border-slate-600 bg-slate-700 px-2 py-1 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -183,6 +192,7 @@ export function QuickAddBar({
                   Add
                 </button>
               </div>
+              {presetError && <p role="alert" className="text-xs text-red-300">{presetError}</p>}
               <div className="space-y-1">
                 {presets.map((p) => (
                   <div key={p.id} className="flex items-center gap-2 text-xs text-slate-400">

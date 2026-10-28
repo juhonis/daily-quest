@@ -41,6 +41,7 @@ The first prototype uses real application data and actions. Sample quests and no
 - Subquests can be expanded from a compact steps summary.
 - Quest creation/editing uses a viewport-bounded dialog, without the old absolutely positioned history panel overlapping the form.
 - Discarding an edited quest or note asks for confirmation; saving closes the editor.
+- The next slice, [V2 quest editor](v2-quest-editor.md), focuses the form on title/scheduling, adds inline optional sections and local draft recovery, and moves global tag management to Settings.
 
 ### Notes and Library
 
@@ -120,7 +121,7 @@ Preview origins have separate browser storage. Use sample data or an imported co
 ## Follow-up slices
 
 - Refine the accepted shell into a consistent design system and tune desktop density.
-- Simplify the full quest form, scheduling controls, tag management, and touch reordering.
+- Review the focused quest editor and its local draft recovery with real data; touch panel reordering remains part of mobile polish.
 - Develop Notes search, quieter color treatments, reading/editor layouts, and draft persistence.
 - Further polish weather/radar presentation and radar-specific unavailable/retry behavior.
 - Complete mobile browser/PWA acceptance, app icons, browser-back behavior, and keyboard handling.

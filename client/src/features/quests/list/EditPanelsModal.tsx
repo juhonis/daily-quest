@@ -27,8 +27,8 @@ interface EditPanelsModalProps {
 const PANEL_LABELS: Record<PanelId, string> = {
   daily: 'Daily',
   repeating: 'Repeating',
-  important: 'Important today',
-  rollover: 'Rollover',
+  important: 'Planned',
+  rollover: 'Carried forward',
   done: 'Done',
 }
 

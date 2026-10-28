@@ -15,5 +15,5 @@ interface ImportantQuestsPanelProps {
 }
 
 export function ImportantQuestsPanel(props: ImportantQuestsPanelProps) {
-  return <BasePanel {...props} label="Important today" emptyHint="No specific quests for this date." />
+  return <BasePanel {...props} label="Planned" emptyHint="No quests planned for this date." />
 }

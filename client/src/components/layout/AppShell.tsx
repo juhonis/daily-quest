@@ -4,7 +4,8 @@ import { CalendarColumn } from '../../features/calendar/CalendarColumn'
 import { QuestsColumn } from '../../features/quests/list/QuestsColumn'
 import { DayOverview } from '../../features/quests/list/DayOverview'
 import { RadarPanel } from '../../features/weather/RadarPanel'
-import { QuestCreateForm } from '../../features/quests/create/QuestCreateForm'
+import { QuestEditor } from '../../features/quests/create/QuestEditor'
+import { assignTagColor } from '../../features/quests/tagColors'
 import { QuestLibrary } from '../../features/quests/QuestLibrary'
 import { NotesGrid, type NotesGridHandle } from '../../features/notes/NotesGrid'
 import { SettingsModal } from '../../features/settings/SettingsModal'
@@ -29,26 +30,16 @@ export function AppShell() {
   const radarTriggerRef = useRef<HTMLButtonElement>(null)
   const workspaceRef = useRef<HTMLElement>(null)
   const [editor, setEditor] = useState<{ id?: string; key: number } | null>(null)
-  const [editorDirty, setEditorDirty] = useState(false)
   const notesRef = useRef<NotesGridHandle>(null)
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const leftOverride = useStore((s) => s.leftColumnOverride)
   const setLeftOverride = useStore((s) => s.setLeftColumnOverride)
   const selectedDate = useStore((s) => s.selectedDate)
   const quests = useStore((s) => s.quests)
-  const addQuest = useStore((s) => s.addQuest)
-  const updateQuest = useStore((s) => s.updateQuest)
-  const addQuickPreset = useStore((s) => s.addQuickPreset)
   const calendarVisible = isDesktop && (leftOverride ?? true)
 
   function openEditor(id?: string) {
-    setEditorDirty(false)
     setEditor({ id, key: Date.now() })
-  }
-
-  function closeEditor() {
-    if (editorDirty && !window.confirm('Discard unsaved quest changes?')) return
-    setEditor(null)
   }
 
   function closeRadar() {
@@ -111,13 +102,21 @@ export function AppShell() {
 
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-800 bg-slate-950/95 px-2 pb-[env(safe-area-inset-bottom)] pt-1 backdrop-blur lg:hidden">{navigation(true)}</div>
       {showCalendar && <Modal isOpen onClose={() => setShowCalendar(false)} title="Choose a date" className="max-w-sm"><CalendarColumn onSelect={() => setShowCalendar(false)} /></Modal>}
-      {editor && <Modal isOpen onClose={closeEditor} title={editor.id ? 'Edit quest' : 'New quest'} className="max-w-3xl">
-        <QuestCreateForm key={editor.key} initialData={quests.find((q) => q.id === editor.id)} defaultDate={selectedDate} onDirtyChange={() => setEditorDirty(true)} onSavePreset={addQuickPreset} onClose={closeEditor} onSave={(quest) => {
-          if (quests.some((q) => q.id === quest.id)) updateQuest(quest.id, quest)
-          else addQuest(quest)
+      {editor && <QuestEditor key={editor.key} initialData={quests.find((q) => q.id === editor.id)} defaultDate={selectedDate} onClose={() => setEditor(null)} onSave={(quest, preset) => {
+          const current = useStore.getState()
+          if (current.quests.some((q) => q.id === quest.id)) current.updateQuest(quest.id, quest)
+          else current.addQuest(quest)
+          for (const tag of quest.tags ?? []) {
+            const state = useStore.getState()
+            if (!Object.hasOwn(state.tagColors, tag)) state.setTagColor(tag, assignTagColor(tag, state.tagColors))
+          }
+          if (preset) {
+            const state = useStore.getState()
+            if (state.quickPresets.some((item) => item.id === preset.id)) state.updateQuickPreset(preset.id, preset)
+            else state.addQuickPreset(preset)
+          }
           setEditor(null)
-        }} />
-      </Modal>}
+        }} />}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>
   )

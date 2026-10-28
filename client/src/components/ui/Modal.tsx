@@ -1,4 +1,4 @@
-import { useId, useLayoutEffect, useRef, type ReactNode } from 'react'
+import { useId, useLayoutEffect, useRef, type ReactNode, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cn } from '../../utils/cn'
@@ -9,13 +9,16 @@ interface ModalProps {
   title: string
   children: ReactNode
   className?: string
+  footer?: ReactNode
+  initialFocusRef?: RefObject<HTMLElement | null>
 }
 
 let openDialogs = 0
 let previousOverflow = ''
 
-export function Modal({ isOpen, onClose, title, children, className }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, className, footer, initialFocusRef }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
   const backdropPressed = useRef(false)
   const titleId = useId()
 
@@ -30,12 +33,31 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
     // Native modal dialogs handle top-layer stacking, background inertness,
     // and keyboard focus containment, including nested settings dialogs.
     dialog.showModal()
+    if (initialFocusRef?.current && !initialFocusRef.current.matches(':disabled')) {
+      initialFocusRef.current.focus({ preventScroll: true })
+    }
+    let resizeFrame = 0
+    const observer = new ResizeObserver(() => {
+      cancelAnimationFrame(resizeFrame)
+      resizeFrame = requestAnimationFrame(() => {
+        const body = bodyRef.current
+        const active = document.activeElement as HTMLElement | null
+        if (!body || !active || !body.contains(active) || !['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName)) return
+        const bounds = body.getBoundingClientRect()
+        const field = active.getBoundingClientRect()
+        if (field.bottom > bounds.bottom - 8) body.scrollTop += field.bottom - bounds.bottom + 8
+        else if (field.top < bounds.top + 8) body.scrollTop -= bounds.top - field.top + 8
+      })
+    })
+    if (bodyRef.current) observer.observe(bodyRef.current)
     return () => {
+      observer.disconnect()
+      cancelAnimationFrame(resizeFrame)
       dialog.close()
       if (--openDialogs === 0) document.body.style.overflow = previousOverflow
       if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true })
     }
-  }, [isOpen])
+  }, [isOpen, initialFocusRef])
 
   if (!isOpen) return null
 
@@ -59,7 +81,8 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
           <X className="h-5 w-5" />
         </button>
       </header>
-      <div className="min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6">{children}</div>
+      <div ref={bodyRef} className="min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6">{children}</div>
+      {footer && <footer className="shrink-0 border-t border-slate-800 bg-slate-900 px-4 py-3 sm:px-6">{footer}</footer>}
     </dialog>,
     document.body,
   )
