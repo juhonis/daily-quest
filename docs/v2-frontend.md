@@ -45,9 +45,9 @@ The first prototype uses real application data and actions. Sample quests and no
 
 ### Notes and Library
 
-- Notes retain their existing colors and Markdown editor. Card grids respond to their container width.
+- Notes preserve their stored colors, with Subtle/Colorful card appearances, title/content/tag search, and sorting. Card grids respond to their container width.
 - Note cards have keyboard-accessible reading buttons and visible archive actions.
-- Note reading/editing uses the shared responsive dialog; the formatting toolbar has larger touch targets.
+- Note reading/editing uses a larger responsive dialog on desktop and a full-screen layout on phones, with Markdown Preview, a fixed action footer, and local draft recovery. See [V2 notes workspace](v2-notes-workspace.md).
 - Library provides search, active/parked/archived filters, and completion-history filters for the selected date, current week, or last 30 days.
 - Library opens the same task details/editor, without checkboxes that could accidentally modify a different date's completion history.
 
@@ -122,7 +122,7 @@ Preview origins have separate browser storage. Use sample data or an imported co
 
 - Refine the accepted shell into a consistent design system and tune desktop density.
 - Review the focused quest editor and its local draft recovery with real data; touch panel reordering remains part of mobile polish.
-- Develop Notes search, quieter color treatments, reading/editor layouts, and draft persistence.
+- Review Notes search, color treatments, reading/editor layouts, and local drafts with real data; refine based on feedback.
 - Further polish weather/radar presentation and radar-specific unavailable/retry behavior.
 - Complete mobile browser/PWA acceptance, app icons, browser-back behavior, and keyboard handling.
 - Add visual regression baselines after the design stabilizes.

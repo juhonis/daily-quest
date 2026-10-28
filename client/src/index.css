@@ -85,6 +85,23 @@ button:not(:disabled), summary, a {
 }
 
 @media (max-width: 639px) {
+  .note-dialog[open] {
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .note-dialog[open] > div {
+    flex: 1 1 auto;
+  }
+
   /* Keep mobile Safari from zooming into small text inputs. */
   input:not([type='checkbox']):not([type='radio']), textarea, select {
     font-size: 16px;
