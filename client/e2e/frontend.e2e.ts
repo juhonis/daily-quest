@@ -1,8 +1,8 @@
 import { test, expect, type Page } from '@playwright/test'
 import { addDays, addMonths } from '../src/utils/dateUtils'
 
-async function seed(page: Page) {
-  await page.addInitScript(() => {
+async function seed(page: Page, withWeather = false) {
+  await page.addInitScript((weather) => {
     const now = new Date()
     const day = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
     const today = day(now)
@@ -17,9 +17,10 @@ async function seed(page: Page) {
       notes: [{ id: 'ideas', title: 'Weekend ideas', content: 'A walk by the water\nTry a new recipe\nFind something good to read', color: '#3B82F6', createdAt: now.toISOString(), updatedAt: now.toISOString() }],
       completions: [],
       tagColors: { Personal: '#3B82F6', Outside: '#10B981' },
+      ...(weather ? { coords: { lat: 60.17, lon: 24.94 }, locationMode: 'manual', locationName: 'Helsinki' } : {}),
       quickPresets: [{ id: 'wordle', title: 'Wordle', externalUrl: 'https://nytimes.com/games/wordle', isUserDefined: false, updatedAt: now.toISOString() }],
     } }))
-  })
+  }, withWeather)
   await page.goto('/')
 }
 
@@ -28,7 +29,7 @@ const navigation = (page: Page, mobile = false) => page.getByRole('navigation', 
 test('desktop reclaims calendar space and offers list and board layouts', async ({ page }, info) => {
   await seed(page)
   await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeVisible()
-  await expect(page.getByRole('region', { name: 'Weather', exact: true })).not.toBeVisible()
+  await expect(page.getByRole('region', { name: 'Weather', exact: true })).toBeVisible()
   await page.screenshot({ path: info.outputPath('desktop-list.png'), fullPage: true })
   const before = await page.locator('main').boundingBox()
   await page.getByRole('button', { name: 'Hide calendar', exact: true }).click()

@@ -5,6 +5,7 @@ import { Play, Pause, Settings, X } from 'lucide-react'
 import { useRainRadar } from './useRainRadar'
 import { useStore } from '../../store/useStore'
 import { LocationPicker } from './LocationPicker'
+import { Modal } from '../../components/ui/Modal'
 
 const RADAR_SIZE = 256
 const RADAR_COLOR = 2
@@ -40,10 +41,9 @@ function frameTime(frameTimeSec: number): string {
 
 function PopupShell({ onClose, children }: { onClose?: () => void; children: ReactNode }) {
   return (
-    <>
-      <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="absolute left-0 top-full mt-2 z-50">{children}</div>
-    </>
+    <Modal isOpen onClose={() => onClose?.()} title="Rain radar" className="max-w-md">
+      {children}
+    </Modal>
   )
 }
 
@@ -129,7 +129,7 @@ export function RainRadar({ onClose }: RainRadarProps) {
   if (!coords) {
     return (
       <PopupShell onClose={onClose}>
-        <div className="glass-panel rounded-xl p-3 w-[340px] flex flex-col gap-1">
+        <div className="w-full flex flex-col gap-1">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500">Radar</span>
             {onClose && (
@@ -159,7 +159,7 @@ export function RainRadar({ onClose }: RainRadarProps) {
   if (!radar || frames.length === 0) {
     return (
       <PopupShell onClose={onClose}>
-        <div className="glass-panel rounded-xl p-3 w-[340px] flex flex-col gap-1">
+        <div className="w-full flex flex-col gap-1">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500">Radar</span>
             {onClose && (
@@ -182,7 +182,7 @@ export function RainRadar({ onClose }: RainRadarProps) {
 
   return (
     <PopupShell onClose={onClose}>
-      <div className="glass-panel rounded-xl p-3 flex flex-col gap-2 w-[340px]">
+      <div className="flex w-full flex-col gap-2">
         <div className="flex items-center justify-between">
           <span className="text-xs text-slate-500">Radar</span>
           <div className="flex items-center gap-2">

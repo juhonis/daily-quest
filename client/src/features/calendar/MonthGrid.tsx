@@ -13,6 +13,8 @@ interface MonthGridProps {
   focusedDate: string | null
   onCellFocus: (date: string) => void
   highlight?: boolean
+  activeDates?: ReadonlySet<string>
+  showOutsideDays?: boolean
 }
 
 export function MonthGrid({
@@ -26,6 +28,8 @@ export function MonthGrid({
   focusedDate,
   onCellFocus,
   highlight = false,
+  activeDates,
+  showOutsideDays = true,
 }: MonthGridProps) {
   const matrix = getMonthMatrix(year, month, WEEK_STARTS_ON)
   const labels = getWeekdayLabels(WEEK_STARTS_ON)
@@ -43,7 +47,11 @@ export function MonthGrid({
       {matrix.map((row, ri) => (
         <div key={ri} className="grid grid-cols-7">
           {row.map((cell) => {
-            const hasQuest = getActiveQuestsForDate(quests, cell.date, completions).length > 0
+            if (!showOutsideDays && !cell.isCurrentMonth) {
+              return <span key={cell.date} aria-hidden="true" className="aspect-square" />
+            }
+            const hasQuest = activeDates ? activeDates.has(cell.date)
+              : getActiveQuestsForDate(quests, cell.date, completions).length > 0
             const isSelected = isSameDay(cell.date, selectedDate)
             const isToday = isSameDay(cell.date, today)
             return (
@@ -53,8 +61,8 @@ export function MonthGrid({
                 onFocus={() => onCellFocus(cell.date)}
                 tabIndex={cell.date === focusedDate ? 0 : -1}
                 aria-current={isToday ? 'date' : undefined}
-                  aria-pressed={isSelected}
-                  data-date={cell.date}
+                aria-pressed={isSelected}
+                data-date={cell.date}
                 aria-label={cell.date}
                 className={`
                   relative flex aspect-square w-full items-center justify-center rounded-lg text-sm

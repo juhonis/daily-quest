@@ -12,6 +12,43 @@
   backdrop-filter: blur(4px);
 }
 
+.day-overview {
+  container-type: inline-size;
+}
+
+.day-overview-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.day-weather {
+  display: grid;
+  gap: 1rem;
+  border-top: 1px solid #1e293b;
+  padding-top: 1rem;
+}
+
+@container (min-width: 280px) {
+  .day-weather {
+    grid-template-columns: minmax(110px, 0.6fr) minmax(0, 1.4fr);
+  }
+}
+
+@container (min-width: 760px) {
+  .day-overview-layout {
+    grid-template-columns: minmax(210px, 0.8fr) minmax(0, 2fr);
+    align-items: start;
+  }
+
+  .day-weather {
+    grid-template-columns: minmax(120px, 0.65fr) minmax(0, 1.35fr);
+    border-top: 0;
+    border-left: 1px solid #1e293b;
+    padding-top: 0;
+    padding-left: 1rem;
+  }
+}
+
 button:not(:disabled), summary, a {
   -webkit-tap-highlight-color: transparent;
 }

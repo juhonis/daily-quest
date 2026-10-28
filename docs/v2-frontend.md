@@ -4,7 +4,7 @@
 
 - `v2` is the experimental integration branch, initially copied from `main`.
 - The first working prototype is on `feat/v2-layout-prototype`.
-- Feature PRs target `v2`. Review its stable Pages preview on desktop and phone before starting the next slice.
+- Feature PRs target `v2`. Local review with imported real-data copies is the current feedback loop; a Pages preview is optional for remote/device testing.
 - Adoption remains a separate decision: `v2` → `main` → `prod` after review and acceptance.
 - Bring regular fixes from `main` into `v2` periodically with a merge.
 
@@ -21,7 +21,7 @@ The first prototype uses real application data and actions. Sample quests and no
 - Separate **Day**, **Notes**, and **Library** destinations.
 - Desktop navigation sits in the header; phone/tablet navigation sits at the bottom, with **More** opening Settings.
 - A contextual **New quest / New note** action is always available in the header.
-- Weather is expanded explicitly from Day rather than occupying every screen's header.
+- Current weather and the selected day's hourly forecast are always visible inside Day's date/header container. Radar and location settings open on demand.
 - Calendar is an optional desktop sidebar. Hiding it releases its grid column.
 - On smaller screens, tapping the date opens a calendar dialog.
 
@@ -56,14 +56,16 @@ The first prototype uses real application data and actions. Sample quests and no
 - Native modal dialogs provide top-layer stacking, background inertness, focus containment, Escape handling, and focus restoration. Nested cancellation is scoped to the top dialog.
 - Default dialogs are bounded by the dynamic viewport and have a scrollable body.
 - Mobile navigation includes bottom safe-area padding; mobile inputs use a readable size without Safari's small-input zoom.
-- The calendar renders one month at a time, has explicit month controls, and moves actual keyboard focus between days and months.
+- The calendar shows multiple months in a naturally scrolling sidebar or date dialog, emphasizes the selected month, and moves actual keyboard focus between days and months.
 
 ## Deliberate prototype choices
 
 - List/Board selection is local component state and resets on reload. Decide whether to persist it after comparing the layouts.
 - Navigation screens are local UI state, not browser routes yet.
 - The old right-column dashboard and create-tab navigation are not rendered in the new shell. Library and shared editing cover their main workflows; the legacy components remain available for reference during the experiment.
-- Calendar uses explicit month navigation in place of the 25-month scrolling view. This is a design choice to review, not a requirement for the final version.
+- Following the first review, multi-month scrolling replaces the single-month picker. Seven months are initially rendered; the buffer extends near either end and stays bounded at thirteen months. Visible-month anchoring prevents jumps when prepending or trimming.
+- The inline header uses available container width rather than just viewport breakpoints: date, current conditions, and forecast sit alongside each other on wide layouts and reflow on phones. Current conditions are labeled **Now**; the hourly strip labels the selected date.
+- Weather requests are deduplicated/cached for ten minutes, with explicit loading/error/retry states and no stale forecast carried into a different date or location. Radar is a viewport-bounded dialog.
 - No storage schema or sync merge-rule changes are included. The shared sync dialog still opens from Settings or QR join links.
 
 ## Verification
@@ -84,6 +86,8 @@ New browser coverage includes:
 - Touch-emulated phone editing/completion and note creation/reading.
 - Completion-history filtering without accidental task completion controls.
 - Calendar arrow/month navigation moving DOM focus.
+- Multi-month wheel scrolling without changing the selected date or moving the page, including anchor preservation when earlier months are added.
+- Always-visible weather, shared current-day requests, selected-date forecasts, out-of-range dates, retry, and location/radar dialogs.
 - Nested dialog Escape behavior and focus restoration.
 - Unsaved quest draft cancellation.
 - Viewport/editor bounds at 320px, 768px, and 1280px.
@@ -93,8 +97,8 @@ The existing peer-sync browser tests remain part of the same suite. Review scree
 ## Review before the next slice
 
 1. Compare List and Board with a realistic number of quests and tags.
-2. Decide whether the calendar should remain a compact month picker or regain a scrolling mode.
-3. Try weather collapsed/expanded and choose its final prominence.
+2. Compare the restored multi-month scrolling with the original, especially browsing without selecting and returning to Today.
+3. Check the inline date/weather container with your location and typical laptop/phone widths.
 4. Test the actual target phone/browser, especially editing with the onscreen keyboard, portrait/landscape, safe areas, and installed-PWA behavior.
 5. Confirm search/history and panel customization cover the workflows previously used in the sidebars.
 
@@ -105,7 +109,7 @@ Preview origins have separate browser storage. Use sample data or an imported co
 - Refine the accepted shell into a consistent design system and tune desktop density.
 - Simplify the full quest form, scheduling controls, tag management, and touch reordering.
 - Develop Notes search, quieter color treatments, reading/editor layouts, and draft persistence.
-- Polish weather/radar popovers, unavailable/retry states, and loading behavior.
+- Further polish weather/radar presentation and radar-specific unavailable/retry behavior.
 - Complete mobile browser/PWA acceptance, app icons, browser-back behavior, and keyboard handling.
 - Add visual regression baselines after the design stabilizes.
 

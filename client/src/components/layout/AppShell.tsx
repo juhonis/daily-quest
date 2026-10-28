@@ -80,7 +80,7 @@ export function AppShell() {
       </header>
 
       <div className="mx-auto grid max-w-[1680px] items-start" style={{ gridTemplateColumns: calendarVisible ? '248px minmax(0, 1fr)' : 'minmax(0, 1fr)' }}>
-        {calendarVisible && <aside aria-label="Calendar sidebar" className="sticky top-[73px] max-h-[calc(100dvh-73px)] overflow-y-auto border-r border-slate-800 p-3"><CalendarColumn /></aside>}
+        {calendarVisible && <aside aria-label="Calendar sidebar" className="sticky top-[73px] h-[calc(100dvh-73px)] overflow-hidden border-r border-slate-800 p-3"><CalendarColumn /></aside>}
         <main id="workspace" tabIndex={-1} className="min-w-0 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 outline-none sm:px-6 lg:pb-10 lg:pt-7">
           <div hidden={screen !== 'day'}><QuestsColumn onEdit={openEditor} onChooseDate={() => setShowCalendar(true)} /></div>
           <div hidden={screen !== 'notes'} className="min-w-0">

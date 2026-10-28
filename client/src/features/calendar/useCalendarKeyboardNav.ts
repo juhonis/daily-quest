@@ -66,7 +66,7 @@ export function useCalendarKeyboardNav(
         setFocusedDate(nextDate)
         onNavigate?.(nextDate)
         const container = e.currentTarget
-        requestAnimationFrame(() => container.querySelector<HTMLElement>(`[data-date="${nextDate}"]`)?.focus())
+        requestAnimationFrame(() => container.querySelector<HTMLElement>(`[data-date="${nextDate}"]`)?.focus({ preventScroll: true }))
       }
     },
     [onNavigate, onSelect, setFocusedDate],

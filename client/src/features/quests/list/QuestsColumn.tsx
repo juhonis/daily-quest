@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { CalendarDays, ChevronLeft, ChevronRight, CloudSun, Columns3, List, SlidersHorizontal } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, Columns3, List, SlidersHorizontal } from 'lucide-react'
 import { format } from 'date-fns'
 import { useStore } from '../../../store/useStore'
 import { Button } from '../../../components/ui/Button'
@@ -7,13 +7,11 @@ import { addDays, getActiveQuestsForDate, getFinishedQuestsForDate, getTodayLoca
 import { QuickAddBar } from './QuickAddBar'
 import { QuestsPanelsRow } from './QuestsPanelsRow'
 import { EditPanelsModal } from './EditPanelsModal'
-import { CurrentWeather } from '../../weather/CurrentWeather'
-import { WeatherCarousel } from '../../weather/WeatherCarousel'
+import { DayWeather } from '../../weather/DayWeather'
 
 export function QuestsColumn({ onEdit, onChooseDate }: { onEdit: (id: string) => void; onChooseDate: () => void }) {
   const [layout, setLayout] = useState<'list' | 'board'>('list')
   const [showFilters, setShowFilters] = useState(false)
-  const [showWeather, setShowWeather] = useState(false)
   const [showPanels, setShowPanels] = useState(false)
   const quests = useStore((s) => s.quests)
   const completions = useStore((s) => s.completions)
@@ -42,16 +40,21 @@ export function QuestsColumn({ onEdit, onChooseDate }: { onEdit: (id: string) =>
 
   return (
     <div className="min-w-0 space-y-5">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">{isToday ? 'Today' : format(parseDate(selectedDate), 'EEEE')}</h1>
-          <button type="button" aria-label="Choose date" onClick={onChooseDate} className="mt-1 inline-flex min-h-11 max-w-full items-center gap-2 text-sm text-slate-400 hover:text-slate-200"><CalendarDays className="h-4 w-4 shrink-0" /><span className="sm:hidden">{format(parseDate(selectedDate), 'EEE, d MMM')}</span><span className="hidden truncate sm:inline">{format(parseDate(selectedDate), 'EEEE, d MMMM yyyy')}</span></button>
+      <header aria-label="Day overview" className="day-overview rounded-2xl border border-slate-800 bg-slate-900/40 p-4 sm:p-5">
+      <div className="day-overview-layout">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h1 className="min-w-0 break-words text-2xl font-semibold tracking-tight text-white sm:text-3xl">{isToday ? 'Today' : format(parseDate(selectedDate), 'EEEE')}</h1>
+          <div className="flex items-center gap-1">
+            {!isToday && <Button variant="ghost" onClick={() => setSelectedDate(getTodayLocal())}>Today</Button>}
+            <Button variant="icon" aria-label="Previous day" onClick={() => setSelectedDate(addDays(selectedDate, -1))}><ChevronLeft className="h-5 w-5" /></Button>
+            <Button variant="icon" aria-label="Next day" onClick={() => setSelectedDate(addDays(selectedDate, 1))}><ChevronRight className="h-5 w-5" /></Button>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          {!isToday && <Button variant="ghost" onClick={() => setSelectedDate(getTodayLocal())}>Today</Button>}
-          <Button variant="icon" aria-label="Previous day" onClick={() => setSelectedDate(addDays(selectedDate, -1))}><ChevronLeft className="h-5 w-5" /></Button>
-          <Button variant="icon" aria-label="Next day" onClick={() => setSelectedDate(addDays(selectedDate, 1))}><ChevronRight className="h-5 w-5" /></Button>
-        </div>
+        <button type="button" aria-label="Choose date" onClick={onChooseDate} className="mt-1 inline-flex min-h-11 max-w-full items-center gap-2 text-left text-sm text-slate-400 hover:text-slate-200"><CalendarDays className="h-4 w-4 shrink-0" /><span className="sm:hidden">{format(parseDate(selectedDate), 'EEE, d MMM')}</span><span className="hidden sm:inline">{format(parseDate(selectedDate), 'EEEE, d MMMM yyyy')}</span></button>
+      </div>
+      <DayWeather />
+      </div>
       </header>
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
@@ -59,9 +62,7 @@ export function QuestsColumn({ onEdit, onChooseDate }: { onEdit: (id: string) =>
           <div className="h-1.5 w-20 overflow-hidden rounded-full bg-slate-800" role="progressbar" aria-label="Daily quest progress" aria-valuemin={0} aria-valuemax={total || 1} aria-valuenow={done}><div className="h-full rounded-full bg-blue-500 transition-[width]" style={{ width: `${total ? done / total * 100 : 0}%` }} /></div>
           <span className="text-sm text-slate-400">{total ? `${done} of ${total} done` : 'A fresh start'}</span>
         </div>
-        <Button variant="ghost" onClick={() => setShowWeather(!showWeather)} aria-expanded={showWeather}><CloudSun className="h-4 w-4" />Weather</Button>
       </div>
-      {showWeather && <section aria-label="Weather" className="flex min-w-0 flex-col gap-3 sm:flex-row"><CurrentWeather /><div className="min-w-0 flex-1"><WeatherCarousel /></div></section>}
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
