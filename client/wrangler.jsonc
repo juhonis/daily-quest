@@ -6,7 +6,7 @@
   "services": [{ "binding": "SYNC_SERVICE", "service": "daily-quest-sync" }],
   "env": {
     "preview": {
-      "services": [{ "binding": "SYNC_SERVICE", "service": "daily-quest-sync-preview" }]
+      "services": [{ "binding": "SYNC_SERVICE", "service": "daily-quest-sync" }]
     }
   }
 }

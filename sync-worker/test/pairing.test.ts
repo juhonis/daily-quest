@@ -4,9 +4,11 @@ import { describe, expect, it } from 'vitest'
 import worker from '../src/index'
 
 const bindings = env as Parameters<typeof worker.fetch>[1]
-async function connect(code: string, role: string, token: string) {
-  const response = await worker.fetch(new Request(`https://app.example/api/sync/socket/${code}?role=${role}&token=${token}`, {
-    headers: { Origin: 'https://app.example', Upgrade: 'websocket', 'CF-Connecting-IP': crypto.randomUUID() },
+const production = 'https://daily-quest-dmt.pages.dev'
+const preview = 'https://main.daily-quest-dmt.pages.dev'
+async function connect(code: string, role: string, token: string, origin = production) {
+  const response = await worker.fetch(new Request(`${origin}/api/sync/socket/${code}?role=${role}&token=${token}`, {
+    headers: { Origin: origin, Upgrade: 'websocket', 'CF-Connecting-IP': crypto.randomUUID() },
   }), bindings)
   expect(response.status).toBe(101)
   const socket = response.webSocket!
@@ -20,11 +22,48 @@ function message(socket: WebSocket): Promise<{ type: string }> {
   })
 }
 
-const request = (path: string, origin = 'https://app.example') => worker.fetch(new Request(`https://app.example/api/sync${path}`, {
+const request = (path: string, origin = production) => worker.fetch(new Request(`${origin}/api/sync${path}`, {
   method: 'POST', headers: { Origin: origin, 'CF-Connecting-IP': crypto.randomUUID() },
-}), env as Parameters<typeof worker.fetch>[1])
+}), bindings)
 
 describe('pairing service', () => {
+  it.each([[production, preview], [preview, production]])('pairs %s with %s through the shared service', async (hostOrigin, guestOrigin) => {
+    const created = await request('/create', hostOrigin)
+    expect(created.status).toBe(200)
+    const room = await created.json() as { code: string; token: string }
+    const joined = await request(`/join/${room.code}`, guestOrigin)
+    expect(joined.status).toBe(200)
+    const guest = await joined.json() as { token: string }
+    const hostSocket = await connect(room.code, 'host', room.token, hostOrigin)
+    const ready = message(hostSocket)
+    const guestSocket = await connect(room.code, 'guest', guest.token, guestOrigin)
+    const guestReady = message(guestSocket)
+    try {
+      expect((await ready).type).toBe('ready')
+      expect((await guestReady).type).toBe('ready')
+      const offer = { type: 'signal', signal: { type: 'offer', sdp: 'test offer' } }
+      const receivedOffer = message(guestSocket)
+      hostSocket.send(JSON.stringify(offer))
+      expect(await receivedOffer).toEqual(offer)
+      const answer = { type: 'signal', signal: { type: 'answer', sdp: 'test answer' } }
+      const receivedAnswer = message(hostSocket)
+      guestSocket.send(JSON.stringify(answer))
+      expect(await receivedAnswer).toEqual(answer)
+      const verified = message(hostSocket)
+      hostSocket.send(JSON.stringify({ type: 'verified' }))
+      guestSocket.send(JSON.stringify({ type: 'verified' }))
+      expect((await verified).type).toBe('verification-ready')
+      const approved = message(hostSocket)
+      hostSocket.send(JSON.stringify({ type: 'approve' }))
+      expect((await approved).type).toBe('approved')
+      const complete = message(hostSocket)
+      hostSocket.send(JSON.stringify({ type: 'finished' }))
+      guestSocket.send(JSON.stringify({ type: 'finished' }))
+      expect((await complete).type).toBe('complete')
+      expect((await request('/create', 'https://other.daily-quest-dmt.pages.dev')).status).toBe(403)
+    } finally { hostSocket.close(); guestSocket.close() }
+  })
+
   it('creates a session and atomically accepts only one guest', async () => {
     const created = await request('/create')
     expect(created.status).toBe(200)
@@ -44,8 +83,8 @@ describe('pairing service', () => {
 
   it('requires a session token for signaling', async () => {
     const room = await (await request('/create')).json() as { code: string }
-    const response = await worker.fetch(new Request(`https://app.example/api/sync/socket/${room.code}?role=host&token=wrong`, {
-      headers: { Origin: 'https://app.example', Upgrade: 'websocket', 'CF-Connecting-IP': crypto.randomUUID() },
+    const response = await worker.fetch(new Request(`${production}/api/sync/socket/${room.code}?role=host&token=wrong`, {
+      headers: { Origin: production, Upgrade: 'websocket', 'CF-Connecting-IP': crypto.randomUUID() },
     }), env as Parameters<typeof worker.fetch>[1])
     expect(response.status).toBe(403)
   })
@@ -75,8 +114,8 @@ describe('pairing service', () => {
     const ip = crypto.randomUUID()
     const responses = []
     for (let i = 0; i < 31; i++) {
-      responses.push(await worker.fetch(new Request('https://app.example/api/sync/join/ZZZZZZZZ', {
-        method: 'POST', headers: { Origin: 'https://app.example', 'CF-Connecting-IP': ip },
+      responses.push(await worker.fetch(new Request(`${production}/api/sync/join/ZZZZZZZZ`, {
+        method: 'POST', headers: { Origin: production, 'CF-Connecting-IP': ip },
       }), bindings))
     }
     expect(responses[0].status).toBe(404)

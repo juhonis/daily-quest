@@ -4,9 +4,9 @@ Manual sync combines two open browsers over encrypted WebRTC. Cloudflare stores 
 
 ## Pair devices
 
-1. Open the same app origin on both devices, preferably on the same non-guest network.
+1. Open production or the stable main preview on each device, preferably on the same non-guest network. Both sites share pairing; their browser storage remains separate.
 2. First device: **Settings → Sync devices → Start sync**.
-3. Second device: enter the eight-character code or scan/open the QR link and choose Join sync.
+3. Second device: enter the eight-character code and choose Join sync. QR links open the initiating site's origin; to sync data already stored on the other site, keep that site open and enter the code there.
 4. Compare verification codes; confirm **Codes match — sync** on the first device.
 5. Keep both apps open until both show **Sync complete**. Alternate edits are under **Settings → Sync recovery**; restore replaces the current version, dismiss removes the recovery item.
 
@@ -19,11 +19,11 @@ Sync includes quests/subquests, notes, completions, presets and their overrides,
 | Environment | App origin | `SYNC_SERVICE` Worker |
 |---|---|---|
 | Production (`prod`) | `https://daily-quest-dmt.pages.dev` | `daily-quest-sync` |
-| Main preview | `https://main.daily-quest-dmt.pages.dev` | `daily-quest-sync-preview` |
+| Main preview | `https://main.daily-quest-dmt.pages.dev` | `daily-quest-sync` (shared with production) |
 | Local Pages | `http://localhost:8788` | Local preview Worker |
 
 - Pages settings: root `client`, build `npm run build`, output `dist`. GitHub integration deploys `prod` to production; other enabled branches are previews.
-- `client/wrangler.jsonc` manages production/preview service bindings. Deploy Functions with the source, not `dist` alone. Only `/api/sync/*` invokes Functions; Pages handles static assets and SPA fallback.
+- `client/wrangler.jsonc` routes deployed production/preview Pages to the shared Worker; `npm run dev:sync` explicitly uses the local preview Worker. Deploy Functions with the source, not `dist` alone. Only `/api/sync/*` invokes Functions; Pages handles static assets and SPA fallback.
 - `sync-worker/wrangler.jsonc` defines a separate Worker with a **SQLite-backed Durable Object**, hibernatable signaling WebSockets, and expiry cleanup. Deploy it before the first Pages build referring to its binding. No separate app-content database is required.
 - `workers_dev: false` is intentional: access is through the Pages service binding.
 
@@ -36,13 +36,15 @@ npm run deploy -- --env preview   # Preview Worker
 npm run deploy -- --env ""        # Production Worker
 ```
 
-Use the same Cloudflare account as Pages. Deploy the intended environment, not both by default.
+Use the same Cloudflare account as Pages. Deploy the intended environment, not both by default. For shared preview/production pairing, deploy the production Worker's updated origin allowlist first, then redeploy preview Pages with the shared binding. The production Pages frontend does not need updating for this configuration change.
 
 ### Origins and previews
 
-`ALLOWED_ORIGINS` must contain the exact browser origin, without trailing slash/path: top-level vars for production, `env.preview.vars` for preview. Current preview origins include localhost 5173/8788 and the stable main alias.
+`ALLOWED_ORIGINS` must contain the exact browser origin, without trailing slash/path. Top-level vars allow production and the stable main preview on the shared Worker. `env.preview.vars` applies to the separate development Worker, including localhost 5173/8788.
 
-Use stable branch aliases rather than deployment hashes; `feat/example` becomes `feat-example.daily-quest-dmt.pages.dev`. Add a new alias to the preview allowlist only if testing sync there, then redeploy the **preview Worker**. Preview and production pairing rooms are separate.
+Use stable branch aliases rather than deployment hashes; `feat/example` becomes `feat-example.daily-quest-dmt.pages.dev`. Other deployed preview aliases are not allowed by default; add an intended alias to the shared Worker's top-level allowlist and redeploy the **production Worker** to enable sync there. Local/development Worker rooms remain separate from the shared service.
+
+Production ↔ main preview sync is the same two-way merge as same-site sync: preview edits and deletions can return to production. Compatible sync protocols are required across versions; current main/prod share the protocol and record schema.
 
 | Change/error | Action |
 |---|---|
