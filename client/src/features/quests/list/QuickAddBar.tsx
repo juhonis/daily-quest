@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Zap } from 'lucide-react'
 import type { QuickPreset, RepeatType } from '../../../types'
 import { cleanExternalLink, externalLinkError } from '../create/questEditorModel'
+import { createId } from '../../../utils/createId'
 
 type QuestType = 'today' | 'daily' | 'repeating' | 'important'
 
@@ -68,7 +69,7 @@ export function QuickAddBar({
     const linkError = externalLinkError(newUrl)
     if (linkError) { setPresetError(linkError); return }
     try { onManageAdd({
-      id: crypto.randomUUID(),
+      id: createId(),
       title: newTitle.trim(),
       externalUrl: cleanExternalLink(newUrl),
       isUserDefined: true,

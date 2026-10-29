@@ -1,10 +1,6 @@
 import {
   type DragEndEvent,
   DndContext,
-  PointerSensor,
-  KeyboardSensor,
-  useSensor,
-  useSensors,
   closestCenter,
 } from '@dnd-kit/core'
 import {
@@ -12,7 +8,6 @@ import {
   useSortable,
   arrayMove,
   rectSortingStrategy,
-  sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { Quest, CompletionRecord, PanelId } from '../../../types'
@@ -27,6 +22,7 @@ import { ImportantQuestsPanel } from './panels/ImportantQuestsPanel'
 import { RolloverQuestsPanel } from './panels/RolloverQuestsPanel'
 import { DoneQuestsPanel } from './panels/DoneQuestsPanel'
 import { TagPanel } from './panels/TagPanel'
+import { usePanelSensors } from '../../../hooks/usePanelSensors'
 
 const PANEL_MAP: Record<PanelId, typeof DailyQuestsPanel> = {
   daily: DailyQuestsPanel,
@@ -143,12 +139,7 @@ export function QuestsPanelsRow(props: QuestsPanelsRowProps) {
   const emptyPanels = props.layout !== 'board' ? visiblePanels.filter((id) => mergedQuestMap[id].length === 0) : []
   const displayedPanels = visiblePanels.filter((id) => !emptyPanels.includes(id))
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  )
+  const sensors = usePanelSensors()
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event

@@ -11,10 +11,10 @@ import { NotesGrid, type NotesGridHandle } from '../../features/notes/NotesGrid'
 import { SettingsModal } from '../../features/settings/SettingsModal'
 import { useStore } from '../../store/useStore'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
+import { useAppScreen } from '../../hooks/useAppScreen'
 import { Button } from '../ui/Button'
 import { Modal } from '../ui/Modal'
 
-type Screen = 'day' | 'notes' | 'library'
 const screens = [
   { id: 'day', label: 'Day', icon: CheckCheck },
   { id: 'notes', label: 'Notes', icon: NotebookPen },
@@ -22,7 +22,7 @@ const screens = [
 ] as const
 
 export function AppShell() {
-  const [screen, setScreen] = useState<Screen>('day')
+  const [screen, setScreen] = useAppScreen()
   const [showSettings, setShowSettings] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
   const [radarOpen, setRadarOpen] = useState(false)
@@ -65,7 +65,7 @@ export function AppShell() {
 
   return (
     <div className="min-h-dvh bg-slate-950 text-slate-200">
-      <a href="#workspace" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-2 focus:z-50 focus:rounded-lg focus:bg-blue-600 focus:p-3 focus:text-white">Skip to workspace</a>
+      <a href="#workspace" onClick={(event) => { event.preventDefault(); workspaceRef.current?.focus({ preventScroll: true }); workspaceRef.current?.scrollIntoView({ block: 'start' }) }} className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-2 focus:z-50 focus:rounded-lg focus:bg-blue-600 focus:p-3 focus:text-white">Skip to workspace</a>
       <header className="sticky top-0 z-20 border-b border-slate-800 bg-slate-950/95 pt-[env(safe-area-inset-top)] backdrop-blur">
         <div className="mx-auto flex min-h-[72px] max-w-[1680px] items-center justify-between gap-3 px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
@@ -85,7 +85,7 @@ export function AppShell() {
 
       <div className="mx-auto grid max-w-[1680px] items-start" style={{ gridTemplateColumns: calendarVisible ? '248px minmax(0, 1fr)' : 'minmax(0, 1fr)' }}>
         {calendarVisible && <aside aria-label="Calendar sidebar" className="sticky top-[73px] h-[calc(100dvh-73px)] overflow-hidden border-r border-slate-800 p-3"><CalendarColumn /></aside>}
-        <main ref={workspaceRef} id="workspace" tabIndex={-1} className={`workspace-grid min-w-0 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 outline-none sm:px-6 lg:pb-10 lg:pt-7 ${radarOpen ? 'has-radar' : ''}`}>
+        <main ref={workspaceRef} id="workspace" tabIndex={-1} className={`workspace-grid min-w-0 scroll-mt-20 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 outline-none sm:px-6 lg:pb-10 lg:pt-7 ${radarOpen ? 'has-radar' : ''}`}>
           <div className="workspace-context min-w-0">
             <div hidden={screen !== 'day'}><DayOverview onChooseDate={() => setShowCalendar(true)} radarOpen={radarOpen} onToggleRadar={() => radarOpen ? closeRadar() : setRadarOpen(true)} radarPanelId={radarPanelId} radarTriggerRef={radarTriggerRef} /></div>
             <header hidden={screen !== 'notes'}><h1 className="text-2xl font-semibold tracking-tight text-white">Notes</h1><p className="mt-1 text-sm text-slate-400">A place for ideas worth keeping.</p></header>

@@ -10,6 +10,7 @@ import { QuestTagPicker } from './QuestTagPicker'
 import { buildPreset, buildQuest, editorFingerprint, editorValues, scheduleSummary, validateEditor, type EditorErrors, type QuestEditorValues } from './questEditorModel'
 import { editorDraftKey, readQuestDraft } from './questDrafts'
 import { useQuestDraft } from './useQuestDraft'
+import { createId } from '../../../utils/createId'
 
 interface QuestEditorProps {
   initialData?: Quest
@@ -34,8 +35,8 @@ export function QuestEditor({ initialData, defaultDate, onSave, onClose }: Quest
     const stale = draft && draft.base !== base ? draft : null
     return {
       key, clean, base, sourceId: initialData?.id ?? null, original: initialData,
-      questId: initialData?.id ?? draft?.questId ?? crypto.randomUUID(),
-      presetId: draft?.presetId ?? crypto.randomUUID(),
+      questId: initialData?.id ?? draft?.questId ?? createId(),
+      presetId: draft?.presetId ?? createId(),
       recovered: !!draft && !stale, values: draft && !stale ? draft.values : clean, stale,
     }
   })
@@ -57,9 +58,10 @@ export function QuestEditor({ initialData, defaultDate, onSave, onClose }: Quest
   }
 
   function discard() {
-    if ((dirty || stale) && !window.confirm('Discard unsaved quest changes?')) return
+    if ((dirty || stale) && !window.confirm('Discard unsaved quest changes?')) return false
     draft.clear()
     onClose()
+    return true
   }
 
   function keepDraft() {
@@ -79,7 +81,7 @@ export function QuestEditor({ initialData, defaultDate, onSave, onClose }: Quest
       return
     }
     try {
-      const quest = buildQuest(values, initialData ?? initial.original, new Date().toISOString(), initial.questId, () => crypto.randomUUID())
+      const quest = buildQuest(values, initialData ?? initial.original, new Date().toISOString(), initial.questId, createId)
       const preset = !initial.sourceId && values.addToQuickAdd ? buildPreset(quest, initial.presetId) : undefined
       onSave(quest, preset)
       draft.clear()
@@ -152,7 +154,7 @@ export function QuestEditor({ initialData, defaultDate, onSave, onClose }: Quest
             </EditorSection>
             <EditorSection title="Subquests" summary={`${values.subQuests.length + (values.pendingStep.trim() ? 1 : 0)} steps`} defaultOpen={values.subQuests.length > 0 || !!values.pendingStep}>
               {values.subQuests.map((step, index) => <div key={step.id} className="flex min-w-0 items-center gap-2"><input aria-label={`Step ${index + 1}`} value={step.title} onChange={(event) => update('subQuests', values.subQuests.map((item) => item.id === step.id ? { ...item, title: event.target.value } : item))} className={fieldClass} /><Button type="button" variant="icon" aria-label={`Remove step ${index + 1}`} onClick={() => update('subQuests', values.subQuests.filter((item) => item.id !== step.id))}><X className="h-4 w-4" /></Button></div>)}
-              <div className="flex min-w-0 items-center gap-2"><input aria-label="New step" value={values.pendingStep} onChange={(event) => update('pendingStep', event.target.value)} placeholder="Add a small step…" className={fieldClass} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); if (values.pendingStep.trim()) setValues((previous) => ({ ...previous, subQuests: [...previous.subQuests, { id: crypto.randomUUID(), title: previous.pendingStep.trim() }], pendingStep: '' })) } }} /><Button type="button" variant="secondary" aria-label="Add step" disabled={!values.pendingStep.trim()} onClick={() => setValues((previous) => ({ ...previous, subQuests: [...previous.subQuests, { id: crypto.randomUUID(), title: previous.pendingStep.trim() }], pendingStep: '' }))}><Plus className="h-4 w-4" /></Button></div>
+              <div className="flex min-w-0 items-center gap-2"><input aria-label="New step" value={values.pendingStep} onChange={(event) => update('pendingStep', event.target.value)} placeholder="Add a small step…" className={fieldClass} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); if (values.pendingStep.trim()) setValues((previous) => ({ ...previous, subQuests: [...previous.subQuests, { id: createId(), title: previous.pendingStep.trim() }], pendingStep: '' })) } }} /><Button type="button" variant="secondary" aria-label="Add step" disabled={!values.pendingStep.trim()} onClick={() => setValues((previous) => ({ ...previous, subQuests: [...previous.subQuests, { id: createId(), title: previous.pendingStep.trim() }], pendingStep: '' }))}><Plus className="h-4 w-4" /></Button></div>
               <p className="text-xs text-slate-500">A step left in the New step field is included when you save.</p>
             </EditorSection>
             <EditorSection title="Tags" summary={values.tags.length ? `${values.tags.length} selected` : 'Optional'} defaultOpen={values.tags.length > 0}>

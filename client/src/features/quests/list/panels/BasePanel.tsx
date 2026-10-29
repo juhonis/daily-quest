@@ -28,7 +28,7 @@ export function BasePanel({ quests, selectedDate, completions, onToggleCompletio
   return (
     <section aria-label={labelOverride ?? label} className="min-w-0 rounded-xl border border-slate-800 bg-slate-900/35 p-3" style={containerStyle}>
       <div className="flex flex-wrap items-center gap-1">
-        {dragHandleProps && <button {...dragHandleProps} aria-label={`Reorder ${label}`} className="hidden min-h-11 min-w-11 touch-none items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 sm:inline-flex"><GripVertical className="h-4 w-4" /></button>}
+        {dragHandleProps && <button {...dragHandleProps} aria-label={`Reorder ${label}`} style={{ touchAction: 'manipulation' }} className="hidden min-h-11 min-w-11 items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 sm:inline-flex"><GripVertical className="h-4 w-4" /></button>}
         <h2 className="min-w-0 flex-1"><button type="button" onClick={() => setCollapsed(!collapsed)} disabled={quests.length === 0} aria-expanded={expanded} aria-controls={contentId} className="flex min-h-11 w-full min-w-0 items-center gap-2 text-left">
           <ChevronDown className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${expanded ? '' : '-rotate-90'}`} />
           <span className="min-w-0 break-words text-sm font-medium text-slate-300">{labelOverride ?? label}</span>

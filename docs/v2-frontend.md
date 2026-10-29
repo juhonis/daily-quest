@@ -62,7 +62,7 @@ The first prototype uses real application data and actions. Sample quests and no
 ## Deliberate prototype choices
 
 - List/Board selection is local component state and resets on reload. Decide whether to persist it after comparing the layouts.
-- Navigation screens are local UI state, not browser routes yet.
+- Day/Notes/Library now use browser history and a `view` query parameter. Modal history is transient and contains no note/quest content; see [Android/PWA polish](v2-mobile-polish.md).
 - The old right-column dashboard and create-tab navigation are not rendered in the new shell. Library and shared editing cover their main workflows; the legacy components remain available for reference during the experiment.
 - Following the first review, multi-month scrolling replaces the single-month picker. Seven months are initially rendered; the buffer extends near either end and stays bounded at thirteen months. Visible-month anchoring prevents jumps when prepending or trimming.
 - The inline header uses available container width rather than just viewport breakpoints. Date and current conditions share one block, without a divider between them; only the hourly forecast is separated. Temperature and time share a line, with a compact city name below and the full location available in its tooltip and location settings. **Now** appears when viewing a date other than today; the hourly strip labels the selected date.
@@ -124,7 +124,7 @@ Preview origins have separate browser storage. Use sample data or an imported co
 - Review the focused quest editor and its local draft recovery with real data; touch panel reordering remains part of mobile polish.
 - Review Notes search, color treatments, reading/editor layouts, and local drafts with real data; refine based on feedback.
 - Further polish weather/radar presentation and radar-specific unavailable/retry behavior.
-- Complete mobile browser/PWA acceptance, app icons, browser-back behavior, and keyboard handling.
+- Complete the OnePlus Nord 2T / Android 14 physical-device checklist in [Android/PWA polish](v2-mobile-polish.md); browser history, keyboard fallback, touch customization, install icons, and offline/update support have automated coverage.
 - Add visual regression baselines after the design stabilizes.
 
 Sync investigation remains deferred in [sync-known-issues.md](sync-known-issues.md).

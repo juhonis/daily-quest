@@ -76,4 +76,4 @@ Screenshots with fixture data are written to ignored Playwright artifacts. Quest
 2. Try title/content/tag search, archive filtering, and recent-update sorting.
 3. Try long Markdown, code, tables, and writing with the phone keyboard open.
 4. Exercise Keep draft, reload, and reopening an existing note draft.
-5. Decide whether the final desktop editor should remain a dialog or become a dedicated workspace. Browser Back behavior, real-device PWA acceptance, and global note-tag management remain follow-up work.
+5. Decide whether the final desktop editor should remain a dialog or become a dedicated workspace. Browser Back is covered by the [mobile-polish slice](v2-mobile-polish.md); physical-device PWA acceptance and global note-tag management remain follow-up work.

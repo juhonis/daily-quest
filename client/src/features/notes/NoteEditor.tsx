@@ -11,6 +11,7 @@ import { applyBlockFormat, applyInlineFormat, continueMarkdownList, linePrefix, 
 import { NOTE_COLORS } from './noteUtils'
 import { NoteTagPicker } from './NoteTagPicker'
 import { NoteMarkdown } from './NoteMarkdown'
+import { createId } from '../../utils/createId'
 
 function FormatButton({ label, active, onClick, children }: { label: string; active?: boolean; onClick: () => void; children: ReactNode }) {
   return <button type="button" title={label} aria-label={label} aria-pressed={active} onPointerDown={(event) => { if (event.pointerType === 'mouse') event.preventDefault() }} onClick={onClick} className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${active ? 'bg-blue-500/15 text-blue-300' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}>{children}</button>
@@ -35,7 +36,7 @@ export function NoteEditor({ initialData, sourceMissing = false, onClose, onSave
       (initialData || !useStore.getState().notes.some((note) => note.id === saved.noteId)) ? saved : null
     const stale = stored && stored.base !== base ? stored : null
     return { key, clean, base, original: initialData, sourceId: initialData?.id ?? null,
-      noteId: initialData?.id ?? stored?.noteId ?? crypto.randomUUID(), recoveryId: crypto.randomUUID(),
+      noteId: initialData?.id ?? stored?.noteId ?? createId(), recoveryId: createId(),
       values: stored && !stale ? stored.values : clean, recovered: !!stored && !stale, stale }
   })
   const [values, setValues] = useState(initial.values)
@@ -60,9 +61,10 @@ export function NoteEditor({ initialData, sourceMissing = false, onClose, onSave
   }
 
   function discard() {
-    if ((dirty || stale) && !window.confirm('Discard unsaved note changes?')) return
+    if ((dirty || stale) && !window.confirm('Discard unsaved note changes?')) return false
     draft.clear()
     onClose()
+    return true
   }
 
   function keep() {

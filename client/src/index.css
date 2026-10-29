@@ -12,6 +12,25 @@
   backdrop-filter: blur(4px);
 }
 
+.app-dialog[data-keyboard-viewport] {
+  top: calc(var(--dialog-visible-top) + 8px);
+  bottom: auto;
+  max-height: calc(var(--dialog-visible-height) - 16px);
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.note-dialog[open][data-keyboard-viewport] {
+  top: var(--dialog-visible-top);
+  height: var(--dialog-visible-height);
+  max-height: var(--dialog-visible-height);
+}
+
+.note-dialog[data-keyboard-viewport] textarea {
+  min-height: min(8rem, calc(var(--dialog-visible-height) / 3));
+  max-height: calc(var(--dialog-visible-height) / 3);
+}
+
 .workspace-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

@@ -14,14 +14,24 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.png'],
+      registerType: 'prompt',
+      injectRegister: false,
+      includeAssets: ['favicon.png', 'app-icon.svg'],
       manifest: {
         name: 'Daily Quest',
         short_name: 'Daily Quest',
-        theme_color: '#0f172a',
+        id: '/',
+        description: 'A local-first calendar, quests, and notes workspace.',
+        start_url: '/',
+        scope: '/',
+        display: 'standalone',
+        orientation: 'any',
+        background_color: '#020617',
+        theme_color: '#020617',
         icons: [
-          { src: '/favicon.png', sizes: '80x80', type: 'image/png' },
+          { src: '/app-icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/app-icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/app-icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {
