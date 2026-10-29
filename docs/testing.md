@@ -36,6 +36,7 @@ npx wrangler deploy --dry-run --env preview
 - `test:e2e`: complete Chromium suite; starts local Worker/Pages processes on 8787/8788. Keep those ports free.
 - `test:android`: focused Chromium mobile/touch and narrow desktop Firefox checks. Firefox cannot emulate Playwright's `isMobile`; its CDP-only drag test is skipped, with move-button coverage retained.
 - Coverage includes dates, backups, causal merges, editors/drafts, browser history, keyboard bounds, touch controls, PWA assets/offline behavior, and real browser-to-browser WebRTC. Weather/radar fixtures avoid external-service dependencies.
+- Opt-in live radar check: `RADAR_LIVE_SMOKE=1 npm run test:e2e -- radar-dock.e2e.ts --grep 'live radar providers'`. Loads only visible OpenStreetMap/RainViewer tiles, pauses animation, and captures desktop/phone screenshots; normal runs mock both services.
 - Runtime state, traces, and screenshots are ignored under `.wrangler`/`test-results`. Regenerate committed app icons with `npm run icons:generate` after installing Chromium.
 
 ## Android acceptance

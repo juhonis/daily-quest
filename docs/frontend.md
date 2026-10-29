@@ -45,8 +45,9 @@
 
 - The day header combines date, current temperature/time, and compact location. **Now** distinguishes current conditions when another date is selected; hourly data follows the selected date.
 - Open-Meteo requests are cached/deduplicated for ten minutes. The UI requests dates within the past 92/next 16 days; API availability can be narrower. Loading, retry, and unavailable states are explicit.
-- Radar uses RainViewer frames and a Leaflet map. At 1440px+, it occupies a 320px sticky right column; otherwise it is inline below the page header.
+- Radar uses RainViewer frames over OpenStreetMap standard raster tiles in Leaflet, with visible provider credits. Tiles use normal browser caching; no prefetch/offline map cache. At 1440px+, it occupies a 320px sticky right column; otherwise it is inline below the page header.
 - Radar stays open across views without blocking work. Resizing preserves map view, frame, and playback. Wheel zoom is disabled; Escape closes only when focus is inside the panel.
+- Metadata, background-map tiles, and rain-overlay tiles have separate retry states. Failed overlay tiles pause playback; retry keeps the map view and selected frame.
 
 ## Mobile/PWA
 

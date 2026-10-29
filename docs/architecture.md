@@ -52,7 +52,7 @@ Sync scope, operational limits, and deployment: [device-sync.md](device-sync.md)
 
 - History stores screen/dialog tokens and scroll positions, not editor content. Reader-to-editor handoffs replace a slot; declined discard restores it. Use shared `Modal` for focus, cancellation, and keyboard bounds.
 - Preserve native keyboard/pinch behavior, visible focus, labeled controls, reduced motion, and touch alternatives to drag. Mobile notes use a scroll body with fixed actions.
-- Open-Meteo provides current/hourly weather; RainViewer provides radar frames, CARTO/OpenStreetMap the basemap. Coordinates stay device-local but are sent to the weather services when used.
+- Open-Meteo provides current/hourly weather; RainViewer provides radar frames, OpenStreetMap standard raster tiles the basemap (no API key). Coordinates stay device-local but are sent to the weather services when used.
 - Radar must keep its Leaflet instance across responsive relocation; invalidate dimensions while preserving center/zoom. Keep it lazy-loaded and non-modal.
 - PWA assets/cache configuration is in `client/vite.config.ts`; the update notice waits for an explicit reload outside dialogs. Never cache the pairing API as an app-shell navigation.
 

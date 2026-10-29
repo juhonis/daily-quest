@@ -176,28 +176,28 @@ button:not(:disabled), summary, a {
   height: 32px;
   line-height: 32px;
   font-size: 18px;
-  color: #cbd5e1;
-  border: 1px solid var(--color-glass-border);
+  color: #0f172a;
+  border: 1px solid #94a3b8;
   border-radius: 4px;
-  background: var(--color-glass-bg);
+  background: #fff;
 }
 .radar-map .leaflet-control-zoom a:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.2);
+  color: #0f172a;
+  background: #e2e8f0;
 }
 .radar-map .leaflet-control-zoom a.leaflet-disabled {
-  color: #475569;
-  background: rgba(255, 255, 255, 0.05);
+  color: #64748b;
+  background: #f1f5f9;
 }
 .radar-map .leaflet-control-attribution {
-  font-size: 7px;
+  font-size: 10px;
   line-height: 1.4;
   padding: 1px 4px;
-  color: #64748b;
-  background: rgba(15, 23, 42, 0.7);
+  color: #334155;
+  background: rgba(255, 255, 255, 0.95);
 }
 .radar-map .leaflet-control-attribution a {
-  color: #94a3b8;
+  color: #075985;
 }
 
 .radar-frame-slider {
