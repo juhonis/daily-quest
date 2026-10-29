@@ -1,36 +1,5 @@
-# Daily Quest — Client
+# Daily Quest client
 
-Modern todo/calendar app with lightweight gamification, built with React + Vite + TypeScript + Tailwind v4.
+React/Vite frontend and Pages Functions. Start with the [project README](../README.md).
 
-## Local development
-
-```bash
-cd client
-npm install
-npm run dev
-```
-
-Open http://localhost:5173
-
-## Running with Docker
-
-Dev (with hot reload):
-```bash
-docker compose up
-```
-
-Production build + serve:
-```bash
-docker build -t daily-quest ./client
-docker run -p 8080:80 daily-quest
-```
-
-Open http://localhost:8080
-
-## Scripts
-
-- `npm run dev` — start Vite dev server
-- `npm run build` — type-check + build for production
-- `npm run lint` — run ESLint
-- `npm run test` — run Vitest in watch mode
-- `npm run test:run` — run Vitest once
+Frontend npm commands run from this directory. See [testing](../docs/testing.md), [frontend behavior](../docs/frontend.md), and [sync setup](../docs/device-sync.md).

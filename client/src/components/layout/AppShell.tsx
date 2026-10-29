@@ -1,133 +1,122 @@
+import { useId, useRef, useState } from 'react'
+import { CheckCheck, Library, NotebookPen, PanelLeftClose, PanelLeftOpen, Plus, Settings } from 'lucide-react'
 import { CalendarColumn } from '../../features/calendar/CalendarColumn'
 import { QuestsColumn } from '../../features/quests/list/QuestsColumn'
-import { RightColumn } from '../../features/right/RightColumn'
+import { DayOverview } from '../../features/quests/list/DayOverview'
+import { RadarPanel } from '../../features/weather/RadarPanel'
+import { QuestEditor } from '../../features/quests/create/QuestEditor'
+import { assignTagColor } from '../../features/quests/tagColors'
+import { QuestLibrary } from '../../features/quests/QuestLibrary'
+import { NotesGrid, type NotesGridHandle } from '../../features/notes/NotesGrid'
 import { SettingsModal } from '../../features/settings/SettingsModal'
 import { useStore } from '../../store/useStore'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
-import { useState } from 'react'
-import { PanelLeft, PanelRight, Settings } from 'lucide-react'
+import { useAppScreen } from '../../hooks/useAppScreen'
+import { Button } from '../ui/Button'
+import { Modal } from '../ui/Modal'
 
-const DESKTOP_QUERY = '(min-width: 1280px)'
-
-function Drawer({
-  side,
-  onClose,
-  children,
-}: {
-  side: 'left' | 'right'
-  onClose: () => void
-  children: React.ReactNode
-}) {
-  const positionClass =
-    side === 'left'
-      ? 'left-0 w-[280px] border-r border-slate-700'
-      : 'right-0 w-[320px] border-l border-slate-700'
-  return (
-    <>
-      <div className="fixed inset-0 z-30 bg-black/50" onClick={onClose} />
-      <div
-        className={`fixed inset-y-0 z-40 overflow-y-auto overflow-x-hidden bg-slate-900 shadow-2xl pt-10 ${positionClass}`}
-      >
-        {children}
-      </div>
-    </>
-  )
-}
+const screens = [
+  { id: 'day', label: 'Day', icon: CheckCheck },
+  { id: 'notes', label: 'Notes', icon: NotebookPen },
+  { id: 'library', label: 'Library', icon: Library },
+] as const
 
 export function AppShell() {
+  const [screen, setScreen] = useAppScreen()
   const [showSettings, setShowSettings] = useState(false)
+  const [showCalendar, setShowCalendar] = useState(false)
+  const [radarOpen, setRadarOpen] = useState(false)
+  const radarPanelId = useId()
+  const radarTriggerRef = useRef<HTMLButtonElement>(null)
+  const workspaceRef = useRef<HTMLElement>(null)
+  const [editor, setEditor] = useState<{ id?: string; key: number } | null>(null)
+  const notesRef = useRef<NotesGridHandle>(null)
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   const leftOverride = useStore((s) => s.leftColumnOverride)
-  const rightOverride = useStore((s) => s.rightColumnOverride)
   const setLeftOverride = useStore((s) => s.setLeftColumnOverride)
-  const setRightOverride = useStore((s) => s.setRightColumnOverride)
-  const isDesktop = useMediaQuery(DESKTOP_QUERY)
+  const selectedDate = useStore((s) => s.selectedDate)
+  const quests = useStore((s) => s.quests)
+  const calendarVisible = isDesktop && (leftOverride ?? true)
 
-  const showLeft = leftOverride ?? isDesktop
-  const showRight = rightOverride ?? isDesktop
+  function openEditor(id?: string) {
+    setEditor({ id, key: Date.now() })
+  }
 
-  const gridTemplateColumns = isDesktop
-    ? '280px minmax(0, 1fr) 320px'
-    : 'minmax(0, 1fr)'
+  function closeRadar() {
+    setRadarOpen(false)
+    // The Day trigger can be hidden while browsing Notes or Library.
+    if (radarTriggerRef.current?.getClientRects().length) radarTriggerRef.current.focus({ preventScroll: true })
+    else workspaceRef.current?.focus({ preventScroll: true })
+  }
 
-  const centerClassName = `overflow-y-auto overflow-x-hidden max-h-screen min-w-0 ${
-    isDesktop ? '' : 'pt-10'
-  }`
-
-  const toggleButtonClass = (active: boolean) =>
-    `p-1.5 rounded-full transition-colors ${
-      active
-        ? 'bg-blue-600 text-white'
-        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700'
-    }`
+  function navigation(mobile: boolean) {
+    return (
+      <nav aria-label={mobile ? 'Mobile navigation' : 'Main navigation'} className={mobile ? 'grid grid-cols-4' : 'flex items-center gap-1'}>
+        {screens.map(({ id, label, icon: Icon }) => (
+          <button key={id} type="button" onClick={() => setScreen(id)} aria-current={screen === id ? 'page' : undefined}
+            className={`${mobile ? 'flex min-h-14 flex-col gap-1 text-xs' : 'inline-flex min-h-11 gap-2 px-4 text-sm'} items-center justify-center rounded-lg font-medium transition-colors ${screen === id ? 'bg-blue-500/10 text-blue-300' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}>
+            <Icon className="h-5 w-5" /><span>{label}</span>
+          </button>
+        ))}
+        {mobile && <button type="button" aria-label="Settings" onClick={() => setShowSettings(true)} className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800"><Settings className="h-5 w-5" /><span>More</span></button>}
+      </nav>
+    )
+  }
 
   return (
-    <div
-      className="relative grid min-h-screen bg-slate-900 text-white"
-      style={{ gridTemplateColumns }}
-    >
-      {isDesktop ? (
-        <>
-          <div
-            className={`overflow-y-auto max-h-screen min-w-0 pt-10 ${
-              showLeft ? 'border-r border-slate-700' : ''
-            }`}
-          >
-            {showLeft && <CalendarColumn />}
+    <div className="min-h-dvh bg-slate-950 text-slate-200">
+      <a href="#workspace" onClick={(event) => { event.preventDefault(); workspaceRef.current?.focus({ preventScroll: true }); workspaceRef.current?.scrollIntoView({ block: 'start' }) }} className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-2 focus:z-50 focus:rounded-lg focus:bg-blue-600 focus:p-3 focus:text-white">Skip to workspace</a>
+      <header className="sticky top-0 z-20 border-b border-slate-800 bg-slate-950/95 pt-[env(safe-area-inset-top)] backdrop-blur">
+        <div className="mx-auto flex min-h-[72px] max-w-[1680px] items-center justify-between gap-3 px-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400"><CheckCheck className="h-6 w-6" /></div>
+            <div className="min-w-0"><p className="truncate text-sm font-semibold text-white sm:text-base">Daily Quest <span className="ml-1 rounded bg-blue-500/10 px-1.5 py-0.5 align-middle text-[10px] font-medium text-blue-300">v2</span></p><p className="text-xs text-slate-500">A little progress, every day.</p></div>
+            <Button variant="icon" className="hidden lg:inline-flex" onClick={() => setLeftOverride(!calendarVisible)} aria-label={calendarVisible ? 'Hide calendar' : 'Show calendar'}>{calendarVisible ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}</Button>
           </div>
-          <div className={centerClassName}>
-            <QuestsColumn />
+          <div className="hidden lg:block">{navigation(false)}</div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button onClick={() => screen === 'notes' ? notesRef.current?.createNote() : openEditor()} aria-label={screen === 'notes' ? 'New note' : 'New quest'}>
+              <Plus className="h-4 w-4" /><span className="hidden sm:inline">{screen === 'notes' ? 'New note' : 'New quest'}</span><span className="sm:hidden">New</span>
+            </Button>
+            <Button variant="icon" aria-label="Settings" onClick={() => setShowSettings(true)} className="hidden lg:inline-flex"><Settings className="h-5 w-5" /></Button>
           </div>
-          <div
-            className={`overflow-y-auto max-h-screen min-w-0 pt-10 ${
-              showRight ? 'border-l border-slate-700' : ''
-            }`}
-          >
-            {showRight && <RightColumn />}
-          </div>
-        </>
-      ) : (
-        <>
-          {showLeft && (
-            <Drawer side="left" onClose={() => setLeftOverride(false)}>
-              <CalendarColumn />
-            </Drawer>
-          )}
-          <div className={centerClassName}>
-            <QuestsColumn />
-          </div>
-          {showRight && (
-            <Drawer side="right" onClose={() => setRightOverride(false)}>
-              <RightColumn />
-            </Drawer>
-          )}
-        </>
-      )}
+        </div>
+      </header>
 
-      <button
-        onClick={() => setLeftOverride(!showLeft)}
-        className={`fixed top-2 left-2 z-50 ${toggleButtonClass(showLeft)}`}
-        title={showLeft ? 'Hide calendar' : 'Show calendar'}
-        aria-label={showLeft ? 'Hide calendar' : 'Show calendar'}
-      >
-        <PanelLeft className="w-4 h-4" />
-      </button>
-      <button
-        onClick={() => setRightOverride(!showRight)}
-        className={`fixed top-2 right-2 z-50 ${toggleButtonClass(showRight)}`}
-        title={showRight ? 'Hide side panel' : 'Show side panel'}
-        aria-label={showRight ? 'Hide side panel' : 'Show side panel'}
-      >
-        <PanelRight className="w-4 h-4" />
-      </button>
-      <button
-        onClick={() => setShowSettings(true)}
-        className={`fixed top-2 right-12 z-50 ${toggleButtonClass(showSettings)}`}
-        title="Settings"
-        aria-label="Settings"
-      >
-        <Settings className="w-4 h-4" />
-      </button>
+      <div className="mx-auto grid max-w-[1680px] items-start" style={{ gridTemplateColumns: calendarVisible ? '248px minmax(0, 1fr)' : 'minmax(0, 1fr)' }}>
+        {calendarVisible && <aside aria-label="Calendar sidebar" className="sticky top-[73px] h-[calc(100dvh-73px)] overflow-hidden border-r border-slate-800 p-3"><CalendarColumn /></aside>}
+        <main ref={workspaceRef} id="workspace" tabIndex={-1} className={`workspace-grid min-w-0 scroll-mt-20 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 outline-none sm:px-6 lg:pb-10 lg:pt-7 ${radarOpen ? 'has-radar' : ''}`}>
+          <div className="workspace-context min-w-0">
+            <div hidden={screen !== 'day'}><DayOverview onChooseDate={() => setShowCalendar(true)} radarOpen={radarOpen} onToggleRadar={() => radarOpen ? closeRadar() : setRadarOpen(true)} radarPanelId={radarPanelId} radarTriggerRef={radarTriggerRef} /></div>
+            <header hidden={screen !== 'notes'}><h1 className="text-2xl font-semibold tracking-tight text-white">Notes</h1><p className="mt-1 text-sm text-slate-400">A place for ideas worth keeping.</p></header>
+            <header hidden={screen !== 'library'}><h1 className="text-2xl font-semibold tracking-tight text-white">Quest library</h1><p className="mt-1 text-sm text-slate-400">Find and edit quests across all dates.</p></header>
+          </div>
+          {radarOpen && <RadarPanel id={radarPanelId} onClose={closeRadar} />}
+          <div className="workspace-content min-w-0">
+            <div hidden={screen !== 'day'}><QuestsColumn onEdit={openEditor} /></div>
+            <div hidden={screen !== 'notes'} className="min-w-0"><NotesGrid ref={notesRef} showCreateButton={false} /></div>
+            <div hidden={screen !== 'library'}><QuestLibrary onEdit={openEditor} showHeading={false} /></div>
+          </div>
+        </main>
+      </div>
 
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-800 bg-slate-950/95 px-2 pb-[env(safe-area-inset-bottom)] pt-1 backdrop-blur lg:hidden">{navigation(true)}</div>
+      {showCalendar && <Modal isOpen onClose={() => setShowCalendar(false)} title="Choose a date" className="max-w-sm"><CalendarColumn onSelect={() => setShowCalendar(false)} /></Modal>}
+      {editor && <QuestEditor key={editor.key} initialData={quests.find((q) => q.id === editor.id)} defaultDate={selectedDate} onClose={() => setEditor(null)} onSave={(quest, preset) => {
+          const current = useStore.getState()
+          if (current.quests.some((q) => q.id === quest.id)) current.updateQuest(quest.id, quest)
+          else current.addQuest(quest)
+          for (const tag of quest.tags ?? []) {
+            const state = useStore.getState()
+            if (!Object.hasOwn(state.tagColors, tag)) state.setTagColor(tag, assignTagColor(tag, state.tagColors))
+          }
+          if (preset) {
+            const state = useStore.getState()
+            if (state.quickPresets.some((item) => item.id === preset.id)) state.updateQuickPreset(preset.id, preset)
+            else state.addQuickPreset(preset)
+          }
+          setEditor(null)
+        }} />}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>
   )

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { addDays, parseDate } from '../../utils/dateUtils'
+import { addDays, addMonths, parseDate } from '../../utils/dateUtils'
 
 interface UseCalendarKeyboardNavReturn {
   focusedDate: string
@@ -10,14 +10,19 @@ interface UseCalendarKeyboardNavReturn {
 export function useCalendarKeyboardNav(
   initialDate: string,
   onSelect: (date: string) => void,
+  onNavigate?: (date: string) => void,
 ): UseCalendarKeyboardNavReturn {
-  const [focusedDate, setFocusedDate] = useState(initialDate)
+  const [focus, setFocus] = useState({ selection: initialDate, date: initialDate })
+  const focusedDate = focus.selection === initialDate ? focus.date : initialDate
+  const setFocusedDate = useCallback((date: string) => setFocus({ selection: initialDate, date }), [initialDate])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      const currentDate = (e.target as HTMLElement).dataset.date
+      if (!currentDate) return
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault()
-        onSelect(focusedDate)
+        onSelect(currentDate)
         return
       }
 
@@ -25,43 +30,46 @@ export function useCalendarKeyboardNav(
 
       switch (e.key) {
         case 'ArrowLeft':
-          nextDate = addDays(focusedDate, -1)
+          nextDate = addDays(currentDate, -1)
           break
         case 'ArrowRight':
-          nextDate = addDays(focusedDate, 1)
+          nextDate = addDays(currentDate, 1)
           break
         case 'ArrowUp':
-          nextDate = addDays(focusedDate, -7)
+          nextDate = addDays(currentDate, -7)
           break
         case 'ArrowDown':
-          nextDate = addDays(focusedDate, 7)
+          nextDate = addDays(currentDate, 7)
           break
         case 'Home': {
-          const d = parseDate(focusedDate)
+          const d = parseDate(currentDate)
           const day = d.getDay()
-          nextDate = addDays(focusedDate, day === 0 ? -6 : 1 - day)
+          nextDate = addDays(currentDate, day === 0 ? -6 : 1 - day)
           break
         }
         case 'End': {
-          const d = parseDate(focusedDate)
+          const d = parseDate(currentDate)
           const day = d.getDay()
-          nextDate = addDays(focusedDate, day === 0 ? 0 : 7 - day)
+          nextDate = addDays(currentDate, day === 0 ? 0 : 7 - day)
           break
         }
         case 'PageUp':
-          nextDate = addDays(focusedDate, -30)
+          nextDate = addMonths(currentDate, -1)
           break
         case 'PageDown':
-          nextDate = addDays(focusedDate, 30)
+          nextDate = addMonths(currentDate, 1)
           break
       }
 
       if (nextDate) {
         e.preventDefault()
         setFocusedDate(nextDate)
+        onNavigate?.(nextDate)
+        const container = e.currentTarget
+        requestAnimationFrame(() => container.querySelector<HTMLElement>(`[data-date="${nextDate}"]`)?.focus({ preventScroll: true }))
       }
     },
-    [focusedDate, onSelect],
+    [onNavigate, onSelect, setFocusedDate],
   )
 
   return { focusedDate, handleKeyDown, setFocusedDate }

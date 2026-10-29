@@ -8,6 +8,8 @@
     "build": "tsc -b && tsc -p tsconfig.functions.json && vite build",
     "dev:sync": "wrangler pages dev dist --port 8788 --service SYNC_SERVICE=daily-quest-sync-preview",
     "test:e2e": "playwright test",
+    "test:android": "playwright test -c playwright.android.config.ts",
+    "icons:generate": "node scripts/generate-icons.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",

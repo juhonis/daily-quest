@@ -145,7 +145,7 @@ export function CurrentWeather() {
       </div>
       {showRadar && (
         <Suspense fallback={<RadarFallback />}>
-          <RainRadar onClose={() => setShowRadar(false)} />
+          <RainRadar onChangeLocation={openLocationPicker} />
         </Suspense>
       )}
       {showLocationPicker && (

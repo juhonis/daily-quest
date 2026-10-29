@@ -15,5 +15,5 @@ interface RolloverQuestsPanelProps {
 }
 
 export function RolloverQuestsPanel(props: RolloverQuestsPanelProps) {
-  return <BasePanel {...props} label="Rollover" emptyHint="Nothing rolling over. All caught up." />
+  return <BasePanel {...props} label="Carried forward" emptyHint="No unfinished quests carried forward. All caught up." />
 }

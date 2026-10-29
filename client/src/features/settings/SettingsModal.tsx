@@ -8,6 +8,7 @@ import type { ImportPayload } from '../../types'
 import { EditPanelsModal } from '../quests/list/EditPanelsModal'
 import { SyncModal } from '../sync/SyncModal'
 import { RecoveryPanel } from '../sync/RecoveryPanel'
+import { QuestTagManager } from '../quests/tags/QuestTagManager'
 
 interface SettingsModalProps {
   onClose: () => void
@@ -26,6 +27,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   const [success, setSuccess] = useState<string | null>(null)
   const [showPanels, setShowPanels] = useState(false)
   const [showSync, setShowSync] = useState(false)
+  const [showTags, setShowTags] = useState(false)
 
   function handleExport() {
     downloadJson(exportFileName(), exportData(useStore.getState()))
@@ -65,13 +67,17 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   }
 
   return (
-    <><Modal isOpen={!showSync} onClose={onClose} title="Settings" className="max-h-[90dvh] overflow-y-auto">
+    <><Modal isOpen={!showSync} onClose={onClose} title="Settings">
       <div className="space-y-6">
         <section>
           <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Device sync</h3>
           <Button variant="secondary" onClick={() => setShowSync(true)}>Sync devices</Button>
         </section>
         <RecoveryPanel />
+        <section>
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Quest tags</h3>
+          <Button variant="secondary" onClick={() => setShowTags(true)}>Manage quest tags</Button>
+        </section>
         <section>
           <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
             Panels
@@ -141,6 +147,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
       </div>
 
       {showPanels && <EditPanelsModal onClose={() => setShowPanels(false)} />}
+      {showTags && <QuestTagManager onClose={() => setShowTags(false)} />}
     </Modal>
     {showSync && <SyncModal onClose={() => setShowSync(false)} />}</>
   )

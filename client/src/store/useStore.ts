@@ -6,6 +6,7 @@ import { normalizeQuest, normalizeCompletion, normalizeNote, normalizeQuickPrese
 import { ensureSync, projectSync, restoreSync, trackChanges } from '../utils/sync/state'
 import { canonical, mergeRecords, primary, writeRecord, type Recovery, type SyncData } from '../utils/sync/records'
 import { parseSyncData } from '../utils/sync/validation'
+import { createId } from '../utils/createId'
 
 // A fresh identity per tab/process avoids copied identities and cross-tab counter reuse.
 const replica = [...crypto.getRandomValues(new Uint8Array(16))].map((byte) => byte.toString(16).padStart(2, '0')).join('')
@@ -170,7 +171,7 @@ export const useStore = create<AppState>()(
           return {
             completions: [
               ...s.completions,
-              { id: crypto.randomUUID(), questId, completedOn: date, updatedAt: now() },
+              { id: createId(), questId, completedOn: date, updatedAt: now() },
             ],
           }
         }),
@@ -191,7 +192,7 @@ export const useStore = create<AppState>()(
           let newCompletions = [...s.completions]
           if (allDone && !hasCompletion) {
             newCompletions.push({
-              id: crypto.randomUUID(),
+              id: createId(),
               questId,
               completedOn: date,
               updatedAt: now(),
@@ -232,7 +233,7 @@ export const useStore = create<AppState>()(
       addQuestFromPreset: (preset, date, overrides?) =>
         set((s) => {
           const quest = {
-            id: crypto.randomUUID(),
+            id: createId(),
             title: preset.title,
             description: undefined,
             createdAt: now(),

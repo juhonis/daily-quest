@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Zap } from 'lucide-react'
 import type { QuickPreset, RepeatType } from '../../../types'
+import { cleanExternalLink, externalLinkError } from '../create/questEditorModel'
+import { createId } from '../../../utils/createId'
 
 type QuestType = 'today' | 'daily' | 'repeating' | 'important'
 
@@ -30,10 +32,10 @@ const TYPE_CONFIG: Record<QuestType, (unit?: 'week' | 'month') => QuestTypeConfi
 }
 
 const TYPE_LABELS: Record<QuestType, string> = {
-  today: 'Today',
+  today: 'Once',
   daily: 'Daily',
   repeating: 'Repeat',
-  important: 'Important',
+  important: 'Carry forward',
 }
 
 export function QuickAddBar({
@@ -46,6 +48,7 @@ export function QuickAddBar({
   const [manageOpen, setManageOpen] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newUrl, setNewUrl] = useState('')
+  const [presetError, setPresetError] = useState('')
   const [questType, setQuestType] = useState<QuestType>('today')
   const [repeatUnit, setRepeatUnit] = useState<'week' | 'month'>('week')
   const wrapperRef = useRef<HTMLDivElement>(null)
@@ -63,13 +66,16 @@ export function QuickAddBar({
 
   function handleAddPreset() {
     if (!newTitle.trim()) return
-    onManageAdd({
-      id: crypto.randomUUID(),
+    const linkError = externalLinkError(newUrl)
+    if (linkError) { setPresetError(linkError); return }
+    try { onManageAdd({
+      id: createId(),
       title: newTitle.trim(),
-      externalUrl: newUrl.trim() || undefined,
+      externalUrl: cleanExternalLink(newUrl),
       isUserDefined: true,
       updatedAt: new Date().toISOString(),
-    })
+    }) } catch { setPresetError('Could not save the preset. Check browser storage and retry.'); return }
+    setPresetError('')
     setNewTitle('')
     setNewUrl('')
   }
@@ -83,10 +89,10 @@ export function QuickAddBar({
   const types: QuestType[] = ['today', 'daily', 'repeating', 'important']
 
   return (
-    <div className="relative mb-4" ref={wrapperRef}>
+    <div className="relative" ref={wrapperRef}>
       <button
         onClick={() => setMenuOpen((o) => !o)}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+        className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
         aria-expanded={menuOpen}
       >
         <Zap className="w-3.5 h-3.5" />
@@ -95,15 +101,16 @@ export function QuickAddBar({
 
       {menuOpen && (
         <div
-          className="absolute left-0 top-full mt-2 z-20 w-80 rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-xl"
+          className="absolute left-0 top-full mt-2 z-20 max-h-[60dvh] w-[min(320px,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 p-3 shadow-xl"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center gap-1 mb-3">
+          <div className="flex flex-wrap items-center gap-1 mb-3">
             {types.map((t) => (
               <button
                 key={t}
-                onClick={() => setQuestType(t)}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                  onClick={() => setQuestType(t)}
+                  aria-pressed={questType === t}
+                className={`min-h-11 px-2 py-2 rounded-md text-xs font-medium transition-colors ${
                   questType === t
                     ? 'bg-blue-600 text-white'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700'
@@ -116,7 +123,7 @@ export function QuickAddBar({
 
           {questType === 'repeating' && (
             <div className="flex items-center gap-2 mb-3 text-xs text-slate-400">
-              <span>Interval:</span>
+              <span>Repeat:</span>
               <div className="flex gap-1">
                 {(['week', 'month'] as const).map((u) => (
                   <button
@@ -141,7 +148,7 @@ export function QuickAddBar({
                 <button
                   key={p.id}
                   onClick={() => handlePickPreset(p)}
-                  className="shrink-0 rounded-lg border border-slate-700 bg-slate-700/60 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-600 hover:text-white transition-colors"
+                  className="min-h-11 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-200 hover:bg-slate-700 hover:text-white transition-colors"
                 >
                   {p.title}
                 </button>
@@ -164,15 +171,18 @@ export function QuickAddBar({
               <div className="flex gap-2">
                 <input
                   type="text"
+                  aria-label="Preset title"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="Preset title"
                   className="flex-1 min-w-0 rounded-lg border border-slate-600 bg-slate-700 px-2 py-1 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <input
-                  type="text"
+                  type="url"
+                  inputMode="url"
+                  aria-label="Preset URL"
                   value={newUrl}
-                  onChange={(e) => setNewUrl(e.target.value)}
+                  onChange={(e) => { setNewUrl(e.target.value); setPresetError('') }}
                   placeholder="URL"
                   className="flex-1 min-w-0 rounded-lg border border-slate-600 bg-slate-700 px-2 py-1 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -183,6 +193,7 @@ export function QuickAddBar({
                   Add
                 </button>
               </div>
+              {presetError && <p role="alert" className="text-xs text-red-300">{presetError}</p>}
               <div className="space-y-1">
                 {presets.map((p) => (
                   <div key={p.id} className="flex items-center gap-2 text-xs text-slate-400">

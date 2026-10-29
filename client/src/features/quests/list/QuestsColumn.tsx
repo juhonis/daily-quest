@@ -1,314 +1,75 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useMemo, useState } from 'react'
+import { Columns3, List, SlidersHorizontal } from 'lucide-react'
 import { useStore } from '../../../store/useStore'
 import { Button } from '../../../components/ui/Button'
-import { Settings, Plus, ChevronLeft, ChevronRight, CalendarCheck } from 'lucide-react'
-import { format } from 'date-fns'
-import { addDays, getTodayLocal, parseDate } from '../../../utils/dateUtils'
-import { QuestsTabs } from '../QuestsTabs'
+import { getActiveQuestsForDate, getFinishedQuestsForDate } from '../../../utils/dateUtils'
 import { QuickAddBar } from './QuickAddBar'
 import { QuestsPanelsRow } from './QuestsPanelsRow'
-import { QuestCreateForm } from '../create/QuestCreateForm'
 import { EditPanelsModal } from './EditPanelsModal'
-import { NotesGrid } from '../../notes/NotesGrid'
-import { CurrentWeather } from '../../weather/CurrentWeather'
-import { WeatherCarousel } from '../../weather/WeatherCarousel'
 
-export function QuestsColumn() {
-  const [tab, setTab] = useState<'quests' | 'create' | 'notes'>('quests')
-  const [editingQuest, setEditingQuest] = useState<string | null>(null)
-  const [formKey, setFormKey] = useState(0)
-  const [showEditPanels, setShowEditPanels] = useState(false)
-
+export function QuestsColumn({ onEdit }: { onEdit: (id: string) => void }) {
+  const [layout, setLayout] = useState<'list' | 'board'>('list')
+  const [showFilters, setShowFilters] = useState(false)
+  const [showPanels, setShowPanels] = useState(false)
   const quests = useStore((s) => s.quests)
   const completions = useStore((s) => s.completions)
-  const quickPresets = useStore((s) => s.quickPresets)
+  const presets = useStore((s) => s.quickPresets)
   const selectedDate = useStore((s) => s.selectedDate)
-  const setSelectedDate = useStore((s) => s.setSelectedDate)
-  const toggleCompletion = useStore((s) => s.toggleCompletion)
-  const toggleSubQuest = useStore((s) => s.toggleSubQuest)
-  const deleteQuest = useStore((s) => s.deleteQuest)
-  const addQuest = useStore((s) => s.addQuest)
-  const updateQuest = useStore((s) => s.updateQuest)
-  const addQuestFromPreset = useStore((s) => s.addQuestFromPreset)
-  const addQuickPreset = useStore((s) => s.addQuickPreset)
-  const deleteQuickPreset = useStore((s) => s.deleteQuickPreset)
-  const hiddenPanels = useStore((s) => s.hiddenPanels)
   const filterTags = useStore((s) => s.filterTags)
   const setFilterTags = useStore((s) => s.setFilterTags)
   const tagColors = useStore((s) => s.tagColors)
   const tagPanels = useStore((s) => s.tagPanels)
   const addTagPanel = useStore((s) => s.addTagPanel)
-
-  const [showTagPicker, setShowTagPicker] = useState(false)
-  const tagPickerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!showTagPicker) return
-    function handler(e: MouseEvent) {
-      if (tagPickerRef.current && !tagPickerRef.current.contains(e.target as Node)) {
-        setShowTagPicker(false)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [showTagPicker])
-
-  const UNTAGGED = '__untagged__'
-  const HIDE_ALL = '__hide__'
-
-  const allTags = useMemo(() => {
-    const set = new Set<string>()
-    quests.forEach((q) => q.tags?.forEach((t) => set.add(t)))
-    return [...set].sort()
-  }, [quests])
-
-  const hasUntaggedQuests = quests.some((q) => !q.tags || q.tags.length === 0)
-
-  const allTagsSelected = allTags.length > 0 && allTags.every((t) => filterTags.includes(t)) && !filterTags.includes(HIDE_ALL)
-  const availableTags = allTags.filter((t) => !tagPanels.includes(t))
-
-  const filteredQuests = useMemo(() => {
-    if (filterTags.length === 0) return quests
-    if (filterTags.includes(HIDE_ALL)) return []
-    return quests.filter((q) => {
-      const hasTags = q.tags && q.tags.length > 0
-      const matchesTag = hasTags && q.tags!.some((t) => filterTags.includes(t))
-      const matchesUntagged = !hasTags && filterTags.includes(UNTAGGED)
-      return matchesTag || matchesUntagged
-    })
-  }, [quests, filterTags])
-
-  const allVisibleHidden = hiddenPanels.length === 5 && tagPanels.length === 0
-  const isToday = selectedDate === getTodayLocal()
-  const dayName = format(parseDate(selectedDate), 'EEEE')
-  const dateLabel = format(parseDate(selectedDate), 'dd/MM/yyyy')
+  const addFromPreset = useStore((s) => s.addQuestFromPreset)
+  const addPreset = useStore((s) => s.addQuickPreset)
+  const deletePreset = useStore((s) => s.deleteQuickPreset)
+  const toggleCompletion = useStore((s) => s.toggleCompletion)
+  const toggleSubQuest = useStore((s) => s.toggleSubQuest)
+  const deleteQuest = useStore((s) => s.deleteQuest)
+  const allTags = useMemo(() => [...new Set(quests.flatMap((q) => q.tags ?? []))].sort(), [quests])
+  const filtered = useMemo(() => filterTags.length === 0 ? quests : quests.filter((q) =>
+    q.tags?.some((tag) => filterTags.includes(tag)) || ((!q.tags || !q.tags.length) && filterTags.includes('__untagged__')),
+  ), [quests, filterTags])
+  const active = getActiveQuestsForDate(quests, selectedDate, completions).length
+  const done = getFinishedQuestsForDate(quests, selectedDate, completions).length
+  const total = active + done
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-4 pt-4">
-        <div className="flex gap-4 mb-6">
-        <CurrentWeather />
-        <div className="flex-1 min-w-0">
-          <WeatherCarousel />
+    <div className="min-w-0 space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="h-1.5 w-20 overflow-hidden rounded-full bg-slate-800" role="progressbar" aria-label="Daily quest progress" aria-valuemin={0} aria-valuemax={total || 1} aria-valuenow={done}><div className="h-full rounded-full bg-blue-500 transition-[width]" style={{ width: `${total ? done / total * 100 : 0}%` }} /></div>
+          <span className="text-sm text-slate-400">{total ? `${done} of ${total} done` : 'A fresh start'}</span>
         </div>
       </div>
 
-      <div className="flex items-center justify-center gap-3 mb-6">
-        <Button
-          variant="icon"
-          aria-label="Previous day"
-          onClick={() => setSelectedDate(addDays(selectedDate, -1))}
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </Button>
-        <button
-          onClick={() => setSelectedDate(getTodayLocal())}
-          className={`flex flex-col items-center gap-0 transition-colors ${
-            isToday ? 'text-slate-200' : 'text-blue-400 hover:text-blue-300'
-          }`}
-          title={isToday ? 'Today' : 'Jump to today'}
-        >
-          {!isToday && <CalendarCheck className="w-4 h-4 mb-0.5" />}
-          <span className="text-lg font-semibold">{dayName}</span>
-          <span className="text-xs text-slate-400">{dateLabel}</span>
-        </button>
-        <Button
-          variant="icon"
-          aria-label="Next day"
-          onClick={() => setSelectedDate(addDays(selectedDate, 1))}
-        >
-          <ChevronRight className="w-6 h-6" />
-        </Button>
-      </div>
-
-      <div className="text-center mb-1">
-        <h2 className="text-xl font-bold text-white tracking-tight">Daily Quests</h2>
-      </div>
-
-      <div className="flex justify-center mb-3">
-        <QuestsTabs
-          activeTab={tab}
-          onChange={(t) => {
-            if (t === 'create') {
-              setEditingQuest(null)
-              setFormKey((k) => k + 1)
-            }
-            setTab(t)
-          }}
-        />
-      </div>
-    </div>
-
-      {tab === 'quests' && (
-        <>
-          <div className="px-4">
-            <div className="flex items-center gap-2 justify-between">
-              <QuickAddBar
-                presets={quickPresets}
-                selectedDate={selectedDate}
-                 onInstantAdd={(preset, config) => addQuestFromPreset(preset, selectedDate, config)}
-                onManageAdd={addQuickPreset}
-                onManageDelete={deleteQuickPreset}
-              />
-              {(allTags.length > 0 || hasUntaggedQuests) && (
-                <div className="flex items-center gap-1.5 flex-wrap justify-center">
-                  <button
-                    onClick={() => {
-                      if (filterTags.length === 0) {
-                        setFilterTags([...allTags, UNTAGGED])
-                      } else if (allTagsSelected) {
-                        setFilterTags([HIDE_ALL])
-                      } else {
-                        setFilterTags([...allTags, UNTAGGED])
-                      }
-                    }}
-                    className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-                      filterTags.length === 0 || allTagsSelected
-                        ? 'bg-slate-700 text-white'
-                        : 'text-slate-500 hover:text-slate-300'
-                    }`}
-                  >
-                    All
-                  </button>
-                  {allTags.map((tag) => {
-                    const color = tagColors[tag] ?? '#3B82F6'
-                    return (
-                      <button
-                        key={tag}
-                        onClick={() => {
-                          if (filterTags.includes(HIDE_ALL)) {
-                            setFilterTags([tag])
-                          } else {
-                            setFilterTags(
-                              filterTags.includes(tag)
-                                ? filterTags.filter((t) => t !== tag)
-                                : [...filterTags, tag],
-                            )
-                          }
-                        }}
-                        className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
-                          filterTags.includes(tag) ? 'text-white border-transparent' : 'hover:brightness-125'
-                        }`}
-                        style={filterTags.includes(tag) ? { backgroundColor: color } : { borderColor: color, color }}
-                      >
-                        {tag}
-                      </button>
-                    )
-                  })}
-                  {hasUntaggedQuests && (
-                    <button
-                      onClick={() => {
-                        if (filterTags.includes(HIDE_ALL)) {
-                          setFilterTags([UNTAGGED])
-                        } else {
-                          setFilterTags(
-                            filterTags.includes(UNTAGGED)
-                              ? filterTags.filter((t) => t !== UNTAGGED)
-                              : [...filterTags, UNTAGGED],
-                          )
-                        }
-                      }}
-                      className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
-                        filterTags.includes(UNTAGGED) && !filterTags.includes(HIDE_ALL)
-                          ? 'bg-slate-600 text-white border-transparent'
-                          : 'text-slate-400 border-slate-500 hover:text-slate-300 hover:border-slate-400'
-                      }`}
-                    >
-                      No tag
-                    </button>
-                  )}
-                </div>
-              )}
-              <div className="relative flex items-center gap-1" ref={tagPickerRef}>
-                {availableTags.length > 0 && (
-                  <Button variant="icon" aria-label="Add tag panel" onClick={() => setShowTagPicker((o) => !o)}>
-                    <Plus className="w-5 h-5" />
-                  </Button>
-                )}
-                {showTagPicker && (
-                  <div className="absolute right-0 top-full mt-1 z-50 rounded-lg border border-slate-600 bg-slate-800 shadow-xl py-1 min-w-[140px]">
-                    {availableTags.map((tag) => {
-                      const color = tagColors[tag] ?? '#3B82F6'
-                      return (
-                        <button
-                          key={tag}
-                          onClick={() => {
-                            addTagPanel(tag)
-                            setShowTagPicker(false)
-                          }}
-                          className="w-full text-left px-3 py-1 text-xs text-slate-300 hover:bg-slate-600 transition-colors flex items-center gap-2"
-                        >
-                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-                          {tag}
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-                <Button variant="icon" aria-label="Edit panels" onClick={() => setShowEditPanels(true)}>
-                  <Settings className="w-5 h-5" />
-                </Button>
-              </div>
-            </div>
-            {allVisibleHidden && (
-              <p className="text-sm text-slate-500 text-center py-8">
-                No panels visible. Tap Edit panels to show some, or add a tag panel with the + button.
-              </p>
-            )}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <QuickAddBar presets={presets} selectedDate={selectedDate} onInstantAdd={(preset, config) => addFromPreset(preset, selectedDate, config)} onManageAdd={addPreset} onManageDelete={deletePreset} />
+          <Button variant="ghost" onClick={() => setShowFilters(!showFilters)} aria-expanded={showFilters}><SlidersHorizontal className="h-4 w-4" />Filters{filterTags.length > 0 && <span className="rounded-full bg-blue-500/15 px-2 text-xs text-blue-300">{filterTags.length}</span>}</Button>
+          {filterTags.length > 0 && <Button variant="ghost" onClick={() => setFilterTags([])}>Clear</Button>}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="hidden rounded-lg border border-slate-800 p-1 sm:flex" aria-label="Task layout">
+            <Button variant="ghost" aria-pressed={layout === 'list'} onClick={() => setLayout('list')} className={layout === 'list' ? 'bg-slate-800 text-white' : ''}><List className="h-4 w-4" />List</Button>
+            <Button variant="ghost" aria-pressed={layout === 'board'} onClick={() => setLayout('board')} className={layout === 'board' ? 'bg-slate-800 text-white' : ''}><Columns3 className="h-4 w-4" />Board</Button>
           </div>
-          {!allVisibleHidden && (
-            <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 px-2 pb-4">
-               <QuestsPanelsRow
-                quests={filteredQuests}
-                completions={completions}
-                selectedDate={selectedDate}
-                onToggleCompletion={toggleCompletion}
-                onToggleSubQuest={toggleSubQuest}
-                onDelete={deleteQuest}
-                onEdit={(id) => {
-                  setEditingQuest(id)
-                  setTab('create')
-                }}
-              />
-            </div>
-          )}
-        </>
-      )}
-
-      {tab === 'notes' && (
-        <div className="flex-1 overflow-y-auto">
-          <NotesGrid />
+          <Button variant="ghost" onClick={() => setShowPanels(true)}>Customize</Button>
         </div>
-      )}
-
-      {tab === 'create' && (
-        <div className="flex-1 overflow-y-auto">
-          <QuestCreateForm
-            key={`${editingQuest ?? 'new'}-${formKey}`}
-            initialData={editingQuest ? quests.find((q) => q.id === editingQuest) ?? undefined : undefined}
-            defaultDate={selectedDate}
-            onSavePreset={(preset) => addQuickPreset(preset)}
-            onSave={(quest) => {
-              const exists = quests.some((q) => q.id === quest.id)
-              if (exists) {
-                updateQuest(quest.id, quest)
-              } else {
-                addQuest(quest)
-              }
-              setEditingQuest(null)
-              setFormKey((k) => k + 1)
-            }}
-            onClose={() => {
-              setEditingQuest(null)
-              setFormKey((k) => k + 1)
-            }}
-          />
+      </div>
+      {showFilters && <section aria-label="Quest filters" className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+        <p className="mb-3 text-sm font-medium text-slate-300">Filter by tag</p>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" aria-pressed={filterTags.length === 0} onClick={() => setFilterTags([])}>All quests</Button>
+          {[...allTags, '__untagged__'].map((tag) => <Button key={tag} variant="ghost" aria-pressed={filterTags.includes(tag)} onClick={() => setFilterTags(filterTags.includes(tag) ? filterTags.filter((t) => t !== tag) : [...filterTags.filter((t) => t !== '__hide__'), tag])} className={filterTags.includes(tag) ? 'bg-blue-500/10 text-blue-300' : ''}>
+            {tag !== '__untagged__' && <span className="h-2 w-2 rounded-full" style={{ backgroundColor: tagColors[tag] ?? '#3B82F6' }} />}{tag === '__untagged__' ? 'No tag' : tag}
+          </Button>)}
         </div>
-      )}
-
-      {showEditPanels && (
-        <EditPanelsModal onClose={() => setShowEditPanels(false)} />
-      )}
+        {allTags.some((tag) => !tagPanels.includes(tag)) && <div className="mt-4 border-t border-slate-800 pt-3"><label htmlFor="tag-panel" className="mr-3 text-sm text-slate-400">Add a tag section</label><select id="tag-panel" value="" onChange={(event) => { if (event.target.value) addTagPanel(event.target.value) }} className="min-h-11 max-w-full rounded-lg border border-slate-700 bg-slate-800 px-3 text-sm"><option value="">Choose a tag…</option>{allTags.filter((tag) => !tagPanels.includes(tag)).map((tag) => <option key={tag}>{tag}</option>)}</select></div>}
+      </section>}
+      {total === 0 && <div className="rounded-xl border border-dashed border-slate-800 px-5 py-8 text-center"><p className="font-medium text-slate-300">Nothing planned for this day.</p><p className="mt-2 text-sm leading-relaxed text-slate-500">Use New to add a quest, or Quick add to start from a preset.</p></div>}
+      <QuestsPanelsRow quests={filtered} completions={completions} selectedDate={selectedDate} onToggleCompletion={toggleCompletion} onToggleSubQuest={toggleSubQuest} onDelete={deleteQuest} onEdit={onEdit} layout={layout} />
+      {showPanels && <EditPanelsModal onClose={() => setShowPanels(false)} />}
     </div>
   )
 }
